@@ -1,6 +1,8 @@
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import Button from "@mui/material/Button";
+
+import { Outlet } from "react-router-dom";
+import Header from "./components/Header.tsx";
 
 const theme = createTheme({
   palette: {
@@ -18,10 +20,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Button variant="contained">Primary</Button>
-      <Button variant="contained" color="secondary" sx={{ ml: 2 }}>
-        Secondary
-      </Button>
+      <Header />
+      <Outlet />
     </ThemeProvider>
   );
 }
