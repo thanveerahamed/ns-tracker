@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
-import App from './App.tsx';
+import App from './pages/App.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
 import Login from './pages/Login.tsx';
@@ -21,6 +21,9 @@ const theme = createTheme({
       main: '#F06418',
     },
     mode: 'dark',
+  },
+  typography: {
+    fontFamily: ['Ubuntu', 'sans-serif'].join(','),
   },
 });
 

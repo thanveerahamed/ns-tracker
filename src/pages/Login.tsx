@@ -1,18 +1,50 @@
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuthState, useSignInWithGoogle } from 'react-firebase-hooks/auth';
+import { Navigate } from 'react-router-dom';
 
 import GoogleIcon from '@mui/icons-material/Google';
+import LoadingButton from '@mui/lab/LoadingButton';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+
+import FullPageLoader from '../components/loaders/FullPageLoader.tsx';
+
+import { auth } from '../services/firebase.ts';
+import { createUserDocument } from '../services/user.ts';
 
 export default function Login() {
-  const loggedIn = localStorage.getItem('loggedIn');
-  const navigate = useNavigate();
+  const [
+    signInWithGoogle,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    credentials,
+    signInLoading,
+  ] = useSignInWithGoogle(auth);
+
+  const [user, loading, error] = useAuthState(auth);
+
   const handleLogin = () => {
-    navigate('/');
+    (async () => {
+      const userCredential = await signInWithGoogle();
+      if (userCredential !== undefined) {
+        const { user } = userCredential;
+        await createUserDocument({
+          id: user.uid,
+          email: user.email ?? '',
+          displayName: user.displayName ?? '',
+          ...(user.photoURL ? { photoUrl: user.photoURL } : {}),
+        });
+      }
+    })();
   };
 
-  if (loggedIn === 'true') {
-    return <Navigate to={'/'} />;
+  if (error) {
+    return <p>error</p>;
+  }
+
+  if (loading) {
+    return <FullPageLoader />;
+  }
+
+  if (user) {
+    return <Navigate to="/" />;
   }
 
   return (
@@ -26,13 +58,14 @@ export default function Login() {
         height: '80vh',
       }}
     >
-      <Button
+      <LoadingButton
         variant="contained"
         onClick={handleLogin}
         endIcon={<GoogleIcon />}
+        loading={signInLoading}
       >
-        Login with
-      </Button>
+        Login with Google
+      </LoadingButton>
     </Box>
   );
 }
