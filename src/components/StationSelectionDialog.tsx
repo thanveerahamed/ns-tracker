@@ -1,4 +1,4 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useMemo, useRef, useState } from 'react';
 
 import CloseIcon from '@mui/icons-material/Close';
 import { CircularProgress, LinearProgress, TextField } from '@mui/material';
@@ -52,6 +52,18 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     setSearchText(event.target.value);
 
+  const filteredStations = useMemo(() => {
+    if (data === undefined) {
+      return undefined;
+    }
+
+    if (data) {
+      return data.filter(
+        (station) => station.stationType !== 'FACULTATIEF_STATION',
+      );
+    }
+  }, [data]);
+
   return (
     <Dialog
       fullScreen
@@ -86,9 +98,9 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
         {isLoading && <LinearProgress color="secondary" />}
         {isError && <Alert severity="error">Some error occurred</Alert>}
         <List>
-          {data &&
-            (data.length > 0 ? (
-              data.map((station) => (
+          {filteredStations &&
+            (filteredStations.length > 0 ? (
+              filteredStations.map((station) => (
                 <ListItem
                   button
                   key={station.code}
