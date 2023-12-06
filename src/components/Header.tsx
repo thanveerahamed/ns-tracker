@@ -1,8 +1,8 @@
 import { useSignOut } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
+import TrainIcon from './icons/TrainIcon.tsx';
 import LogoutIcon from '@mui/icons-material/Logout';
-import TrainIcon from '@mui/icons-material/Train';
 import { IconButton } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -26,7 +26,7 @@ function Header() {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <TrainIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
+          <TrainIcon sx={{ marginRight: '10px' }} />
           <Typography
             variant="h5"
             noWrap

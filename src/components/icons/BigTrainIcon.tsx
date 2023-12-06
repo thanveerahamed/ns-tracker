@@ -1,12 +1,12 @@
 import { SvgIcon } from '@mui/material';
 import { SvgIconProps } from '@mui/material/SvgIcon/SvgIcon';
 
-export default function TrainIcon(props: SvgIconProps) {
+export default function BigTrainIcon(props: SvgIconProps) {
   return (
     <SvgIcon {...props}>
       <svg
-        width="64px"
-        height="64px"
+        width="256px"
+        height="256px"
         viewBox="0 0 1024 1024"
         version="1.1"
         xmlns="http://www.w3.org/2000/svg"

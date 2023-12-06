@@ -19,6 +19,12 @@ export interface Station {
   nearbyMeLocationId: NearbyMeLocationId;
 }
 
+export enum LocationType {
+  Origin = 'origin',
+  Destination = 'destination',
+  Via = 'via',
+}
+
 export interface NearbyMeLocationId {
   value: string;
   type: string;

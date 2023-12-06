@@ -3,8 +3,11 @@ import { Navigate } from 'react-router-dom';
 
 import GoogleIcon from '@mui/icons-material/Google';
 import LoadingButton from '@mui/lab/LoadingButton';
+import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 
+import ShapedBackground from '../components/ShapedBackground.tsx';
+import BigTrainIcon from '../components/icons/BigTrainIcon.tsx';
 import FullPageLoader from '../components/loaders/FullPageLoader.tsx';
 
 import { auth } from '../services/firebase.ts';
@@ -52,12 +55,19 @@ export default function Login() {
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
         alignItems: 'center',
         flexGrow: 1,
-        height: '80vh',
+        height: '100vh',
+        position: 'relative',
       }}
     >
+      <ShapedBackground />
+      <Box>
+        <BigTrainIcon sx={{ width: '256px', height: '256px' }} />
+        <Typography variant="h3">NS Tracker</Typography>
+      </Box>
+
       <LoadingButton
         variant="contained"
         onClick={handleLogin}
