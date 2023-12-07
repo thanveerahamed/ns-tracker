@@ -1,22 +1,22 @@
-export interface Station {
+export interface NSStation {
   UICCode: string;
   stationType: string;
   EVACode: string;
   code: string;
   cdCode: number;
-  sporen: Sporen[];
+  sporen: NSSporen[];
   synoniemen: string[];
   heeftFaciliteiten: boolean;
   heeftVertrektijden: boolean;
   heeftReisassistentie: boolean;
-  namen: Namen;
+  namen: NSNamen;
   land: string;
   lat: number;
   lng: number;
   radius: number;
   naderenRadius: number;
   ingangsDatum: string;
-  nearbyMeLocationId: NearbyMeLocationId;
+  nearbyMeLocationId: NSNearbyMeLocationId;
 }
 
 export enum LocationType {
@@ -25,17 +25,17 @@ export enum LocationType {
   Via = 'via',
 }
 
-export interface NearbyMeLocationId {
+export interface NSNearbyMeLocationId {
   value: string;
   type: string;
 }
 
-export interface Namen {
+export interface NSNamen {
   lang: string;
   middel: string;
   kort: string;
 }
 
-export interface Sporen {
+export interface NSSporen {
   spoorNummer: string;
 }

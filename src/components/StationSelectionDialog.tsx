@@ -1,7 +1,7 @@
-import React, { forwardRef, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useMemo, useState } from 'react';
 
 import CloseIcon from '@mui/icons-material/Close';
-import { CircularProgress, LinearProgress, TextField } from '@mui/material';
+import { LinearProgress, TextField } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -17,7 +17,7 @@ import { TransitionProps } from '@mui/material/transitions';
 
 import { useStationsQuery } from '../apis/stations.ts';
 import TrainStopImage from '../assets/train-stop.png';
-import { Station } from '../types/station.ts';
+import { NSStation } from '../types/station.ts';
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & {
@@ -30,7 +30,7 @@ const Transition = forwardRef(function Transition(
 
 interface Props {
   open: boolean;
-  onClose: (station?: Station) => void;
+  onClose: (station?: NSStation) => void;
 }
 
 export default function StationSelectionDialog({ onClose, open }: Props) {
@@ -45,7 +45,7 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
     onClose();
   };
 
-  const handleItemClick = (station?: Station) => {
+  const handleItemClick = (station?: NSStation) => {
     onClose(station);
   };
 

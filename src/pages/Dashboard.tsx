@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
@@ -24,32 +24,50 @@ import {
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import { MobileDateTimePicker } from '@mui/x-date-pickers';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 
-import { LocationType, Station } from '../types/station.ts';
+import {
+  getArrivalToggleFromCache,
+  getSearchDateTimeFromCache,
+  getStationFromCache,
+  saveArrivalToggleToCache,
+  saveSearchDateTimeToCache,
+  saveStationToCache,
+} from '../services/cache.ts';
+import { LocationType, NSStation } from '../types/station.ts';
 
 export default function Dashboard() {
   const [openStationSelection, setOpenStationSelection] =
     useState<boolean>(false);
-  const [origin, setOrigin] = useState<Station | undefined>(undefined);
-  const [destination, setDestination] = useState<Station | undefined>(
-    undefined,
+  const [origin, setOrigin] = useState<NSStation | undefined>(
+    getStationFromCache(LocationType.Origin),
+  );
+  const [destination, setDestination] = useState<NSStation | undefined>(
+    getStationFromCache(LocationType.Destination),
+  );
+  const [via, setVia] = useState<NSStation | undefined>(
+    getStationFromCache(LocationType.Via),
+  );
+  const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | undefined>(
+    getSearchDateTimeFromCache(),
   );
   const [locationTypeClicked, setLocationTypeClicked] = useState<
     LocationType | undefined
   >(undefined);
   const [hasIntermediateStop, setHasIntermediateStop] =
     useState<boolean>(false);
-  const [isDeparture, setIsDeparture] = useState<boolean>(true);
+  const [isArrival, setIsArrival] = useState<boolean>(
+    getArrivalToggleFromCache(),
+  );
 
   const handleTextFocused = (locationType: LocationType) => {
     setLocationTypeClicked(locationType);
     setOpenStationSelection(true);
   };
 
-  const handleStationSelectorClosed = (station?: Station) => {
+  const handleStationSelectorClosed = (station?: NSStation) => {
     setOpenStationSelection(false);
     if (station !== undefined) {
       if (locationTypeClicked === LocationType.Origin) {
@@ -58,6 +76,10 @@ export default function Dashboard() {
 
       if (locationTypeClicked === LocationType.Destination) {
         setDestination(station);
+      }
+
+      if (locationTypeClicked === LocationType.Via) {
+        setVia(station);
       }
     }
 
@@ -70,6 +92,23 @@ export default function Dashboard() {
       return origin;
     });
   };
+
+  const handleToggleIntermediateStop = () => {
+    setHasIntermediateStop((prevState) => !prevState);
+    setVia(undefined);
+  };
+
+  const handleDateTimeChange = (value: Dayjs | null) => {
+    setSelectedDateTime(value ?? undefined);
+    saveSearchDateTimeToCache(value ?? undefined);
+  };
+
+  useEffect(() => {
+    saveStationToCache(LocationType.Via, via);
+    saveStationToCache(LocationType.Origin, origin);
+    saveStationToCache(LocationType.Destination, destination);
+    saveArrivalToggleToCache(isArrival);
+  }, [via, origin, destination, isArrival]);
 
   return (
     <>
@@ -136,8 +175,8 @@ export default function Dashboard() {
                       label="Via"
                       variant="outlined"
                       fullWidth
-                      // value={origin?.namen?.lang ?? ''}
-                      // onClick={() => handleTextFocused(LocationType.Origin)}
+                      value={via?.namen?.lang ?? ''}
+                      onClick={() => handleTextFocused(LocationType.Via)}
                     />
                   </TimelineContent>
                 </TimelineItem>
@@ -172,9 +211,7 @@ export default function Dashboard() {
               </IconButton>
               <IconButton
                 color={hasIntermediateStop ? 'error' : 'warning'}
-                onClick={() =>
-                  setHasIntermediateStop((prevState) => !prevState)
-                }
+                onClick={handleToggleIntermediateStop}
               >
                 {hasIntermediateStop ? (
                   <WrongLocationIcon />
@@ -187,14 +224,16 @@ export default function Dashboard() {
           <Box sx={{ margin: '0 16px' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
               <MobileDateTimePicker
-                label={isDeparture ? 'Departure' : 'Arrival'}
-                defaultValue={dayjs()}
+                label={isArrival ? 'Departure' : 'Arrival'}
+                onChange={handleDateTimeChange}
+                value={selectedDateTime}
+                format={'DD MMM YYYY hh:mm A'}
               />
               <FormControlLabel
                 control={
                   <Switch
-                    value={!isDeparture}
-                    onClick={() => setIsDeparture((prevState) => !prevState)}
+                    checked={isArrival}
+                    onClick={() => setIsArrival((prevState) => !prevState)}
                   />
                 }
                 label="Arrival"
