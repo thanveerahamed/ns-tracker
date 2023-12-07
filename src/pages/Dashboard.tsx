@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import { MobileDateTimePicker } from '@mui/x-date-pickers';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 

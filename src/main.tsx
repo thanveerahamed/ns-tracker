@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
+import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import App from './pages/App.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
@@ -70,7 +71,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <RouterProvider router={router} />
+          <SnackbarProvider>
+            <RouterProvider router={router} />
+          </SnackbarProvider>
         </ThemeProvider>
       </LocalizationProvider>
     </QueryClientProvider>

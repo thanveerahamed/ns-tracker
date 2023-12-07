@@ -1,7 +1,10 @@
 import React, { forwardRef, useMemo, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 import CloseIcon from '@mui/icons-material/Close';
-import { LinearProgress, TextField } from '@mui/material';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import { LinearProgress, ListItemButton, TextField } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -17,6 +20,13 @@ import { TransitionProps } from '@mui/material/transitions';
 
 import { useStationsQuery } from '../apis/stations.ts';
 import TrainStopImage from '../assets/train-stop.png';
+import { useSnackbarContext } from '../context/SnackbarContext.tsx';
+import { auth } from '../services/firebase.ts';
+import {
+  addFavouriteStation,
+  removeFavouriteStation,
+  useFavouriteStation,
+} from '../services/station.ts';
 import { NSStation } from '../types/station.ts';
 
 const Transition = forwardRef(function Transition(
@@ -41,6 +51,11 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
     enabled: open && searchText.length >= 2,
   });
 
+  const [user] = useAuthState(auth);
+  const { showNotification } = useSnackbarContext();
+
+  const [favouriteStationSnapshots] = useFavouriteStation(user?.uid);
+
   const internalHandleCLose = () => {
     onClose();
   };
@@ -51,6 +66,28 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
 
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     setSearchText(event.target.value);
+
+  const handleFavourite = async (
+    action: 'add' | 'remove',
+    station: NSStation,
+  ) => {
+    if (user) {
+      if (action === 'add') {
+        await addFavouriteStation(user.uid, station);
+        showNotification('Favourite added!', 'success');
+      } else {
+        await removeFavouriteStation(user.uid, station);
+        showNotification('Favourite removed!', 'success');
+      }
+    }
+  };
+
+  const favouriteStations: NSStation[] = useMemo(() => {
+    return (
+      favouriteStationSnapshots?.docs.map((doc) => doc.data() as NSStation) ??
+      []
+    );
+  }, [favouriteStationSnapshots]);
 
   const filteredStations = useMemo(() => {
     if (data === undefined) {
@@ -102,21 +139,43 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
             (filteredStations.length > 0 ? (
               filteredStations.map((station) => (
                 <ListItem
-                  button
-                  key={station.code}
-                  onClick={() => handleItemClick(station)}
+                  key={station.UICCode}
+                  secondaryAction={
+                    favouriteStations.find(
+                      (favourite) => favourite.UICCode === station.UICCode,
+                    ) === undefined ? (
+                      <IconButton
+                        edge="end"
+                        aria-label="start-border"
+                        onClick={() => handleFavourite('add', station)}
+                      >
+                        <StarBorderIcon />
+                      </IconButton>
+                    ) : (
+                      <IconButton
+                        edge="end"
+                        aria-label="start-border"
+                        onClick={() => handleFavourite('remove', station)}
+                        color="primary"
+                      >
+                        <StarIcon />
+                      </IconButton>
+                    )
+                  }
                 >
-                  <img
-                    alt="tr_st"
-                    src={TrainStopImage}
-                    width="32px"
-                    height="32px"
-                    style={{ marginRight: '10px' }}
-                  />
-                  <ListItemText
-                    primary={station.namen.lang}
-                    secondary={station.stationType}
-                  />
+                  <ListItemButton onClick={() => handleItemClick(station)}>
+                    <img
+                      alt="tr_st"
+                      src={TrainStopImage}
+                      width="32px"
+                      height="32px"
+                      style={{ marginRight: '10px' }}
+                    />
+                    <ListItemText
+                      primary={station.namen.lang}
+                      secondary={station.stationType}
+                    />
+                  </ListItemButton>
                 </ListItem>
               ))
             ) : (
