@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState } from 'react';
+import { ReactNode, createContext, useState } from 'react';
 
 import { AlertColor, Snackbar } from '@mui/material';
 import Alert from '@mui/material/Alert';
