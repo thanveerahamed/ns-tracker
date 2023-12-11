@@ -4,7 +4,15 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import { LinearProgress, ListItemButton, TextField } from '@mui/material';
+import TrainIcon from '@mui/icons-material/Train';
+import {
+  Card,
+  CardContent,
+  LinearProgress,
+  ListItemButton,
+  ListSubheader,
+  TextField,
+} from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -134,50 +142,82 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
         />
         {isLoading && <LinearProgress color="secondary" />}
         {isError && <Alert severity="error">Some error occurred</Alert>}
+        {favouriteStations.length > 0 && (
+          <List>
+            <ListSubheader>Favourites</ListSubheader>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+              {favouriteStations.map((favourite) => {
+                return (
+                  <Card
+                    sx={{
+                      marginRight: '5px',
+                      marginTop: '5px',
+                      flex: 1,
+                      flexBasis: '25%',
+                    }}
+                    variant="elevation"
+                    onClick={() => handleItemClick(favourite)}
+                  >
+                    <CardContent sx={{ textAlign: 'center' }}>
+                      <TrainIcon />
+                      <br />
+                      <Typography variant="caption">
+                        {favourite.namen.lang}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </Box>
+          </List>
+        )}
         <List>
           {filteredStations &&
             (filteredStations.length > 0 ? (
-              filteredStations.map((station) => (
-                <ListItem
-                  key={station.UICCode}
-                  secondaryAction={
-                    favouriteStations.find(
-                      (favourite) => favourite.UICCode === station.UICCode,
-                    ) === undefined ? (
-                      <IconButton
-                        edge="end"
-                        aria-label="start-border"
-                        onClick={() => handleFavourite('add', station)}
-                      >
-                        <StarBorderIcon />
-                      </IconButton>
-                    ) : (
-                      <IconButton
-                        edge="end"
-                        aria-label="start-border"
-                        onClick={() => handleFavourite('remove', station)}
-                        color="primary"
-                      >
-                        <StarIcon />
-                      </IconButton>
-                    )
-                  }
-                >
-                  <ListItemButton onClick={() => handleItemClick(station)}>
-                    <img
-                      alt="tr_st"
-                      src={TrainStopImage}
-                      width="32px"
-                      height="32px"
-                      style={{ marginRight: '10px' }}
-                    />
-                    <ListItemText
-                      primary={station.namen.lang}
-                      secondary={station.stationType}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))
+              <>
+                <ListSubheader>Search results...</ListSubheader>
+                {filteredStations.map((station) => (
+                  <ListItem
+                    key={station.UICCode}
+                    secondaryAction={
+                      favouriteStations.find(
+                        (favourite) => favourite.UICCode === station.UICCode,
+                      ) === undefined ? (
+                        <IconButton
+                          edge="end"
+                          aria-label="start-border"
+                          onClick={() => handleFavourite('add', station)}
+                        >
+                          <StarBorderIcon />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          edge="end"
+                          aria-label="start-border"
+                          onClick={() => handleFavourite('remove', station)}
+                          color="primary"
+                        >
+                          <StarIcon />
+                        </IconButton>
+                      )
+                    }
+                  >
+                    <ListItemButton onClick={() => handleItemClick(station)}>
+                      <img
+                        alt="tr_st"
+                        src={TrainStopImage}
+                        width="32px"
+                        height="32px"
+                        style={{ marginRight: '10px' }}
+                      />
+                      <ListItemText
+                        primary={station.namen.lang}
+                        secondary={station.stationType}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </>
             ) : (
               <Typography variant="caption">
                 No stations to display..
