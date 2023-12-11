@@ -23,9 +23,9 @@ import {
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
-import { MobileDateTimePicker } from '@mui/x-date-pickers';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
+import CustomDateTimePicker from '../components/CustomDateTimePicker.tsx';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 
 import {
@@ -50,7 +50,7 @@ export default function Dashboard() {
   const [via, setVia] = useState<NSStation | undefined>(
     getStationFromCache(LocationType.Via),
   );
-  const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | undefined>(
+  const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | 'now'>(
     getSearchDateTimeFromCache(),
   );
   const [locationTypeClicked, setLocationTypeClicked] = useState<
@@ -62,7 +62,7 @@ export default function Dashboard() {
     getArrivalToggleFromCache(),
   );
 
-  const handleTextFocused = (locationType: LocationType) => {
+  const handleTextClicked = (locationType: LocationType) => {
     setLocationTypeClicked(locationType);
     setOpenStationSelection(true);
   };
@@ -98,9 +98,28 @@ export default function Dashboard() {
     setVia(undefined);
   };
 
-  const handleDateTimeChange = (value: Dayjs | null) => {
-    setSelectedDateTime(value ?? undefined);
+  const handleDateTimeChange = (value?: Dayjs | 'now') => {
+    if (value) {
+      setSelectedDateTime(value);
+    }
+
+    if (value === 'now') {
+      setIsArrival(false);
+    }
+
     saveSearchDateTimeToCache(value ?? undefined);
+  };
+
+  const handleSwitchChange = () => {
+    setIsArrival((prevState) => {
+      const newState = !prevState;
+
+      if (newState && selectedDateTime === 'now') {
+        setSelectedDateTime(dayjs());
+      }
+
+      return newState;
+    });
   };
 
   useEffect(() => {
@@ -158,7 +177,7 @@ export default function Dashboard() {
                     variant="outlined"
                     fullWidth
                     value={origin?.namen?.lang ?? ''}
-                    onClick={() => handleTextFocused(LocationType.Origin)}
+                    onClick={() => handleTextClicked(LocationType.Origin)}
                   />
                 </TimelineContent>
               </TimelineItem>
@@ -176,7 +195,7 @@ export default function Dashboard() {
                       variant="outlined"
                       fullWidth
                       value={via?.namen?.lang ?? ''}
-                      onClick={() => handleTextFocused(LocationType.Via)}
+                      onClick={() => handleTextClicked(LocationType.Via)}
                     />
                   </TimelineContent>
                 </TimelineItem>
@@ -193,7 +212,7 @@ export default function Dashboard() {
                     variant="outlined"
                     fullWidth
                     value={destination?.namen?.lang ?? ''}
-                    onClick={() => handleTextFocused(LocationType.Destination)}
+                    onClick={() => handleTextClicked(LocationType.Destination)}
                   />
                 </TimelineContent>
               </TimelineItem>
@@ -223,18 +242,14 @@ export default function Dashboard() {
           </Box>
           <Box sx={{ margin: '0 16px' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
-              <MobileDateTimePicker
-                label={isArrival ? 'Departure' : 'Arrival'}
+              <CustomDateTimePicker
+                label={isArrival ? 'Arrival' : 'Departure'}
                 onChange={handleDateTimeChange}
                 value={selectedDateTime}
-                format={'DD MMM YYYY hh:mm A'}
               />
               <FormControlLabel
                 control={
-                  <Switch
-                    checked={isArrival}
-                    onClick={() => setIsArrival((prevState) => !prevState)}
-                  />
+                  <Switch checked={isArrival} onClick={handleSwitchChange} />
                 }
                 label="Arrival"
               />

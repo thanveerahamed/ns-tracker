@@ -20,7 +20,7 @@ import { TransitionProps } from '@mui/material/transitions';
 
 import { useStationsQuery } from '../apis/stations.ts';
 import TrainStopImage from '../assets/train-stop.png';
-import { useSnackbarContext } from '../context/SnackbarContext.tsx';
+import { useSnackbarContext } from '../context';
 import { auth } from '../services/firebase.ts';
 import {
   addFavouriteStation,

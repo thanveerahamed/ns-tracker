@@ -15,7 +15,7 @@ export const getStationFromCache = (
   return station === null ? undefined : JSON.parse(station);
 };
 
-export const saveSearchDateTimeToCache = (dateTime?: Dayjs) => {
+export const saveSearchDateTimeToCache = (dateTime?: Dayjs | 'now') => {
   localStorage.setItem(
     `search.datetime`,
     dateTime?.toString() ?? dayjs().toString(),
