@@ -28,6 +28,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import CustomDateTimePicker from '../components/CustomDateTimePicker.tsx';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 
+import { useTripsInformation } from '../apis/stations.ts';
 import {
   getArrivalToggleFromCache,
   getSearchDateTimeFromCache,
@@ -50,17 +51,32 @@ export default function Dashboard() {
   const [via, setVia] = useState<NSStation | undefined>(
     getStationFromCache(LocationType.Via),
   );
+  const [isArrival, setIsArrival] = useState<boolean>(
+    getArrivalToggleFromCache(),
+  );
   const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | 'now'>(
-    getSearchDateTimeFromCache(),
+    isArrival && getSearchDateTimeFromCache() === 'now'
+      ? dayjs()
+      : dayjs(getSearchDateTimeFromCache()),
   );
   const [locationTypeClicked, setLocationTypeClicked] = useState<
     LocationType | undefined
   >(undefined);
   const [hasIntermediateStop, setHasIntermediateStop] =
     useState<boolean>(false);
-  const [isArrival, setIsArrival] = useState<boolean>(
-    getArrivalToggleFromCache(),
-  );
+
+  const { data } = useTripsInformation({
+    viaUicCode: via?.UICCode,
+    searchForArrival: isArrival,
+    dateTime:
+      selectedDateTime === undefined && selectedDateTime === 'now'
+        ? dayjs()
+        : dayjs(selectedDateTime),
+    destinationUicCode: destination?.UICCode,
+    originUicCode: origin?.UICCode,
+  });
+
+  console.log('tripsInformation', data);
 
   const handleTextClicked = (locationType: LocationType) => {
     setLocationTypeClicked(locationType);
@@ -101,6 +117,7 @@ export default function Dashboard() {
   const handleDateTimeChange = (value?: Dayjs | 'now') => {
     if (value) {
       setSelectedDateTime(value);
+      console.log('formatting', dayjs(value).format('YYYY-MM-DDTHH:mm:ssZ[Z]'));
     }
 
     if (value === 'now') {

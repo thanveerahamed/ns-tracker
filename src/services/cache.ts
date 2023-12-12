@@ -24,7 +24,7 @@ export const saveSearchDateTimeToCache = (dateTime?: Dayjs | 'now') => {
 
 export const getSearchDateTimeFromCache = () => {
   const dateTime = localStorage.getItem(`search.datetime`);
-  return dateTime === null ? dayjs() : dayjs(dateTime);
+  return dateTime === null || dateTime === 'now' ? 'now' : dayjs(dateTime);
 };
 
 export const saveArrivalToggleToCache = (toggle: boolean) => {

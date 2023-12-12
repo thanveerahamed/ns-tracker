@@ -1,13 +1,11 @@
 import React, { forwardRef, useMemo, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
+import FavouriteStations from './FavouriteStations.tsx';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
-import TrainIcon from '@mui/icons-material/Train';
 import {
-  Card,
-  CardContent,
   LinearProgress,
   ListItemButton,
   ListSubheader,
@@ -142,35 +140,10 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
         />
         {isLoading && <LinearProgress color="secondary" />}
         {isError && <Alert severity="error">Some error occurred</Alert>}
-        {favouriteStations.length > 0 && (
-          <List>
-            <ListSubheader>Favourites</ListSubheader>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-              {favouriteStations.map((favourite) => {
-                return (
-                  <Card
-                    sx={{
-                      marginRight: '5px',
-                      marginTop: '5px',
-                      flex: 1,
-                      flexBasis: '25%',
-                    }}
-                    variant="elevation"
-                    onClick={() => handleItemClick(favourite)}
-                  >
-                    <CardContent sx={{ textAlign: 'center' }}>
-                      <TrainIcon />
-                      <br />
-                      <Typography variant="caption">
-                        {favourite.namen.lang}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </Box>
-          </List>
-        )}
+        <FavouriteStations
+          stations={favouriteStations}
+          onSelect={handleItemClick}
+        />
         <List>
           {filteredStations &&
             (filteredStations.length > 0 ? (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button, DialogActions, DialogContent, TextField } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
@@ -22,6 +22,10 @@ function DatePickerModal({ open, onChange, value }: DatePickerModalProps) {
   const handleClose = (dateTime?: Dayjs | 'now') => {
     onChange(dateTime);
   };
+
+  useEffect(() => {
+    setCurrentDateTime(value);
+  }, [value]);
 
   return (
     <Dialog open={open}>

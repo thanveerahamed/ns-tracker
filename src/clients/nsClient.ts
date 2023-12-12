@@ -15,7 +15,7 @@ const getHostUrl = () => {
 
 export const apiGet = async <T>(
   url: string,
-  params: Record<string, string | number> = {},
+  params: Record<string, string | number | boolean | undefined> = {},
 ) => {
   const response = await axios.get<T>(`${getHostUrl()}${url}`, {
     headers: await getDefaultHeaders(),
