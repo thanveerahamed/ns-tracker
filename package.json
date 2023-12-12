@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,yml,md}\"",
-    "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
+    "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "type:check": "tsc -noEmit --skipLibCheck"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
