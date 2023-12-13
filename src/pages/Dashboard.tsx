@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
@@ -15,10 +16,8 @@ import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import {
   Button,
-  FormControlLabel,
   IconButton,
   Paper,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -28,55 +27,32 @@ import dayjs, { Dayjs } from 'dayjs';
 import CustomDateTimePicker from '../components/CustomDateTimePicker.tsx';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 
-import { useTripsInformation } from '../apis/stations.ts';
-import {
-  getArrivalToggleFromCache,
-  getSearchDateTimeFromCache,
-  getStationFromCache,
-  saveArrivalToggleToCache,
-  saveSearchDateTimeToCache,
-  saveStationToCache,
-} from '../services/cache.ts';
+import { useSearchFilterContext } from '../context';
 import { LocationType, NSStation } from '../types/station.ts';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const {
+    setHasIntermediateStop,
+    hasIntermediateStop,
+    via,
+    setVia,
+    setSelectedDateTime,
+    selectedDateTime,
+    origin,
+    setOrigin,
+    setDestination,
+    destination,
+    setIsArrival,
+    swapLocations,
+    isArrival,
+  } = useSearchFilterContext();
   const [openStationSelection, setOpenStationSelection] =
     useState<boolean>(false);
-  const [origin, setOrigin] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Origin),
-  );
-  const [destination, setDestination] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Destination),
-  );
-  const [via, setVia] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Via),
-  );
-  const [isArrival, setIsArrival] = useState<boolean>(
-    getArrivalToggleFromCache(),
-  );
-  const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | 'now'>(
-    isArrival && getSearchDateTimeFromCache() === 'now'
-      ? dayjs()
-      : dayjs(getSearchDateTimeFromCache()),
-  );
+
   const [locationTypeClicked, setLocationTypeClicked] = useState<
     LocationType | undefined
   >(undefined);
-  const [hasIntermediateStop, setHasIntermediateStop] =
-    useState<boolean>(false);
-
-  const { data } = useTripsInformation({
-    viaUicCode: via?.UICCode,
-    searchForArrival: isArrival,
-    dateTime:
-      selectedDateTime === undefined && selectedDateTime === 'now'
-        ? dayjs()
-        : dayjs(selectedDateTime),
-    destinationUicCode: destination?.UICCode,
-    originUicCode: origin?.UICCode,
-  });
-
-  console.log('tripsInformation', data);
 
   const handleTextClicked = (locationType: LocationType) => {
     setLocationTypeClicked(locationType);
@@ -103,48 +79,34 @@ export default function Dashboard() {
   };
 
   const handleSwap = () => {
-    setDestination((previousDestination) => {
-      setOrigin(previousDestination);
-      return origin;
-    });
+    swapLocations();
   };
 
   const handleToggleIntermediateStop = () => {
-    setHasIntermediateStop((prevState) => !prevState);
+    setHasIntermediateStop(!hasIntermediateStop);
     setVia(undefined);
   };
 
   const handleDateTimeChange = (value?: Dayjs | 'now') => {
     if (value) {
       setSelectedDateTime(value);
-      console.log('formatting', dayjs(value).format('YYYY-MM-DDTHH:mm:ssZ[Z]'));
     }
 
     if (value === 'now') {
       setIsArrival(false);
     }
-
-    saveSearchDateTimeToCache(value ?? undefined);
   };
 
-  const handleSwitchChange = () => {
-    setIsArrival((prevState) => {
-      const newState = !prevState;
-
-      if (newState && selectedDateTime === 'now') {
-        setSelectedDateTime(dayjs());
-      }
-
-      return newState;
-    });
+  const handleIsArrivalChange = (newState: boolean) => {
+    if (newState && selectedDateTime === 'now') {
+      setSelectedDateTime(dayjs());
+    }
+    setIsArrival(newState);
   };
 
-  useEffect(() => {
-    saveStationToCache(LocationType.Via, via);
-    saveStationToCache(LocationType.Origin, origin);
-    saveStationToCache(LocationType.Destination, destination);
-    saveArrivalToggleToCache(isArrival);
-  }, [via, origin, destination, isArrival]);
+  const handleSearch = () => {
+    navigate('/tripsInformation');
+  };
 
   return (
     <>
@@ -154,7 +116,7 @@ export default function Dashboard() {
           elevation={10}
           sx={{
             paddingBottom: '1rem',
-            paddingTop: '5rem',
+            paddingTop: '20%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -195,6 +157,7 @@ export default function Dashboard() {
                     fullWidth
                     value={origin?.namen?.lang ?? ''}
                     onClick={() => handleTextClicked(LocationType.Origin)}
+                    onFocus={(event) => event.target.blur()}
                   />
                 </TimelineContent>
               </TimelineItem>
@@ -213,6 +176,7 @@ export default function Dashboard() {
                       fullWidth
                       value={via?.namen?.lang ?? ''}
                       onClick={() => handleTextClicked(LocationType.Via)}
+                      onFocus={(event) => event.target.blur()}
                     />
                   </TimelineContent>
                 </TimelineItem>
@@ -230,6 +194,7 @@ export default function Dashboard() {
                     fullWidth
                     value={destination?.namen?.lang ?? ''}
                     onClick={() => handleTextClicked(LocationType.Destination)}
+                    onFocus={(event) => event.target.blur()}
                   />
                 </TimelineContent>
               </TimelineItem>
@@ -245,6 +210,16 @@ export default function Dashboard() {
               <IconButton onClick={handleSwap}>
                 <SwapVertIcon />
               </IconButton>
+            </Box>
+          </Box>
+          <Box sx={{ margin: '0 16px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
+              <CustomDateTimePicker
+                onChange={handleDateTimeChange}
+                value={selectedDateTime}
+                isArrival={isArrival}
+                setIsArrival={handleIsArrivalChange}
+              />
               <IconButton
                 color={hasIntermediateStop ? 'error' : 'warning'}
                 onClick={handleToggleIntermediateStop}
@@ -255,26 +230,16 @@ export default function Dashboard() {
                   <AddLocationAltIcon />
                 )}
               </IconButton>
-            </Box>
-          </Box>
-          <Box sx={{ margin: '0 16px' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-around' }}>
-              <CustomDateTimePicker
-                label={isArrival ? 'Arrival' : 'Departure'}
-                onChange={handleDateTimeChange}
-                value={selectedDateTime}
-              />
-              <FormControlLabel
-                control={
-                  <Switch checked={isArrival} onClick={handleSwitchChange} />
-                }
-                label="Arrival"
-              />
               <IconButton color="primary">
                 <SettingsIcon />
               </IconButton>
             </Box>
-            <Button sx={{ marginTop: '10px' }} variant="contained" fullWidth>
+            <Button
+              sx={{ marginTop: '10px' }}
+              variant="contained"
+              fullWidth
+              onClick={handleSearch}
+            >
               Search
             </Button>
           </Box>

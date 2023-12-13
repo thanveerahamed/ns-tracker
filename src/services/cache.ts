@@ -5,6 +5,8 @@ import { LocationType, NSStation } from '../types/station.ts';
 export const saveStationToCache = (type: LocationType, station?: NSStation) => {
   if (station) {
     localStorage.setItem(`search.station.${type}`, JSON.stringify(station));
+  } else {
+    localStorage.removeItem(`search.station.${type}`);
   }
 };
 
@@ -29,6 +31,14 @@ export const getSearchDateTimeFromCache = () => {
 
 export const saveArrivalToggleToCache = (toggle: boolean) => {
   localStorage.setItem(`search.arrival.toggle`, `${toggle}`);
+};
+
+export const saveHasIntermediateStopCache = (toggle: boolean) => {
+  localStorage.setItem(`search.intermediate.enabled`, `${toggle}`);
+};
+
+export const getHasIntermediateStopCache = () => {
+  return localStorage.getItem(`search.intermediate.enabled`) === 'true';
 };
 
 export const getArrivalToggleFromCache = () => {

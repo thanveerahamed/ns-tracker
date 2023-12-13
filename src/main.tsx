@@ -3,12 +3,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
+import { SearchFilterProvider } from './context/SearchFilterContext.tsx';
 import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import App from './pages/App.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
 import Login from './pages/Login.tsx';
-import SplitView from './pages/SplitView.tsx';
+import TripsInformation from './pages/TripsInformation.tsx';
 import { ThemeProvider } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
@@ -46,8 +47,8 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: '/splitview',
-        element: <SplitView />,
+        path: '/tripsInformation',
+        element: <TripsInformation />,
       },
     ],
   },
@@ -72,7 +73,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <SnackbarProvider>
-            <RouterProvider router={router} />
+            <SearchFilterProvider>
+              <RouterProvider router={router} />
+            </SearchFilterProvider>
           </SnackbarProvider>
         </ThemeProvider>
       </LocalizationProvider>
