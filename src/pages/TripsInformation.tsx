@@ -1,12 +1,17 @@
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
+import TrainIcon from '@mui/icons-material/Train';
+import { Chip, LinearProgress, Paper } from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
 
+import SearchFilter from '../components/SearchFilter.tsx';
+
 import { useTripsInformation } from '../apis/stations';
 import { useSearchFilterContext } from '../context';
+import { Trip } from '../types/trip.ts';
 
 export default function TripsInformation() {
   const { via, isArrival, selectedDateTime, destination, origin } =
@@ -22,25 +27,63 @@ export default function TripsInformation() {
     originUicCode: origin?.UICCode,
   });
 
-  if (isLoading) {
-    return <>Loading...</>;
-  }
+  const makeTripStartAndEndTime = (trip: Trip) => {
+    const legsOriginDestination = trip.legs.map(({ origin, destination }) => ({
+      origin,
+      destination,
+    }));
+    const currentTripOrigin = legsOriginDestination[0].origin;
+    const currentTripDestination =
+      legsOriginDestination[legsOriginDestination.length - 1].destination;
+
+    return `${dayjs(
+      currentTripOrigin.actualDateTime ?? currentTripOrigin.plannedDateTime,
+    ).format('LT')} - ${dayjs(
+      currentTripDestination.actualDateTime ??
+        currentTripDestination.plannedDateTime,
+    ).format('LT')}`;
+  };
+
+  const getTrainNames = (trip: Trip) => {
+    return trip.legs.map((leg) => leg.product.displayName);
+  };
 
   return (
     <>
+      <Paper
+        variant="elevation"
+        elevation={10}
+        sx={{
+          paddingBottom: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+        }}
+      >
+        <SearchFilter />
+      </Paper>
+      {isLoading && <LinearProgress />}
       {data?.trips.map((trip) => (
-        <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-          >
-            <Typography>{trip.status}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Typography>{JSON.stringify(trip)}</Typography>
-          </AccordionDetails>
-        </Accordion>
+        <Card key={trip.idx} variant="outlined">
+          <CardContent>
+            {trip.status !== 'NORMAL' && (
+              <Alert severity="error">{trip.status}</Alert>
+            )}
+
+            <Typography variant="h6" component="div">
+              {makeTripStartAndEndTime(trip)}
+            </Typography>
+            {getTrainNames(trip).map((brief) => (
+              <Chip icon={<TrainIcon />} label={brief} variant="outlined" />
+            ))}
+            {trip.primaryMessage && (
+              <Typography variant="body2" sx={{ color: 'error.main' }}>
+                {trip.primaryMessage.title}
+              </Typography>
+            )}
+          </CardContent>
+          <CardActions></CardActions>
+        </Card>
       )) ?? ''}
     </>
   );

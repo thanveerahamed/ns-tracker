@@ -114,8 +114,8 @@ export interface ProductFare {
 }
 
 export interface FareLeg {
-  origin: Origin2;
-  destination: Origin2;
+  origin: FareLocation;
+  destination: FareLocation;
   operator: string;
   productTypes: string[];
   fares: Fare[];
@@ -131,7 +131,7 @@ export interface Fare {
   discountType: string;
 }
 
-export interface Origin2 {
+export interface FareLocation {
   name: string;
   lng: number;
   lat: number;
@@ -150,8 +150,8 @@ export interface Leg {
   changePossible: boolean;
   alternativeTransport: boolean;
   journeyDetailRef: string;
-  origin: Origin;
-  destination: Destination;
+  origin: NSLocation;
+  destination: NSLocation;
   product: Product;
   messages: Message[][];
   stops: Stop[];
@@ -271,7 +271,7 @@ export interface NameNesProperties {
   color: string;
 }
 
-export interface Destination {
+export interface NSLocation {
   name: string;
   lng: number;
   lat: number;
@@ -288,24 +288,6 @@ export interface Destination {
   checkinStatus: string;
   notes: never[];
   exitSide?: string;
-}
-
-export interface Origin {
-  name: string;
-  lng: number;
-  lat: number;
-  countryCode: string;
-  uicCode: string;
-  stationCode: string;
-  type: string;
-  plannedTimeZoneOffset: number;
-  plannedDateTime: string;
-  actualTimeZoneOffset: number;
-  actualDateTime: string;
-  plannedTrack: string;
-  actualTrack: string;
-  checkinStatus: string;
-  notes: never[];
 }
 
 export interface GetTripsInformationProps {
