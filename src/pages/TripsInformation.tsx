@@ -1,6 +1,7 @@
 import TrainIcon from '@mui/icons-material/Train';
 import { Chip, LinearProgress, Paper } from '@mui/material';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
@@ -65,16 +66,20 @@ export default function TripsInformation() {
       {isLoading && <LinearProgress />}
       {data?.trips.map((trip) => (
         <Card key={trip.idx} variant="outlined">
+          {trip.status !== 'NORMAL' && (
+            <Alert severity="error">{trip.status}</Alert>
+          )}
           <CardContent>
-            {trip.status !== 'NORMAL' && (
-              <Alert severity="error">{trip.status}</Alert>
-            )}
-
             <Typography variant="h6" component="div">
               {makeTripStartAndEndTime(trip)}
             </Typography>
             {getTrainNames(trip).map((brief) => (
-              <Chip icon={<TrainIcon />} label={brief} variant="outlined" />
+              <Chip
+                icon={<TrainIcon />}
+                label={brief}
+                variant="outlined"
+                sx={{ margin: '5px' }}
+              />
             ))}
             {trip.primaryMessage && (
               <Typography variant="body2" sx={{ color: 'error.main' }}>
