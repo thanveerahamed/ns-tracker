@@ -140,10 +140,13 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
         />
         {isLoading && <LinearProgress color="secondary" />}
         {isError && <Alert severity="error">Some error occurred</Alert>}
-        <FavouriteStations
-          stations={favouriteStations}
-          onSelect={handleItemClick}
-        />
+        {!searchText && (
+          <FavouriteStations
+            stations={favouriteStations}
+            onSelect={handleItemClick}
+          />
+        )}
+
         <List>
           {filteredStations &&
             (filteredStations.length > 0 ? (
