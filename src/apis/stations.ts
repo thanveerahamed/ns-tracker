@@ -33,7 +33,9 @@ export const useTripsInformation = (
       props.dateTime !== undefined,
     queryKey: [
       'stations',
-      ...Object.values(props).filter((x) => x !== undefined),
+      ...Object.values(props).filter(
+        (x) => x !== undefined && dayjs.isDayjs(x) === false,
+      ),
     ],
     queryFn: async () => {
       return await getTripsInformation({
