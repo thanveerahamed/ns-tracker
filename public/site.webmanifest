@@ -1,14 +1,18 @@
 {
-    "name": "NS Tracker App",
-    "short_name": "NS Tracker",
-    "description": "An app that can help with better NS Train tracking",
-    "icons": [
-      {
-        "src": "/train_256.png",
-        "sizes": "256X256",
-        "type": "image/png",
-        "purpose": "any maskable",
-      },
-    ],
-    "orientation": "portrait",
-  }
+  "name": "NS Tracker App",
+  "short_name": "NS Tracker",
+  "description": "An app that can help with better NS Train tracking",
+  "icons": [
+    {
+      "src": "/train_256.png",
+      "sizes": "256X256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

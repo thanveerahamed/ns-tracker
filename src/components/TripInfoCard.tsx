@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
 
 import { NSStation } from '../types/station.ts';
-import { Trip } from '../types/trip.ts';
+import { NSLocation, Trip } from '../types/trip.ts';
 import { extendedDayjs } from '../utils/date.ts';
 
 interface Props {
@@ -24,6 +24,14 @@ interface Props {
 }
 
 export default function TripInfoCard({ trip, via }: Props) {
+  const makeDateTimeWithDelay = (location: NSLocation) => {
+    const delayTimeString =
+      location.actualDateTime &&
+      dayjs(location.plannedDateTime).diff(location.actualDateTime) !== 0
+        ? dayjs(location.plannedDateTime).diff(location.actualDateTime)
+        : '';
+    return `${dayjs(location.plannedDateTime).format('LT')}${delayTimeString}`;
+  };
   const makeTripStartAndEndTime = useCallback((trip: Trip) => {
     const legsOriginDestination = trip.legs.map(({ origin, destination }) => ({
       origin,
@@ -33,16 +41,9 @@ export default function TripInfoCard({ trip, via }: Props) {
     const currentTripDestination =
       legsOriginDestination[legsOriginDestination.length - 1].destination;
 
-    return `${dayjs(
-      currentTripOrigin.actualDateTime ?? currentTripOrigin.plannedDateTime,
-    ).format('LT')} - ${dayjs(
-      currentTripDestination.actualDateTime ??
-        currentTripDestination.plannedDateTime,
-    ).format('LT')}`;
-  }, []);
-
-  const getTrainNames = useCallback((trip: Trip) => {
-    return trip.legs.map((leg) => leg.product.displayName);
+    return `${makeDateTimeWithDelay(
+      currentTripOrigin,
+    )} - ${makeDateTimeWithDelay(currentTripDestination)}`;
   }, []);
 
   const getCrowdStatusColor = useCallback((trip: Trip) => {
@@ -86,11 +87,13 @@ export default function TripInfoCard({ trip, via }: Props) {
             <Typography variant="h6" component="div">
               {makeTripStartAndEndTime(trip)}
             </Typography>
-            {getTrainNames(trip).map((brief, index) => (
+            {trip.legs.map((leg, index) => (
               <Chip
                 key={index}
                 icon={<TrainIcon />}
-                label={brief}
+                label={`${leg.product.displayName} (Track: ${
+                  leg.origin.actualTrack ?? leg.origin.plannedTrack
+                })`}
                 variant="outlined"
                 color="primary"
                 sx={{ margin: '5px', borderRadius: '0' }}
