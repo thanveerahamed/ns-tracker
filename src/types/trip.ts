@@ -296,4 +296,5 @@ export interface GetTripsInformationProps {
   dateTime: Dayjs;
   viaUicCode?: string;
   searchForArrival?: boolean;
+  context?: string;
 }

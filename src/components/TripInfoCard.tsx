@@ -25,11 +25,19 @@ interface Props {
 
 export default function TripInfoCard({ trip, via }: Props) {
   const makeDateTimeWithDelay = (location: NSLocation) => {
-    const delayTimeString =
-      location.actualDateTime &&
-      dayjs(location.plannedDateTime).diff(location.actualDateTime) !== 0
-        ? dayjs(location.plannedDateTime).diff(location.actualDateTime)
-        : '';
+    let delayTimeString = '';
+    if (location.actualDateTime) {
+      const differenceInMinutes = dayjs(location.actualDateTime).diff(
+        location.plannedDateTime,
+        'minutes',
+      );
+
+      if (differenceInMinutes > 0) {
+        delayTimeString = `+${differenceInMinutes}`;
+      } else if (differenceInMinutes < 0) {
+        delayTimeString = `${differenceInMinutes}`;
+      }
+    }
     return `${dayjs(location.plannedDateTime).format('LT')}${delayTimeString}`;
   };
   const makeTripStartAndEndTime = useCallback((trip: Trip) => {
@@ -77,9 +85,27 @@ export default function TripInfoCard({ trip, via }: Props) {
   );
 
   return (
-    <Card key={trip.idx} variant="outlined">
+    <Card
+      key={trip.idx}
+      variant={trip.status === 'CANCELLED' ? 'elevation' : 'outlined'}
+      elevation={trip.status === 'CANCELLED' ? 5 : undefined}
+      sx={
+        trip.status === 'CANCELLED'
+          ? { border: '1px solid rgb(118 66 66)' }
+          : {}
+      }
+    >
       {trip.status !== 'NORMAL' && (
-        <Alert severity="error">{trip.status}</Alert>
+        <Alert
+          severity="error"
+          sx={
+            trip.status === 'CANCELLED'
+              ? { backgroundColor: 'rgb(118 66 66)' }
+              : {}
+          }
+        >
+          {trip.status}
+        </Alert>
       )}
       <CardContent>
         <Grid container>
@@ -89,6 +115,15 @@ export default function TripInfoCard({ trip, via }: Props) {
             </Typography>
             {trip.legs.map((leg, index) => (
               <Chip
+                sx={{
+                  'height': 'auto',
+                  '& .MuiChip-label': {
+                    display: 'block',
+                    whiteSpace: 'normal',
+                  },
+                  'margin': '5px',
+                  'borderRadius': '0',
+                }}
                 key={index}
                 icon={<TrainIcon />}
                 label={`${leg.product.displayName} (Track: ${
@@ -96,7 +131,6 @@ export default function TripInfoCard({ trip, via }: Props) {
                 })`}
                 variant="outlined"
                 color="primary"
-                sx={{ margin: '5px', borderRadius: '0' }}
               />
             ))}
             {trip.labelListItems && trip.labelListItems.length > 0 && (
