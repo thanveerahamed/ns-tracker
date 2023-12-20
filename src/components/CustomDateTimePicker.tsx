@@ -133,6 +133,7 @@ export default function CustomDateTimePicker({
           value === 'now' ? 'now' : dayjs(value).format('DD MMM YYYY hh:mm A')
         }
         onClick={() => setOpenDateTimeSelectorModel(true)}
+        onFocus={(event) => event.target.blur()}
       />
       <DatePickerModal
         open={openDateTimeSelectorModel}

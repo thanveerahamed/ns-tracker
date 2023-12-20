@@ -4,6 +4,7 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PinDropIcon from '@mui/icons-material/PinDrop';
+import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
 import WrongLocationIcon from '@mui/icons-material/WrongLocation';
@@ -13,7 +14,7 @@ import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import { IconButton, TextField } from '@mui/material';
+import { Button, IconButton, TextField } from '@mui/material';
 import Box from '@mui/material/Box';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -23,7 +24,11 @@ import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 import { useSearchFilterContext } from '../context';
 import { LocationType, NSStation } from '../types/station.ts';
 
-export default function SearchFilter() {
+interface Props {
+  onSearch: () => void;
+}
+
+export default function SearchFilter({ onSearch }: Props) {
   const {
     setHasIntermediateStop,
     hasIntermediateStop,
@@ -210,6 +215,9 @@ export default function SearchFilter() {
           <IconButton color="primary">
             <SettingsIcon />
           </IconButton>
+          <Button color="primary" variant="contained" onClick={onSearch}>
+            <SearchIcon />
+          </Button>
         </Box>
       </Box>
 

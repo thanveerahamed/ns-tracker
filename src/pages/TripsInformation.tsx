@@ -1,6 +1,5 @@
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ReplayIcon from '@mui/icons-material/Replay';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
@@ -42,7 +41,7 @@ export default function TripsInformation() {
           justifyContent: 'space-between',
         }}
       >
-        <SearchFilter />
+        <SearchFilter onSearch={reload} />
       </Paper>
       {!isInitialLoading && (
         <Stack direction="row" justifyContent="space-between">
@@ -61,15 +60,6 @@ export default function TripsInformation() {
               ? dayjs().format('LL')
               : dayjs(selectedDateTime).format('LL')}
           </Typography>
-          <LoadingButton
-            size="small"
-            onClick={reload}
-            startIcon={<ReplayIcon />}
-            loading={isInitialLoading}
-            loadingPosition="start"
-          >
-            Refresh
-          </LoadingButton>
         </Stack>
       )}
       {isInitialLoading && <LinearProgress />}

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { Button, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 
 import SearchFilter from '../components/SearchFilter.tsx';
@@ -30,12 +30,12 @@ export default function Dashboard() {
             <Typography variant="h5">Welcome to</Typography>
             <Typography variant="h3">NS Tracker</Typography>
           </Box>
-          <SearchFilter />
-          <Box sx={{ marginTop: '10px', padding: '0 20px' }}>
-            <Button variant="contained" fullWidth onClick={handleSearch}>
-              Search
-            </Button>
-          </Box>
+          <SearchFilter onSearch={handleSearch} />
+          {/*<Box sx={{ marginTop: '10px', padding: '0 20px' }}>*/}
+          {/*  <Button variant="contained" fullWidth onClick={handleSearch}>*/}
+          {/*    Search*/}
+          {/*  </Button>*/}
+          {/*</Box>*/}
         </Paper>
       </Box>
     </>

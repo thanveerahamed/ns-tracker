@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -30,23 +30,26 @@ export const useTrips = ({
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(false);
   const [isLoadMoreLoading, setIsLoadMoreLoading] = useState<boolean>(false);
 
-  const makeFetch = async (
-    context?: string,
-    callback?: (tripsInformation: TripsInformation) => void,
-  ) => {
-    const response = await getTripsInformation({
-      originUicCode: originUicCode ?? '',
-      destinationUicCode: destinationUicCode ?? '',
-      dateTime: dateTime ?? dayjs(),
-      searchForArrival,
-      viaUicCode: viaUicCode,
-      context,
-    });
+  const makeFetch = useCallback(
+    async (
+      context?: string,
+      callback?: (tripsInformation: TripsInformation) => void,
+    ) => {
+      const response = await getTripsInformation({
+        originUicCode: originUicCode ?? '',
+        destinationUicCode: destinationUicCode ?? '',
+        dateTime: dateTime ?? dayjs(),
+        searchForArrival,
+        viaUicCode: viaUicCode,
+        context,
+      });
 
-    if (callback) {
-      callback(response);
-    }
-  };
+      if (callback) {
+        callback(response);
+      }
+    },
+    [dateTime, destinationUicCode, originUicCode, searchForArrival, viaUicCode],
+  );
 
   const handleLoadEarlier = () => {
     setIsLoadMoreLoading(true);
@@ -80,7 +83,7 @@ export const useTrips = ({
     })();
   };
 
-  const fetchTrips = () => {
+  const fetchTrips = useCallback(() => {
     setIsInitialLoading(true);
     (async () => {
       try {
@@ -93,7 +96,7 @@ export const useTrips = ({
         setIsInitialLoading(false);
       }
     })();
-  };
+  }, [makeFetch]);
 
   const handleReload = () => {
     fetchTrips();
@@ -101,7 +104,7 @@ export const useTrips = ({
 
   useEffect(() => {
     fetchTrips();
-    //eslint-disable-next-line  react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {

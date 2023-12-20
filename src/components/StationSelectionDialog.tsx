@@ -60,7 +60,9 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
   const [user] = useAuthState(auth);
   const { showNotification } = useSnackbarContext();
 
-  const [favouriteStationSnapshots] = useFavouriteStation(user?.uid);
+  const [favouriteStationSnapshots, isFavouriteLoading] = useFavouriteStation(
+    user?.uid,
+  );
 
   const internalHandleCLose = () => {
     onClose();
@@ -144,6 +146,7 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
           <FavouriteStations
             stations={favouriteStations}
             onSelect={handleItemClick}
+            showLoader={isFavouriteLoading}
           />
         )}
 

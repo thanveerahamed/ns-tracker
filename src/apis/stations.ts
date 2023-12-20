@@ -28,7 +28,6 @@ const createUseTripsInformationQuery = ({
   viaUicCode,
   destinationUicCode,
   context,
-  dateTime,
   searchForArrival,
 }: Partial<GetTripsInformationProps>) => [
   ...(originUicCode ? [originUicCode] : []),
@@ -36,7 +35,6 @@ const createUseTripsInformationQuery = ({
   ...(destinationUicCode ? [destinationUicCode] : []),
   ...(context ? [context] : []),
   ...(searchForArrival ? [searchForArrival] : []),
-  ...(dateTime ? [dateTime.toString()] : []),
 ];
 
 export const useTripsInformation = (
