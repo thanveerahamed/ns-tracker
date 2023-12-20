@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { LinearProgress, Paper, Stack, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
+import List from '@mui/material/List';
 import dayjs from 'dayjs';
 
 import SearchFilter from '../components/SearchFilter.tsx';
 import TripInfoCard from '../components/TripInfoCard.tsx';
+import TripInformation from '../components/TripInformation.tsx';
 
 import { useSearchFilterContext } from '../context';
 import { useTrips } from '../hooks/useTrips.ts';
+import { Trip } from '../types/trip.ts';
 
 export default function TripsInformation() {
   const {
@@ -36,6 +39,8 @@ export default function TripsInformation() {
     destinationUicCode: destination?.UICCode,
     originUicCode: origin?.UICCode,
   });
+
+  const [selectedTrip, setSelectedTrip] = useState<Trip | undefined>(undefined);
 
   const filteredTrips = useMemo(() => {
     if (onlyShowTransferEqualVia) {
@@ -79,7 +84,7 @@ export default function TripsInformation() {
           >
             Earlier
           </LoadingButton>
-          <Typography variant="caption">
+          <Typography variant="subtitle1">
             {selectedDateTime === 'now'
               ? dayjs().format('LL')
               : dayjs(selectedDateTime).format('LL')}
@@ -87,9 +92,16 @@ export default function TripsInformation() {
         </Stack>
       )}
       {isInitialLoading && <LinearProgress />}
-      {filteredTrips.map((trip, index) => (
-        <TripInfoCard key={`trip_info_${index}`} trip={trip} via={via} />
-      ))}
+      <List>
+        {filteredTrips.map((trip, index) => (
+          <TripInfoCard
+            key={`trip_info_${index}`}
+            trip={trip}
+            via={via}
+            onSelect={(newTrip) => setSelectedTrip(newTrip)}
+          />
+        ))}
+      </List>
       {!isInitialLoading && trips.length === 0 && (
         <Alert color="info">No trips match current search criteria.</Alert>
       )}
@@ -105,6 +117,12 @@ export default function TripsInformation() {
           Later
         </LoadingButton>
       )}
+      <TripInformation
+        trip={selectedTrip}
+        onClose={() => setSelectedTrip(undefined)}
+        origin={origin}
+        destination={destination}
+      />
     </>
   );
 }
