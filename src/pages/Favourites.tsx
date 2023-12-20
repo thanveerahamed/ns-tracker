@@ -2,42 +2,17 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import TrainIcon from '@mui/icons-material/Train';
-import { Card, CardContent, CircularProgress } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Typography from '@mui/material/Typography';
+
+import CustomTabPanel from '../components/CustomTabPanel.tsx';
+import FavouriteStationCard from '../components/FavouriteStationCard.tsx';
 
 import { auth } from '../services/firebase.ts';
 import { useFavouriteStation } from '../services/station.ts';
 import { NSStation } from '../types/station.ts';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
 
 function a11yProps(index: number) {
   return {
@@ -81,24 +56,7 @@ export default function Favourites() {
         <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
           {favouriteStations.map((station) => {
             return (
-              <Card
-                key={station.UICCode}
-                sx={{
-                  marginRight: '5px',
-                  marginTop: '5px',
-                  flex: 1,
-                  flexBasis: '25%',
-                }}
-                variant="elevation"
-              >
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <TrainIcon />
-                  <br />
-                  <Typography variant="caption">
-                    {station.namen.lang}
-                  </Typography>
-                </CardContent>
-              </Card>
+              <FavouriteStationCard key={station.UICCode} station={station} />
             );
           })}
         </Box>

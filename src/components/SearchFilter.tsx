@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import SearchSettings from './SearchSettings.tsx';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -14,7 +15,7 @@ import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import { Button, IconButton, TextField } from '@mui/material';
+import { Badge, Button, IconButton, TextField } from '@mui/material';
 import Box from '@mui/material/Box';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -43,10 +44,11 @@ export default function SearchFilter({ onSearch }: Props) {
     setIsArrival,
     swapLocations,
     isArrival,
+    settingsEnabled,
   } = useSearchFilterContext();
   const [openStationSelection, setOpenStationSelection] =
     useState<boolean>(false);
-
+  const [openSearchSettings, setOpenSearchSettings] = useState<boolean>(false);
   const [locationTypeClicked, setLocationTypeClicked] = useState<
     LocationType | undefined
   >(undefined);
@@ -212,8 +214,16 @@ export default function SearchFilter({ onSearch }: Props) {
               <AddLocationAltIcon />
             )}
           </IconButton>
-          <IconButton color="primary">
-            <SettingsIcon />
+          <IconButton
+            color="primary"
+            onClick={() => setOpenSearchSettings(true)}
+          >
+            <Badge
+              color="secondary"
+              variant={settingsEnabled ? 'dot' : 'standard'}
+            >
+              <SettingsIcon />
+            </Badge>
           </IconButton>
           <Button color="primary" variant="contained" onClick={onSearch}>
             <SearchIcon />
@@ -225,6 +235,13 @@ export default function SearchFilter({ onSearch }: Props) {
         <StationSelectionDialog
           open={openStationSelection}
           onClose={handleStationSelectorClosed}
+        />
+      )}
+
+      {openSearchSettings && (
+        <SearchSettings
+          open={openSearchSettings}
+          onClose={() => setOpenSearchSettings(false)}
         />
       )}
     </>

@@ -40,6 +40,7 @@ export default function TripInfoCard({ trip, via }: Props) {
     }
     return `${dayjs(location.plannedDateTime).format('LT')}${delayTimeString}`;
   };
+
   const makeTripStartAndEndTime = useCallback((trip: Trip) => {
     const legsOriginDestination = trip.legs.map(({ origin, destination }) => ({
       origin,

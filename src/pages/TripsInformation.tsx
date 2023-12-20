@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -12,8 +14,14 @@ import { useSearchFilterContext } from '../context';
 import { useTrips } from '../hooks/useTrips.ts';
 
 export default function TripsInformation() {
-  const { via, isArrival, selectedDateTime, destination, origin } =
-    useSearchFilterContext();
+  const {
+    via,
+    isArrival,
+    selectedDateTime,
+    destination,
+    origin,
+    onlyShowTransferEqualVia,
+  } = useSearchFilterContext();
   const {
     trips,
     isLoadMoreLoading,
@@ -28,6 +36,22 @@ export default function TripsInformation() {
     destinationUicCode: destination?.UICCode,
     originUicCode: origin?.UICCode,
   });
+
+  const filteredTrips = useMemo(() => {
+    if (onlyShowTransferEqualVia) {
+      return trips.filter((trip) => {
+        if (trip.legs.length > 1) {
+          return Boolean(
+            trip.legs.find((leg) => leg.destination.uicCode === via?.UICCode),
+          );
+        } else {
+          return false;
+        }
+      });
+    }
+
+    return trips;
+  }, [onlyShowTransferEqualVia, trips, via?.UICCode]);
 
   return (
     <>
@@ -63,7 +87,7 @@ export default function TripsInformation() {
         </Stack>
       )}
       {isInitialLoading && <LinearProgress />}
-      {trips.map((trip, index) => (
+      {filteredTrips.map((trip, index) => (
         <TripInfoCard key={`trip_info_${index}`} trip={trip} via={via} />
       ))}
       {!isInitialLoading && trips.length === 0 && (

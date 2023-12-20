@@ -5,10 +5,12 @@ import dayjs, { Dayjs } from 'dayjs';
 import {
   getArrivalToggleFromCache,
   getHasIntermediateStopCache,
+  getOnlyShowTransferEqualVia,
   getSearchDateTimeFromCache,
   getStationFromCache,
   saveArrivalToggleToCache,
   saveHasIntermediateStopCache,
+  saveOnlyShowTransferEqualVia,
   saveSearchDateTimeToCache,
   saveStationToCache,
 } from '../services/cache.ts';
@@ -28,6 +30,9 @@ export interface SearchFilterContextValue {
   setSelectedDateTime: (dateTime: Dayjs | 'now') => void;
   setHasIntermediateStop: (flag: boolean) => void;
   swapLocations: () => void;
+  onlyShowTransferEqualVia: boolean;
+  setOnlyShowTransferEqualVia: (flag: boolean) => void;
+  settingsEnabled: boolean;
 }
 
 export interface SearchFilterContextProps {
@@ -62,6 +67,9 @@ export const SearchFilterProvider = ({
   const [hasIntermediateStop, setHasIntermediateStop] = useState<boolean>(
     getHasIntermediateStopCache(),
   );
+  const [onlyShowTransferEqualVia, setOnlyShowTransferEqualVia] =
+    useState<boolean>(getOnlyShowTransferEqualVia());
+  const [settingsEnabled, setSettingsEnabled] = useState<boolean>(false);
 
   const swapLocations = () => {
     setDestination((previousDestination) => {
@@ -78,6 +86,10 @@ export const SearchFilterProvider = ({
   };
 
   useEffect(() => {
+    setSettingsEnabled(onlyShowTransferEqualVia);
+  }, [onlyShowTransferEqualVia]);
+
+  useEffect(() => {
     if (hasIntermediateStop) {
       saveStationToCache(LocationType.Via, via);
     } else {
@@ -88,7 +100,15 @@ export const SearchFilterProvider = ({
     saveStationToCache(LocationType.Destination, destination);
     saveArrivalToggleToCache(isArrival);
     saveHasIntermediateStopCache(hasIntermediateStop);
-  }, [via, origin, destination, isArrival, hasIntermediateStop]);
+    saveOnlyShowTransferEqualVia(onlyShowTransferEqualVia);
+  }, [
+    via,
+    origin,
+    destination,
+    isArrival,
+    hasIntermediateStop,
+    onlyShowTransferEqualVia,
+  ]);
 
   return (
     <SearchFilterContext.Provider
@@ -106,6 +126,9 @@ export const SearchFilterProvider = ({
         setSelectedDateTime: handleDateTimeChange,
         setIsArrival,
         swapLocations,
+        onlyShowTransferEqualVia,
+        setOnlyShowTransferEqualVia,
+        settingsEnabled,
       }}
     >
       {children}

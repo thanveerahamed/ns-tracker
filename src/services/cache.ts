@@ -45,3 +45,11 @@ export const getArrivalToggleFromCache = () => {
   const toggle = localStorage.getItem(`search.arrival.toggle`);
   return toggle === 'true';
 };
+
+export const saveOnlyShowTransferEqualVia = (toggle: boolean) => {
+  localStorage.setItem(`search.transfer_equal_via.enabled`, `${toggle}`);
+};
+
+export const getOnlyShowTransferEqualVia = () => {
+  return localStorage.getItem(`search.transfer_equal_via.enabled`) === 'true';
+};

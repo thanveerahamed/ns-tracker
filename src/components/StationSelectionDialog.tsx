@@ -1,7 +1,8 @@
-import React, { forwardRef, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import FavouriteStations from './FavouriteStations.tsx';
+import SearchFavouriteStations from './SearchFavouriteStations.tsx';
+import { SlideUpTransition } from './transitions/SlideUp.tsx';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
@@ -19,10 +20,8 @@ import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import Slide from '@mui/material/Slide';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { TransitionProps } from '@mui/material/transitions';
 
 import { useStationsQuery } from '../apis/stations.ts';
 import TrainStopImage from '../assets/train-stop.png';
@@ -34,15 +33,6 @@ import {
   useFavouriteStation,
 } from '../services/station.ts';
 import { NSStation } from '../types/station.ts';
-
-const Transition = forwardRef(function Transition(
-  props: TransitionProps & {
-    children: React.ReactElement;
-  },
-  ref: React.Ref<unknown>,
-) {
-  return <Slide direction="up" ref={ref} {...props} />;
-});
 
 interface Props {
   open: boolean;
@@ -114,7 +104,7 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
       fullScreen
       open={open}
       onClose={internalHandleCLose}
-      TransitionComponent={Transition}
+      TransitionComponent={SlideUpTransition}
       keepMounted={false}
     >
       <AppBar sx={{ position: 'relative' }}>
@@ -143,7 +133,7 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
         {isLoading && <LinearProgress color="secondary" />}
         {isError && <Alert severity="error">Some error occurred</Alert>}
         {!searchText && (
-          <FavouriteStations
+          <SearchFavouriteStations
             stations={favouriteStations}
             onSelect={handleItemClick}
             showLoader={isFavouriteLoading}

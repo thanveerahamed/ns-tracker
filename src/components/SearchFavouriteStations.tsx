@@ -19,7 +19,7 @@ interface Props {
   showLoader?: boolean;
 }
 
-export default function FavouriteStations({
+export default function SearchFavouriteStations({
   stations,
   onSelect,
   showLoader,

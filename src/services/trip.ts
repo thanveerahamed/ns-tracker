@@ -8,7 +8,7 @@ export const getTripsInformation = async ({
 }: GetTripsInformationProps): Promise<TripsInformation> => {
   const params = {
     ...rest,
-    dateTime: dateTime.format('YYYY-MM-DDTHH:mm:ssZ[Z]'), //2023-11-20T14:58:31+01:00
+    dateTime: dateTime.format('YYYY-MM-DDTHH:mm:ssZ'), //2023-11-20T14:58:31+01:00
     ...(searchForArrival ? { searchForArrival: true } : {}),
     excludeTrainsWithReservationRequired: true,
   };
