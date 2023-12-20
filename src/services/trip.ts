@@ -10,6 +10,7 @@ export const getTripsInformation = async ({
     ...rest,
     dateTime: dateTime.format('YYYY-MM-DDTHH:mm:ssZ[Z]'), //2023-11-20T14:58:31+01:00
     ...(searchForArrival ? { searchForArrival: true } : {}),
+    excludeTrainsWithReservationRequired: true,
   };
 
   return apiGet<TripsInformation>('/v3/trips', params);

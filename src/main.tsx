@@ -8,6 +8,7 @@ import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import App from './pages/App.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
+import Favourites from './pages/Favourites.tsx';
 import Login from './pages/Login.tsx';
 import TripsInformation from './pages/TripsInformation.tsx';
 import { ThemeProvider } from '@mui/material';
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
       {
         path: '/tripsInformation',
         element: <TripsInformation />,
+      },
+      {
+        path: '/favourites',
+        element: <Favourites />,
       },
     ],
   },

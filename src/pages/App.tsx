@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthState, useSignOut } from 'react-firebase-hooks/auth';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 
@@ -8,6 +8,7 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import Toolbar from '@mui/material/Toolbar';
 
+import MenuDrawer from '../components/MenuDrawer.tsx';
 import FullPageLoader from '../components/loaders/FullPageLoader.tsx';
 
 import { auth } from '../services/firebase.ts';
@@ -17,6 +18,11 @@ function App() {
   const [signOut] = useSignOut(auth);
   const navigate = useNavigate();
   const location = useLocation();
+  const [showMenu, setShowMenu] = useState<boolean>(false);
+
+  const handleMenuDrawerClose = () => {
+    setShowMenu(false);
+  };
 
   const getSelectedBottomNav = () => {
     // eslint-disable-next-line no-restricted-globals
@@ -63,13 +69,19 @@ function App() {
             onClick={() => handleBottomNavigation('/')}
           />
           <BottomNavigationAction
+            value="/favourites"
             label="Favorites"
             icon={<FavoriteIcon />}
-            onClick={() => signOut()}
+            onClick={() => handleBottomNavigation('/favourites')}
           />
-          <BottomNavigationAction label="More" icon={<MenuOpenIcon />} />
+          <BottomNavigationAction
+            label="More"
+            icon={<MenuOpenIcon />}
+            onClick={() => setShowMenu(true)}
+          />
         </BottomNavigation>
       </Paper>
+      <MenuDrawer open={showMenu} onClose={handleMenuDrawerClose} />
     </>
   );
 }
