@@ -42,7 +42,7 @@ export default function TripInfoCard({ trip, via, onSelect }: Props) {
   return (
     <ListItem sx={{ padding: '0' }}>
       {trip.status === 'CANCELLED' ? (
-        <Accordion sx={{ padding: '2px 5px' }}>
+        <Accordion sx={{ padding: '2px 5px', width: '100%' }}>
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="panel1a-content"

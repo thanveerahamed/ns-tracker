@@ -43,7 +43,7 @@ export default function TripsInformation() {
   const [selectedTrip, setSelectedTrip] = useState<Trip | undefined>(undefined);
 
   const filteredTrips = useMemo(() => {
-    if (onlyShowTransferEqualVia) {
+    if (via && onlyShowTransferEqualVia) {
       return trips.filter((trip) => {
         if (trip.legs.length > 1) {
           return Boolean(
@@ -56,7 +56,7 @@ export default function TripsInformation() {
     }
 
     return trips;
-  }, [onlyShowTransferEqualVia, trips, via?.UICCode]);
+  }, [onlyShowTransferEqualVia, trips, via]);
 
   return (
     <>

@@ -1,7 +1,12 @@
+import { Fragment } from 'react';
+
+import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
 import { SlideLeftTransition } from './transitions/SlideLeft.tsx';
-import CloseIcon from '@mui/icons-material/Close';
+import styled from '@emotion/styled';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import TrainIcon from '@mui/icons-material/Train';
 import Timeline from '@mui/lab/Timeline';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
@@ -15,8 +20,10 @@ import {
   Card,
   CardContent,
   Dialog,
+  Divider,
   Grid,
   IconButton,
+  Stack,
   Typography,
 } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
@@ -35,6 +42,10 @@ interface Props {
   destination?: NSStation;
 }
 
+const StyledDivider = styled(Divider)`
+  margin: 10px 0;
+`;
+
 export default function TripInformation({
   trip,
   onClose,
@@ -42,6 +53,7 @@ export default function TripInformation({
   destination,
 }: Props) {
   const open = Boolean(trip);
+  const destinationLeg = trip?.legs[trip?.legs.length - 1];
 
   return (
     <Dialog
@@ -58,7 +70,7 @@ export default function TripInformation({
             onClick={onClose}
             aria-label="close"
           >
-            <CloseIcon />
+            <ChevronLeftIcon />
           </IconButton>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
             {origin?.namen.kort} to {destination?.namen.kort}
@@ -93,23 +105,129 @@ export default function TripInformation({
                 <Timeline
                   sx={{
                     [`& .${timelineOppositeContentClasses.root}`]: {
-                      flex: 0.2,
+                      flex: 0.3,
                     },
                     padding: 0,
                   }}
                 >
-                  {trip.legs.map((leg) => (
-                    <TimelineItem>
+                  {trip.legs.map((leg, index) => (
+                    <TimelineItem key={index}>
                       <TimelineOppositeContent color="textSecondary">
+                        {index > 0 &&
+                          dayjs(
+                            trip.legs[index - 1].destination.plannedDateTime,
+                          ).format('hh:mm a')}
+                        {index > 0 && <br />}
                         {dayjs(leg.origin.plannedDateTime).format('hh:mm a')}
+                        <br />
+                        <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />
                       </TimelineOppositeContent>
                       <TimelineSeparator>
-                        <TimelineDot />
-                        <TimelineConnector />
+                        <TimelineDot color="primary" />
+                        <TimelineConnector sx={{ bgcolor: 'primary.main' }} />
                       </TimelineSeparator>
-                      <TimelineContent>{leg.origin.name}</TimelineContent>
+                      <TimelineContent>
+                        <Stack direction="row" justifyContent="space-between">
+                          <Typography sx={{ color: 'primary.main' }}>
+                            {leg.origin.name}
+                          </Typography>
+                          <Typography sx={{ color: 'primary.main' }}>
+                            Track: {leg.origin.plannedTrack}
+                          </Typography>
+                        </Stack>
+                        {index > 0 && (
+                          <>
+                            <Typography variant="caption">
+                              Exit side: {leg.destination.exitSide}
+                            </Typography>
+                            {leg.transferMessages &&
+                              leg.transferMessages.map((transferMessage) => {
+                                //messageNesProperties
+                                return (
+                                  <>
+                                    <br />
+                                    <Typography
+                                      sx={{
+                                        color:
+                                          transferMessage.messageNesProperties
+                                            .type === 'error'
+                                            ? 'error.main'
+                                            : 'primary.main',
+                                      }}
+                                      variant="caption"
+                                    >
+                                      {transferMessage.message}
+                                    </Typography>
+                                  </>
+                                );
+                              })}
+                          </>
+                        )}
+                        <StyledDivider />
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="center"
+                        >
+                          <Box>
+                            <Typography>{leg.product.displayName}</Typography>
+                            <Typography>to {leg.direction}</Typography>
+                            {leg.notes?.find(
+                              (note) => note.value === 'Supplement',
+                            ) && (
+                              <Typography sx={{ color: 'error.main' }}>
+                                Supplement required
+                              </Typography>
+                            )}
+                          </Box>
+                          <CrowdForecast crowdForecast={leg.crowdForecast} />
+                        </Stack>
+                        <StyledDivider />
+                        {leg.messages?.map((message, index) => {
+                          return (
+                            <Fragment key={index}>
+                              <Typography
+                                sx={{
+                                  color:
+                                    message.type === 'DISRUPTION'
+                                      ? 'error.main'
+                                      : 'inherit',
+                                }}
+                              >
+                                {message.head}
+                              </Typography>
+                              <StyledDivider />
+                            </Fragment>
+                          );
+                        }) ?? <></>}
+                      </TimelineContent>
                     </TimelineItem>
                   ))}
+                  {destinationLeg && (
+                    <TimelineItem>
+                      <TimelineOppositeContent color="textSecondary">
+                        {dayjs(
+                          destinationLeg.destination.plannedDateTime,
+                        ).format('hh:mm a')}
+                      </TimelineOppositeContent>
+                      <TimelineSeparator>
+                        <TimelineDot color="primary" />
+                      </TimelineSeparator>
+                      <TimelineContent>
+                        <Stack direction="row" justifyContent="space-between">
+                          <Typography sx={{ color: 'primary.main' }}>
+                            {destinationLeg.destination.name}
+                          </Typography>
+                          <Typography sx={{ color: 'primary.main' }}>
+                            Track: {destinationLeg.destination.plannedTrack}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption">
+                          Exit side: {destinationLeg.destination.exitSide}
+                        </Typography>
+                      </TimelineContent>
+                    </TimelineItem>
+                  )}
                 </Timeline>
               </CardContent>
             </Card>

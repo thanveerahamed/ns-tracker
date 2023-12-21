@@ -63,7 +63,7 @@ export function TripInfoDetail({
             <NumberOfConnectionsDisplay connections={trip.legs.length - 1} />
             {trip.crowdForecast !== 'UNKNOWN' && (
               <Stack direction="row" alignItems="center" gap={1}>
-                <CrowdForecast trip={trip} />
+                <CrowdForecast crowdForecast={trip.crowdForecast} />
               </Stack>
             )}
           </Stack>

@@ -11,7 +11,7 @@ export default function ConnectionCounts({
     <Stack direction="row" alignItems="center" gap={1}>
       <SyncIcon />
       <Typography display="block" gutterBottom>
-        {connections - 1}
+        {connections}
       </Typography>
     </Stack>
   );

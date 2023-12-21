@@ -153,7 +153,7 @@ export interface Leg {
   origin: NSLocation;
   destination: NSLocation;
   product: Product;
-  messages: Message[][];
+  messages: Message[];
   stops: Stop[];
   crowdForecast: string;
   bicycleSpotCount: number;
@@ -269,6 +269,7 @@ export interface IconNesProperties {
 
 export interface NameNesProperties {
   color: string;
+  type: string;
 }
 
 export interface NSLocation {
