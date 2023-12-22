@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { TripInfoDetail } from './TripInfoDetail.tsx';
+import TripStartAndEndTime from './TripStartAndEndTime.tsx';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
@@ -17,7 +18,6 @@ import ListItem from '@mui/material/ListItem';
 
 import { NSStation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
-import { makeTripStartAndEndTime } from '../utils/trips.ts';
 
 interface Props {
   trip: Trip;
@@ -51,9 +51,7 @@ export default function TripInfoCard({ trip, via, onSelect }: Props) {
           >
             <Box>
               <Typography>{trip.status}</Typography>
-              <Typography variant="caption">
-                {makeTripStartAndEndTime(trip)}
-              </Typography>
+              <TripStartAndEndTime trip={trip} />
             </Box>
           </AccordionSummary>
           <AccordionDetails

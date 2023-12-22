@@ -3,6 +3,8 @@ import { Fragment } from 'react';
 import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
+import TripStartAndEndTime from './TripStartAndEndTime.tsx';
+import TripTiming from './TripTiming.tsx';
 import { SlideLeftTransition } from './transitions/SlideLeft.tsx';
 import styled from '@emotion/styled';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -33,10 +35,7 @@ import dayjs from 'dayjs';
 
 import { NSStation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
-import {
-  getColorFromNesProperties,
-  makeTripStartAndEndTime,
-} from '../utils/trips.ts';
+import { getColorFromNesProperties } from '../utils/trips.ts';
 
 interface Props {
   trip?: Trip;
@@ -87,9 +86,7 @@ export default function TripInformation({
               <CardContent>
                 <Grid container>
                   <Grid item xs={9}>
-                    <Typography variant="h6" component="div">
-                      {makeTripStartAndEndTime(trip)}
-                    </Typography>
+                    <TripStartAndEndTime trip={trip} />
                     <Typography variant="body1" component="div">
                       {dayjs(trip.legs[0].origin.plannedDateTime).format('LL')}
                     </Typography>
@@ -116,13 +113,12 @@ export default function TripInformation({
                   {trip.legs.map((leg, index) => (
                     <TimelineItem key={index}>
                       <TimelineOppositeContent color="textSecondary">
-                        {index > 0 &&
-                          dayjs(
-                            trip.legs[index - 1].destination.plannedDateTime,
-                          ).format('hh:mm a')}
-                        {index > 0 && <br />}
-                        {dayjs(leg.origin.plannedDateTime).format('hh:mm a')}
-                        <br />
+                        {index > 0 && (
+                          <TripTiming
+                            location={trip.legs[index - 1].destination}
+                          />
+                        )}
+                        <TripTiming location={leg.origin} />
                         <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />
                       </TimelineOppositeContent>
                       <TimelineSeparator>
@@ -130,7 +126,8 @@ export default function TripInformation({
                           color={
                             index > 0 &&
                             (trip.legs[index - 1].cancelled ||
-                              trip.legs[index - 1].partCancelled)
+                              trip.legs[index - 1].partCancelled ||
+                              !trip.legs[index - 1].changePossible)
                               ? 'error'
                               : 'primary'
                           }
@@ -138,7 +135,9 @@ export default function TripInformation({
                         <TimelineConnector
                           sx={{
                             bgcolor:
-                              leg.cancelled || leg.partCancelled
+                              leg.cancelled ||
+                              leg.partCancelled ||
+                              !leg.changePossible
                                 ? 'error.main'
                                 : 'primary.main',
                           }}
@@ -238,15 +237,14 @@ export default function TripInformation({
                   {destinationLeg && (
                     <TimelineItem>
                       <TimelineOppositeContent color="textSecondary">
-                        {dayjs(
-                          destinationLeg.destination.plannedDateTime,
-                        ).format('hh:mm a')}
+                        <TripTiming location={destinationLeg.destination} />
                       </TimelineOppositeContent>
                       <TimelineSeparator>
                         <TimelineDot
                           color={
                             destinationLeg.partCancelled ||
-                            destinationLeg.cancelled
+                            destinationLeg.cancelled ||
+                            !destinationLeg.changePossible
                               ? 'error'
                               : 'primary'
                           }

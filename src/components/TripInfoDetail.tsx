@@ -1,6 +1,7 @@
 import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
+import TripStartAndEndTime from './TripStartAndEndTime.tsx';
 import TrainIcon from '@mui/icons-material/Train';
 import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStation';
 import { Chip, Grid, Stack } from '@mui/material';
@@ -8,7 +9,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import { Trip } from '../types/trip.ts';
-import { makeTripStartAndEndTime } from '../utils/trips.ts';
+import { getColorFromNesProperties } from '../utils/trips.ts';
 
 export function TripInfoDetail({
   trip,
@@ -20,9 +21,7 @@ export function TripInfoDetail({
   return (
     <Grid container>
       <Grid item xs={9}>
-        <Typography variant="h6" component="div">
-          {makeTripStartAndEndTime(trip)}
-        </Typography>
+        <TripStartAndEndTime trip={trip} />
         {trip.legs.map((leg, index) => (
           <Chip
             sx={{
@@ -51,7 +50,14 @@ export function TripInfoDetail({
           />
         )}
         {trip.primaryMessage && (
-          <Typography variant="body2" sx={{ color: 'error.main' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: getColorFromNesProperties(
+                trip.primaryMessage.nesProperties,
+              ),
+            }}
+          >
             {trip.primaryMessage.title}
           </Typography>
         )}

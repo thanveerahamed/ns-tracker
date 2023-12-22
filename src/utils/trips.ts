@@ -2,8 +2,8 @@ import dayjs from 'dayjs';
 
 import { Trip, TripLocation } from '../types/trip.ts';
 
-const makeDateTimeWithDelay = (location: TripLocation) => {
-  let delayTimeString = '';
+export const makeDateTimeWithDelay = (location: TripLocation) => {
+  let delayTimeString = undefined;
   if (location.actualDateTime) {
     const differenceInMinutes = dayjs(location.actualDateTime).diff(
       location.plannedDateTime,
@@ -16,21 +16,26 @@ const makeDateTimeWithDelay = (location: TripLocation) => {
       delayTimeString = `${differenceInMinutes}`;
     }
   }
-  return `${dayjs(location.plannedDateTime).format('LT')}${delayTimeString}`;
+
+  return {
+    formattedTime: dayjs(location.plannedDateTime).format('LT'),
+    delayTimeString,
+  };
 };
 
-export const makeTripStartAndEndTime = (trip: Trip) => {
+export const getCompleteTripEndLocations = (trip: Trip) => {
   const legsOriginDestination = trip.legs.map(({ origin, destination }) => ({
     origin,
     destination,
   }));
-  const currentTripOrigin = legsOriginDestination[0].origin;
-  const currentTripDestination =
+  const completeTripOrigin = legsOriginDestination[0].origin;
+  const completeTripDestination =
     legsOriginDestination[legsOriginDestination.length - 1].destination;
 
-  return `${makeDateTimeWithDelay(currentTripOrigin)} - ${makeDateTimeWithDelay(
-    currentTripDestination,
-  )}`;
+  return {
+    completeTripOrigin,
+    completeTripDestination,
+  };
 };
 
 export const getColorFromNesProperties = ({ type }: { type: string }) => {
