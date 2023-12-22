@@ -33,7 +33,10 @@ import dayjs from 'dayjs';
 
 import { NSStation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
-import { makeTripStartAndEndTime } from '../utils/trips.ts';
+import {
+  getColorFromNesProperties,
+  makeTripStartAndEndTime,
+} from '../utils/trips.ts';
 
 interface Props {
   trip?: Trip;
@@ -123,46 +126,76 @@ export default function TripInformation({
                         <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />
                       </TimelineOppositeContent>
                       <TimelineSeparator>
-                        <TimelineDot color="primary" />
-                        <TimelineConnector sx={{ bgcolor: 'primary.main' }} />
+                        <TimelineDot
+                          color={
+                            index > 0 &&
+                            (trip.legs[index - 1].cancelled ||
+                              trip.legs[index - 1].partCancelled)
+                              ? 'error'
+                              : 'primary'
+                          }
+                        />
+                        <TimelineConnector
+                          sx={{
+                            bgcolor:
+                              leg.cancelled || leg.partCancelled
+                                ? 'error.main'
+                                : 'primary.main',
+                          }}
+                        />
                       </TimelineSeparator>
                       <TimelineContent>
                         <Stack direction="row" justifyContent="space-between">
-                          <Typography sx={{ color: 'primary.main' }}>
-                            {leg.origin.name}
-                          </Typography>
-                          <Typography sx={{ color: 'primary.main' }}>
-                            Track: {leg.origin.plannedTrack}
-                          </Typography>
-                        </Stack>
-                        {index > 0 && (
-                          <>
-                            <Typography variant="caption">
-                              Exit side: {leg.destination.exitSide}
+                          <Box>
+                            <Typography sx={{ color: 'primary.main' }}>
+                              {leg.origin.name}
                             </Typography>
-                            {leg.transferMessages &&
-                              leg.transferMessages.map((transferMessage) => {
-                                //messageNesProperties
-                                return (
-                                  <>
-                                    <br />
-                                    <Typography
-                                      sx={{
-                                        color:
-                                          transferMessage.messageNesProperties
-                                            .type === 'error'
-                                            ? 'error.main'
-                                            : 'primary.main',
-                                      }}
-                                      variant="caption"
-                                    >
-                                      {transferMessage.message}
-                                    </Typography>
-                                  </>
-                                );
-                              })}
-                          </>
-                        )}
+                            {index > 0 && (
+                              <>
+                                {leg.destination.exitSide && (
+                                  <Typography variant="caption">
+                                    Exit side: {leg.destination.exitSide}
+                                  </Typography>
+                                )}
+
+                                {leg.transferMessages &&
+                                  leg.transferMessages.map(
+                                    (transferMessage) => {
+                                      return (
+                                        <>
+                                          <br />
+                                          <Typography
+                                            sx={{
+                                              color: getColorFromNesProperties(
+                                                transferMessage.messageNesProperties,
+                                              ),
+                                            }}
+                                            variant="caption"
+                                          >
+                                            {transferMessage.message}
+                                          </Typography>
+                                        </>
+                                      );
+                                    },
+                                  )}
+                              </>
+                            )}
+                          </Box>
+                          <Stack
+                            direction="column"
+                            justifyContent="space-evenly"
+                          >
+                            {index > 0 && (
+                              <Typography sx={{ color: 'primary.main' }}>
+                                Track:{' '}
+                                {trip.legs[index - 1].destination.plannedTrack}
+                              </Typography>
+                            )}
+                            <Typography sx={{ color: 'primary.main' }}>
+                              Track: {leg.origin.plannedTrack}
+                            </Typography>
+                          </Stack>
+                        </Stack>
                         <StyledDivider />
                         <Stack
                           direction="row"
@@ -188,13 +221,12 @@ export default function TripInformation({
                             <Fragment key={index}>
                               <Typography
                                 sx={{
-                                  color:
-                                    message.type === 'DISRUPTION'
-                                      ? 'error.main'
-                                      : 'inherit',
+                                  color: getColorFromNesProperties(
+                                    message.nesProperties,
+                                  ),
                                 }}
                               >
-                                {message.head}
+                                {message.text ?? message.head}
                               </Typography>
                               <StyledDivider />
                             </Fragment>
@@ -211,7 +243,14 @@ export default function TripInformation({
                         ).format('hh:mm a')}
                       </TimelineOppositeContent>
                       <TimelineSeparator>
-                        <TimelineDot color="primary" />
+                        <TimelineDot
+                          color={
+                            destinationLeg.partCancelled ||
+                            destinationLeg.cancelled
+                              ? 'error'
+                              : 'primary'
+                          }
+                        />
                       </TimelineSeparator>
                       <TimelineContent>
                         <Stack direction="row" justifyContent="space-between">
@@ -219,12 +258,16 @@ export default function TripInformation({
                             {destinationLeg.destination.name}
                           </Typography>
                           <Typography sx={{ color: 'primary.main' }}>
-                            Track: {destinationLeg.destination.plannedTrack}
+                            Track:{' '}
+                            {destinationLeg.destination.actualTrack ??
+                              destinationLeg.destination.plannedTrack}
                           </Typography>
                         </Stack>
-                        <Typography variant="caption">
-                          Exit side: {destinationLeg.destination.exitSide}
-                        </Typography>
+                        {destinationLeg.destination.exitSide && (
+                          <Typography variant="caption">
+                            Exit side: {destinationLeg.destination.exitSide}
+                          </Typography>
+                        )}
                       </TimelineContent>
                     </TimelineItem>
                   )}

@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 
-import { NSLocation, Trip } from '../types/trip.ts';
+import { Trip, TripLocation } from '../types/trip.ts';
 
-const makeDateTimeWithDelay = (location: NSLocation) => {
+const makeDateTimeWithDelay = (location: TripLocation) => {
   let delayTimeString = '';
   if (location.actualDateTime) {
     const differenceInMinutes = dayjs(location.actualDateTime).diff(
@@ -31,4 +31,20 @@ export const makeTripStartAndEndTime = (trip: Trip) => {
   return `${makeDateTimeWithDelay(currentTripOrigin)} - ${makeDateTimeWithDelay(
     currentTripDestination,
   )}`;
+};
+
+export const getColorFromNesProperties = ({ type }: { type: string }) => {
+  switch (type) {
+    case 'error':
+      return 'error.main';
+
+    case 'warning':
+      return 'warning.main';
+
+    case 'primary':
+      return 'primary.main';
+
+    default:
+      return 'inherit';
+  }
 };
