@@ -20,7 +20,7 @@ export function TripTimelineView({ trip }: { trip: Trip }) {
       }}
     >
       {legs.map((leg, index) => (
-        <LegTimeLineItem legs={legs} leg={leg} index={index} key={index} />
+        <LegTimeLineItem key={index} legs={legs} leg={leg} index={index} />
       ))}
       {destinationLeg && (
         <DestinationLegTimeLineItem destinationLeg={destinationLeg} />

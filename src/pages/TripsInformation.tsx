@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -12,49 +11,20 @@ import dayjs from 'dayjs';
 import SearchFilter from '../components/SearchFilter.tsx';
 import TripInfoCard from '../components/TripInfoCard.tsx';
 
-import { useSearchFilterContext } from '../context';
-import { useTrips } from '../hooks/useTrips.ts';
+import { useTripsInformationContext } from '../context';
 
 export default function TripsInformation() {
   const navigate = useNavigate();
   const {
-    via,
-    isArrival,
-    selectedDateTime,
-    destination,
-    origin,
-    onlyShowTransferEqualVia,
-  } = useSearchFilterContext();
-  const {
-    trips,
-    isLoadMoreLoading,
     isInitialLoading,
+    isLoadMoreLoading,
     loadLater,
     loadEarlier,
+    trips,
     reload,
-  } = useTrips({
-    viaUicCode: via?.UICCode,
-    searchForArrival: isArrival,
-    dateTime: selectedDateTime === 'now' ? dayjs() : dayjs(selectedDateTime),
-    destinationUicCode: destination?.UICCode,
-    originUicCode: origin?.UICCode,
-  });
-
-  const filteredTrips = useMemo(() => {
-    if (via && onlyShowTransferEqualVia) {
-      return trips.filter((trip) => {
-        if (trip.legs.length > 1) {
-          return Boolean(
-            trip.legs.find((leg) => leg.destination.uicCode === via?.UICCode),
-          );
-        } else {
-          return false;
-        }
-      });
-    }
-
-    return trips;
-  }, [onlyShowTransferEqualVia, trips, via]);
+    via,
+    dateTime,
+  } = useTripsInformationContext();
 
   return (
     <>
@@ -83,15 +53,15 @@ export default function TripsInformation() {
             Earlier
           </LoadingButton>
           <Typography variant="subtitle1">
-            {selectedDateTime === 'now'
+            {dateTime === 'now'
               ? dayjs().format('LL')
-              : dayjs(selectedDateTime).format('LL')}
+              : dayjs(dateTime).format('LL')}
           </Typography>
         </Stack>
       )}
       {isInitialLoading && <LinearProgress />}
       <List>
-        {filteredTrips.map((trip, index) => (
+        {trips.map((trip, index) => (
           <TripInfoCard
             key={`trip_info_${index}`}
             trip={trip}

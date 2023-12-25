@@ -5,6 +5,7 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 
 import { SearchFilterProvider } from './context/SearchFilterContext.tsx';
 import { SnackbarProvider } from './context/SnackbarContext.tsx';
+import { TripsInformationProvider } from './context/TrpsInformationContext.tsx';
 import App from './pages/App.tsx';
 import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
@@ -84,7 +85,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <CssBaseline />
           <SnackbarProvider>
             <SearchFilterProvider>
-              <RouterProvider router={router} />
+              <TripsInformationProvider>
+                <RouterProvider router={router} />
+              </TripsInformationProvider>
             </SearchFilterProvider>
           </SnackbarProvider>
         </ThemeProvider>
