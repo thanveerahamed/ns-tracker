@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard.tsx';
 import ErrorScreen from './pages/Error.tsx';
 import Favourites from './pages/Favourites.tsx';
 import Login from './pages/Login.tsx';
+import Trip from './pages/Trip.tsx';
 import TripsInformation from './pages/TripsInformation.tsx';
 import { ThemeProvider } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: '/tripsInformation',
         element: <TripsInformation />,
+      },
+      {
+        path: '/trip',
+        element: <Trip />,
       },
       {
         path: '/favourites',

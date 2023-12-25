@@ -1,5 +1,9 @@
 import { apiGet } from '../clients/nsClient.ts';
-import { GetTripsInformationProps, TripsInformation } from '../types/trip.ts';
+import {
+  GetTripsInformationProps,
+  Trip,
+  TripsInformation,
+} from '../types/trip.ts';
 
 export const getTripsInformation = async ({
   searchForArrival,
@@ -14,4 +18,16 @@ export const getTripsInformation = async ({
   };
 
   return apiGet<TripsInformation>('/v3/trips', params);
+};
+
+export const getTrip = async ({
+  ctxRecon,
+}: {
+  ctxRecon: string;
+}): Promise<Trip> => {
+  const params = {
+    ctxRecon,
+  };
+
+  return apiGet<Trip>('/v3/trips/trip', params);
 };

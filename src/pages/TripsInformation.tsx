@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -10,13 +11,12 @@ import dayjs from 'dayjs';
 
 import SearchFilter from '../components/SearchFilter.tsx';
 import TripInfoCard from '../components/TripInfoCard.tsx';
-import TripInformation from '../components/TripInformation.tsx';
 
 import { useSearchFilterContext } from '../context';
 import { useTrips } from '../hooks/useTrips.ts';
-import { Trip } from '../types/trip.ts';
 
 export default function TripsInformation() {
+  const navigate = useNavigate();
   const {
     via,
     isArrival,
@@ -39,8 +39,6 @@ export default function TripsInformation() {
     destinationUicCode: destination?.UICCode,
     originUicCode: origin?.UICCode,
   });
-
-  const [selectedTrip, setSelectedTrip] = useState<Trip | undefined>(undefined);
 
   const filteredTrips = useMemo(() => {
     if (via && onlyShowTransferEqualVia) {
@@ -98,7 +96,7 @@ export default function TripsInformation() {
             key={`trip_info_${index}`}
             trip={trip}
             via={via}
-            onSelect={(newTrip) => setSelectedTrip(newTrip)}
+            onSelect={() => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
           />
         ))}
       </List>
@@ -117,12 +115,6 @@ export default function TripsInformation() {
           Later
         </LoadingButton>
       )}
-      <TripInformation
-        trip={selectedTrip}
-        onClose={() => setSelectedTrip(undefined)}
-        origin={origin}
-        destination={destination}
-      />
     </>
   );
 }

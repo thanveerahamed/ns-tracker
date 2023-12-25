@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
 import { Trip } from '../types/trip.ts';
-import { getColorFromNesProperties } from '../utils/trips.ts';
+import { getPaletteColorFromNesProperties } from '../utils/trips.ts';
 
 export function TripInfoDetail({
   trip,
@@ -55,7 +55,7 @@ export function TripInfoDetail({
           <Typography
             variant="body2"
             sx={{
-              color: getColorFromNesProperties(
+              color: getPaletteColorFromNesProperties(
                 trip.primaryMessage.nesProperties,
               ),
             }}

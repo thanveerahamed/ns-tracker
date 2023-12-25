@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Trip, TripLocation } from '../types/trip.ts';
+import { Leg, Trip, TripLocation } from '../types/trip.ts';
 
 export const makeDateTimeWithDelay = (location: TripLocation) => {
   let delayTimeString = undefined;
@@ -38,7 +38,11 @@ export const getCompleteTripEndLocations = (trip: Trip) => {
   };
 };
 
-export const getColorFromNesProperties = ({ type }: { type: string }) => {
+export const getPaletteColorFromNesProperties = ({
+  type,
+}: {
+  type: string;
+}) => {
   switch (type) {
     case 'error':
       return 'error.main';
@@ -53,3 +57,16 @@ export const getColorFromNesProperties = ({ type }: { type: string }) => {
       return 'inherit';
   }
 };
+
+export const getColorFromNesProperties = ({ type }: { type: string }) => {
+  const colors = ['error', 'primary', 'warning', 'info'];
+
+  if (colors.includes(type)) {
+    return type;
+  }
+
+  return 'inherit';
+};
+
+export const isInValidLeg = (leg: Leg) =>
+  leg.cancelled || leg.partCancelled || !leg.changePossible;
