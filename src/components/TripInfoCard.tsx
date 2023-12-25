@@ -61,6 +61,7 @@ export default function TripInfoCard({ trip, via, onSelect }: Props) {
             <TripInfoDetail
               trip={trip}
               isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
+              hideStartAndEndTime
             />
           </AccordionDetails>
         </Accordion>

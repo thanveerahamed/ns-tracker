@@ -14,14 +14,16 @@ import { getColorFromNesProperties } from '../utils/trips.ts';
 export function TripInfoDetail({
   trip,
   isChangeInIntermediateStop,
+  hideStartAndEndTime,
 }: {
   trip: Trip;
   isChangeInIntermediateStop: boolean;
+  hideStartAndEndTime?: boolean;
 }) {
   return (
     <Grid container>
       <Grid item xs={9}>
-        <TripStartAndEndTime trip={trip} />
+        {!hideStartAndEndTime && <TripStartAndEndTime trip={trip} />}
         {trip.legs.map((leg, index) => (
           <Chip
             sx={{
