@@ -14,6 +14,7 @@ import {
   saveSearchDateTimeToCache,
   saveStationToCache,
 } from '../services/cache.ts';
+import { SearchFilter, UpdateRecentSearchProps } from '../types/search.ts';
 import { LocationType, NSStation } from '../types/station.ts';
 
 export interface SearchFilterContextValue {
@@ -33,6 +34,7 @@ export interface SearchFilterContextValue {
   onlyShowTransferEqualVia: boolean;
   setOnlyShowTransferEqualVia: (flag: boolean) => void;
   settingsEnabled: boolean;
+  updateRecentSearch: (props: UpdateRecentSearchProps) => void;
 }
 
 export interface SearchFilterContextProps {
@@ -44,91 +46,149 @@ export const SearchFilterContext =
 export const SearchFilterProvider = ({
   children,
 }: SearchFilterContextProps) => {
-  const [origin, setOrigin] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Origin),
-  );
-  const [destination, setDestination] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Destination),
-  );
-  const [via, setVia] = useState<NSStation | undefined>(
-    getStationFromCache(LocationType.Via),
-  );
-  const [isArrival, setIsArrival] = useState<boolean>(
-    getArrivalToggleFromCache(),
-  );
   const cachedDateTime = getSearchDateTimeFromCache();
-  const [selectedDateTime, setSelectedDateTime] = useState<Dayjs | 'now'>(
-    cachedDateTime === 'now'
-      ? isArrival
-        ? dayjs()
-        : cachedDateTime
-      : dayjs(cachedDateTime),
-  );
-  const [hasIntermediateStop, setHasIntermediateStop] = useState<boolean>(
-    getHasIntermediateStopCache(),
-  );
-  const [onlyShowTransferEqualVia, setOnlyShowTransferEqualVia] =
-    useState<boolean>(getOnlyShowTransferEqualVia());
-  const [settingsEnabled, setSettingsEnabled] = useState<boolean>(false);
+  const isArrival = getArrivalToggleFromCache();
+  const [filters, setFilters] = useState<SearchFilter>({
+    via: getStationFromCache(LocationType.Via),
+    destination: getStationFromCache(LocationType.Destination),
+    settingsEnabled: false,
+    hasIntermediateStop: getHasIntermediateStopCache(),
+    isArrival,
+    onlyShowTransferEqualVia: getOnlyShowTransferEqualVia(),
+    origin: getStationFromCache(LocationType.Origin),
+    selectedDateTime:
+      cachedDateTime === 'now'
+        ? isArrival
+          ? dayjs()
+          : cachedDateTime
+        : dayjs(cachedDateTime),
+  });
 
   const swapLocations = () => {
-    setDestination((previousDestination) => {
-      setOrigin(previousDestination);
-      return origin;
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        origin: prevState.destination,
+        destination: prevState.origin,
+      };
     });
   };
 
   const handleDateTimeChange = (value?: Dayjs | 'now') => {
     if (value) {
-      setSelectedDateTime(value);
+      setFilters((prevState) => {
+        return {
+          ...prevState,
+          selectedDateTime: value,
+        };
+      });
     }
     saveSearchDateTimeToCache(value ?? undefined);
   };
 
-  useEffect(() => {
-    setSettingsEnabled(onlyShowTransferEqualVia);
-  }, [onlyShowTransferEqualVia]);
+  const handleUpdateRecentSearch = (props: UpdateRecentSearchProps) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        origin: props.origin,
+        destination: props.destination,
+        via: props.via,
+        selectedDateTime: 'now',
+        hasIntermediateStop: Boolean(props.via),
+      };
+    });
+  };
+
+  const setHasIntermediateStop = (newValue: boolean) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        hasIntermediateStop: newValue,
+      };
+    });
+  };
+
+  const setOrigin = (newValue: NSStation) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        origin: newValue,
+      };
+    });
+  };
+
+  const setDestination = (station: NSStation) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        destination: station,
+      };
+    });
+  };
+
+  const setVia = (station?: NSStation) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        via: station,
+      };
+    });
+  };
+
+  const setIsArrival = (newValue: boolean) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        newValue,
+      };
+    });
+  };
+
+  const setOnlyShowTransferEqualVia = (flag: boolean) => {
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        onlyShowTransferEqualVia: flag,
+      };
+    });
+  };
 
   useEffect(() => {
-    if (hasIntermediateStop) {
-      saveStationToCache(LocationType.Via, via);
+    setFilters((prevState) => {
+      return {
+        ...prevState,
+        onlyShowTransferEqualVia: filters.onlyShowTransferEqualVia,
+      };
+    });
+  }, [filters.onlyShowTransferEqualVia]);
+
+  useEffect(() => {
+    if (filters.hasIntermediateStop) {
+      saveStationToCache(LocationType.Via, filters.via);
     } else {
       saveStationToCache(LocationType.Via, undefined);
     }
 
-    saveStationToCache(LocationType.Origin, origin);
-    saveStationToCache(LocationType.Destination, destination);
-    saveArrivalToggleToCache(isArrival);
-    saveHasIntermediateStopCache(hasIntermediateStop);
-    saveOnlyShowTransferEqualVia(onlyShowTransferEqualVia);
-  }, [
-    via,
-    origin,
-    destination,
-    isArrival,
-    hasIntermediateStop,
-    onlyShowTransferEqualVia,
-  ]);
+    saveStationToCache(LocationType.Origin, filters.origin);
+    saveStationToCache(LocationType.Destination, filters.destination);
+    saveArrivalToggleToCache(filters.isArrival);
+    saveHasIntermediateStopCache(filters.hasIntermediateStop);
+    saveOnlyShowTransferEqualVia(filters.onlyShowTransferEqualVia);
+  }, [filters]);
 
   return (
     <SearchFilterContext.Provider
       value={{
-        isArrival,
-        destination,
-        setDestination,
-        origin,
-        hasIntermediateStop,
+        ...filters,
         setHasIntermediateStop,
         setOrigin,
-        via,
+        setDestination,
         setVia,
-        selectedDateTime,
         setSelectedDateTime: handleDateTimeChange,
         setIsArrival,
         swapLocations,
-        onlyShowTransferEqualVia,
         setOnlyShowTransferEqualVia,
-        settingsEnabled,
+        updateRecentSearch: handleUpdateRecentSearch,
       }}
     >
       {children}

@@ -2,14 +2,15 @@ import React, { useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import HistoryIcon from '@mui/icons-material/History';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import {
   Card,
   CardContent,
   Grid,
   ListSubheader,
   Paper,
+  Stack,
   Typography,
 } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -18,14 +19,18 @@ import dayjs from 'dayjs';
 
 import SearchFilter from '../components/SearchFilter.tsx';
 
+import { useTripsInformationContext } from '../context';
 import { auth } from '../services/firebase.ts';
 import { useRecentSearch } from '../services/recent.ts';
 import { RecentSearch } from '../types/recent.ts';
+import { UpdateRecentSearchProps } from '../types/search.ts';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const [recentSearchSnapshots] = useRecentSearch(user?.uid);
+
+  const { updateRecentSearch, reload } = useTripsInformationContext();
 
   const recentSearch = useMemo(() => {
     return (
@@ -36,7 +41,14 @@ export default function Dashboard() {
   }, [recentSearchSnapshots]);
 
   const handleSearch = () => {
-    navigate('/tripsInformation');
+    setTimeout(() => {
+      reload();
+      navigate('/tripsInformation');
+    }, 1000);
+  };
+
+  const handleRecentSearchClicked = (props: UpdateRecentSearchProps) => {
+    updateRecentSearch(props);
   };
 
   return (
@@ -73,26 +85,49 @@ export default function Dashboard() {
                           height: '100%',
                         }}
                         variant="elevation"
-                        onClick={() => {}}
+                        onClick={() =>
+                          handleRecentSearchClicked({
+                            via: search.via,
+                            origin: search.origin,
+                            destination: search.destination,
+                          })
+                        }
                       >
                         <CardContent sx={{ textAlign: 'left' }}>
-                          <HistoryIcon />
-                          <br />
-                          <Typography variant="body2">
-                            {search.origin.namen.lang}
-                          </Typography>
-                          <ArrowDropDownIcon />
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            mb={1}
+                          >
+                            <ArrowDownwardIcon color="primary" />
+                            <Typography variant="caption">
+                              {search.origin.namen.lang}
+                            </Typography>
+                          </Stack>
                           {search.via && (
-                            <>
-                              <Typography variant="body2">
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              spacing={1}
+                              mb={1}
+                            >
+                              <ArrowDownwardIcon />
+                              <Typography variant="caption">
                                 {search.via.namen.lang}
                               </Typography>
-                              <ArrowDropDownIcon />
-                            </>
+                            </Stack>
                           )}
-                          <Typography variant="body2">
-                            {search.destination.namen.lang}
-                          </Typography>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                          >
+                            <GpsFixedIcon color="secondary" />
+                            <Typography variant="caption">
+                              {search.destination.namen.lang}
+                            </Typography>
+                          </Stack>
                         </CardContent>
                       </Card>
                     </Grid>

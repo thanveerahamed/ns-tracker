@@ -5,6 +5,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useSearchFilterContext } from './index.ts';
 
 import { useTrips } from '../hooks/useTrips.ts';
+import { UpdateRecentSearchProps } from '../types/search.ts';
 import { NSStation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
 
@@ -17,6 +18,7 @@ export interface TripsInformationContextValue {
   reload: () => void;
   via?: NSStation;
   dateTime: Dayjs | 'now';
+  updateRecentSearch: (props: UpdateRecentSearchProps) => void;
 }
 export interface TripsInformationContextProps {
   children: ReactNode;
@@ -35,6 +37,7 @@ export const TripsInformationProvider = ({
     destination,
     origin,
     onlyShowTransferEqualVia,
+    updateRecentSearch,
   } = useSearchFilterContext();
 
   const {
@@ -68,6 +71,18 @@ export const TripsInformationProvider = ({
     return trips;
   }, [onlyShowTransferEqualVia, trips, via]);
 
+  const handleUpdateRecentSearch = ({
+    via,
+    origin,
+    destination,
+  }: UpdateRecentSearchProps) => {
+    updateRecentSearch({
+      via,
+      origin,
+      destination,
+    });
+  };
+
   return (
     <TripsInformationContext.Provider
       value={{
@@ -79,6 +94,7 @@ export const TripsInformationProvider = ({
         reload,
         via,
         dateTime: selectedDateTime,
+        updateRecentSearch: handleUpdateRecentSearch,
       }}
     >
       {children}
