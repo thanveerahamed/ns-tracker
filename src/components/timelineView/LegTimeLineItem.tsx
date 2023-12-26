@@ -49,7 +49,7 @@ export default function LegTimeLineItem({
   }, [leg]);
 
   return (
-    <TimelineItem>
+    <TimelineItem key={index}>
       <TimelineOppositeContent color="textSecondary">
         {index > 0 && <TripTiming location={legs[index - 1].destination} />}
         <TripTiming location={leg.origin} />

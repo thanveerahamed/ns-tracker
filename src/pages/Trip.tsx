@@ -38,7 +38,6 @@ export default function Trip() {
   return (
     <AnimatePresence>
       <motion.div
-        layout
         initial={{ width: '0', x: '100vw' }}
         animate={{ width: '100%', x: 0 }}
         transition={{ duration: 0.5, origin: 0 }}

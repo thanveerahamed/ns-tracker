@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SearchSettings from './SearchSettings.tsx';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
@@ -23,6 +24,8 @@ import CustomDateTimePicker from '../components/CustomDateTimePicker.tsx';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 
 import { useSearchFilterContext } from '../context';
+import { auth } from '../services/firebase.ts';
+import { createRecentSearch } from '../services/recent.ts';
 import { LocationType, NSStation } from '../types/station.ts';
 
 interface Props {
@@ -46,6 +49,7 @@ export default function SearchFilter({ onSearch }: Props) {
     isArrival,
     settingsEnabled,
   } = useSearchFilterContext();
+  const [user] = useAuthState(auth);
   const [openStationSelection, setOpenStationSelection] =
     useState<boolean>(false);
   const [openSearchSettings, setOpenSearchSettings] = useState<boolean>(false);
@@ -101,6 +105,17 @@ export default function SearchFilter({ onSearch }: Props) {
       setSelectedDateTime(dayjs());
     }
     setIsArrival(newState);
+  };
+
+  const internalOnSearch = () => {
+    onSearch();
+    if (user && origin && destination) {
+      createRecentSearch({ userId: user.uid, via, origin, destination }).then(
+        () => {
+          console.log('recent search item set');
+        },
+      );
+    }
   };
 
   return (
@@ -225,7 +240,11 @@ export default function SearchFilter({ onSearch }: Props) {
               <SettingsIcon />
             </Badge>
           </IconButton>
-          <Button color="primary" variant="contained" onClick={onSearch}>
+          <Button
+            color="primary"
+            variant="contained"
+            onClick={internalOnSearch}
+          >
             <SearchIcon />
           </Button>
         </Box>
