@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -12,6 +14,9 @@ import SearchFilter from '../components/SearchFilter.tsx';
 import TripInfoCard from '../components/TripInfoCard.tsx';
 
 import { useTripsInformationContext } from '../context';
+import { auth } from '../services/firebase.ts';
+import { useFavouriteTrip } from '../services/trip.ts';
+import { Trip } from '../types/trip.ts';
 
 export default function TripsInformation() {
   const navigate = useNavigate();
@@ -25,6 +30,20 @@ export default function TripsInformation() {
     via,
     dateTime,
   } = useTripsInformationContext();
+
+  const [user] = useAuthState(auth);
+  const [favouriteTripsSnapshots] = useFavouriteTrip(user?.uid);
+
+  const isFavouriteTrip = useCallback(
+    (trip: Trip) => {
+      return (
+        favouriteTripsSnapshots?.docs
+          .map((doc) => doc.data().ctxRecon)
+          .includes(trip.ctxRecon) ?? false
+      );
+    },
+    [favouriteTripsSnapshots],
+  );
 
   return (
     <>
@@ -67,6 +86,7 @@ export default function TripsInformation() {
             trip={trip}
             via={via}
             onSelect={() => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
+            isFavourite={isFavouriteTrip(trip)}
           />
         ))}
       </List>

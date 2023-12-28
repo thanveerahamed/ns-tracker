@@ -468,3 +468,7 @@ export interface GetTripsInformationProps {
   searchForArrival?: boolean;
   context?: string;
 }
+
+export interface FavouriteTrip extends Trip {
+  docId: string;
+}

@@ -22,10 +22,16 @@ import { Trip } from '../types/trip.ts';
 interface Props {
   trip: Trip;
   via?: NSStation;
+  isFavourite: boolean;
   onSelect: (trip: Trip) => void;
 }
 
-export default function TripInfoCard({ trip, via, onSelect }: Props) {
+export default function TripInfoCard({
+  trip,
+  via,
+  onSelect,
+  isFavourite,
+}: Props) {
   const isChangeInIntermediateStop = useCallback(
     (trip: Trip) => {
       if (trip.legs.length > 1) {
@@ -61,6 +67,7 @@ export default function TripInfoCard({ trip, via, onSelect }: Props) {
             trip={trip}
             isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
             hideStartAndEndTime
+            isFavourite={isFavourite}
           />
         </AccordionDetails>
       </Accordion>
@@ -88,6 +95,7 @@ export default function TripInfoCard({ trip, via, onSelect }: Props) {
             <TripInfoDetail
               trip={trip}
               isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
+              isFavourite={isFavourite}
             />
           </CardContent>
         </Card>

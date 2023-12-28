@@ -2,6 +2,7 @@ import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
 import TripStartAndEndTime from './TripStartAndEndTime.tsx';
+import StarIcon from '@mui/icons-material/Star';
 import TrainIcon from '@mui/icons-material/Train';
 import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStation';
 import { Chip, Grid, Stack } from '@mui/material';
@@ -15,9 +16,11 @@ export function TripInfoDetail({
   trip,
   isChangeInIntermediateStop,
   hideStartAndEndTime,
+  isFavourite,
 }: {
   trip: Trip;
   isChangeInIntermediateStop: boolean;
+  isFavourite: boolean;
   hideStartAndEndTime?: boolean;
 }) {
   return (
@@ -77,6 +80,7 @@ export function TripInfoDetail({
           </Stack>
           <Stack direction="row" alignItems="center" gap={1}>
             {isChangeInIntermediateStop && <TransferWithinAStationIcon />}
+            {isFavourite && <StarIcon color="primary" />}
           </Stack>
         </Box>
       </Grid>

@@ -59,7 +59,7 @@ export default function Dashboard() {
           elevation={10}
           sx={{
             paddingBottom: '1rem',
-            paddingTop: '20%',
+            paddingTop: '15%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',

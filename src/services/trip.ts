@@ -1,3 +1,8 @@
+import { useCollection } from 'react-firebase-hooks/firestore';
+
+import { db } from './firebase.ts';
+import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
+
 import { apiGet } from '../clients/nsClient.ts';
 import {
   GetTripsInformationProps,
@@ -31,3 +36,14 @@ export const getTrip = async ({
 
   return apiGet<Trip>('/v3/trips/trip', params);
 };
+
+export const addFavouriteTrip = (userId: string, trip: Trip) =>
+  addDoc(collection(db, 'users', userId, 'favouriteTrips'), trip);
+
+export const useFavouriteTrip = (userId?: string) =>
+  useCollection(collection(db, 'users', userId ?? '', 'favouriteTrips'), {
+    snapshotListenOptions: { includeMetadataChanges: true },
+  });
+
+export const removeFavouriteTrip = (userId: string, id: string) =>
+  deleteDoc(doc(db, 'users', userId, 'favouriteTrips', id));
