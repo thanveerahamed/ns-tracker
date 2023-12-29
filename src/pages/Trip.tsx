@@ -97,7 +97,7 @@ export default function Trip() {
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() => navigate('/tripsInformation')}
+              onClick={() => navigate(-1)}
               aria-label="close"
             >
               <ChevronLeftIcon />
@@ -119,7 +119,7 @@ export default function Trip() {
                 {isLoading ? 'Fetching information' : 'No information'}
               </Typography>
             )}
-            {trip && (
+            {trip && trip.status !== 'CANCELLED' && (
               <IconButton
                 edge="start"
                 color="inherit"

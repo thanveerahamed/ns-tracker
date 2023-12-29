@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -6,6 +7,7 @@ import Tabs from '@mui/material/Tabs';
 
 import CustomTabPanel from '../components/CustomTabPanel.tsx';
 import FavouriteStations from '../components/favourites/FavouriteStations.tsx';
+import FavouriteTrips from '../components/favourites/FavouriteTrips.tsx';
 
 function a11yProps(index: number) {
   return {
@@ -15,29 +17,32 @@ function a11yProps(index: number) {
 }
 
 export default function Favourites() {
-  const [value, setValue] = React.useState(0);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const paramTabIndex = searchParams.get('tabIndex');
+  const tabIndex = paramTabIndex ? Number(paramTabIndex) : 0;
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+    navigate(`/favourites?tabIndex=${newValue}`);
   };
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
-          value={value}
+          value={tabIndex}
           onChange={handleChange}
           aria-label="basic tabs example"
         >
           <Tab label="Stations" {...a11yProps(0)} />
-          <Tab label="Routes" {...a11yProps(1)} />
+          <Tab label="Trips" {...a11yProps(1)} />
         </Tabs>
       </Box>
-      <CustomTabPanel value={value} index={0}>
+      <CustomTabPanel value={tabIndex} index={0}>
         <FavouriteStations />
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
-        Item Two
+      <CustomTabPanel value={tabIndex} index={1}>
+        <FavouriteTrips />
       </CustomTabPanel>
     </Box>
   );
