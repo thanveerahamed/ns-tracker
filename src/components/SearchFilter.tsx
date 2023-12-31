@@ -17,6 +17,7 @@ import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Badge, Button, IconButton, TextField } from '@mui/material';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -56,6 +57,7 @@ export default function SearchFilter({ onSearch }: Props) {
   const [locationTypeClicked, setLocationTypeClicked] = useState<
     LocationType | undefined
   >(undefined);
+  const [submitted, setSubmitted] = useState<boolean>(false);
 
   const handleTextClicked = (locationType: LocationType) => {
     setLocationTypeClicked(locationType);
@@ -107,7 +109,32 @@ export default function SearchFilter({ onSearch }: Props) {
     setIsArrival(newState);
   };
 
+  const areStationsSame = () =>
+    origin &&
+    destination &&
+    (origin.UICCode === destination.UICCode ||
+      origin.UICCode === via?.UICCode ||
+      via?.UICCode === destination.UICCode);
+
+  const isFormValid = () => {
+    if (hasIntermediateStop && !via) {
+      return false;
+    }
+
+    if (!origin || !destination) {
+      return false;
+    }
+
+    return !areStationsSame();
+  };
+
   const internalOnSearch = () => {
+    setSubmitted(true);
+
+    if (!isFormValid()) {
+      return;
+    }
+
     onSearch();
     if (user && origin && destination) {
       createRecentSearch({ userId: user.uid, via, origin, destination }).then(
@@ -120,6 +147,11 @@ export default function SearchFilter({ onSearch }: Props) {
 
   return (
     <>
+      {areStationsSame() && (
+        <Alert severity="error">
+          Origin and destination(s) cannot be same.
+        </Alert>
+      )}
       <Box
         sx={{
           border: '1px solid grey',
@@ -152,6 +184,12 @@ export default function SearchFilter({ onSearch }: Props) {
                 value={origin?.namen?.lang ?? ''}
                 onClick={() => handleTextClicked(LocationType.Origin)}
                 onFocus={(event) => event.target.blur()}
+                error={submitted && origin === undefined}
+                helperText={
+                  submitted && origin === undefined
+                    ? 'Please select an origin!'
+                    : undefined
+                }
               />
             </TimelineContent>
           </TimelineItem>
@@ -171,6 +209,12 @@ export default function SearchFilter({ onSearch }: Props) {
                   value={via?.namen?.lang ?? ''}
                   onClick={() => handleTextClicked(LocationType.Via)}
                   onFocus={(event) => event.target.blur()}
+                  error={submitted && via === undefined}
+                  helperText={
+                    submitted && via === undefined
+                      ? 'Please select an intermediate stop!'
+                      : undefined
+                  }
                 />
               </TimelineContent>
             </TimelineItem>
@@ -189,6 +233,12 @@ export default function SearchFilter({ onSearch }: Props) {
                 value={destination?.namen?.lang ?? ''}
                 onClick={() => handleTextClicked(LocationType.Destination)}
                 onFocus={(event) => event.target.blur()}
+                error={submitted && destination === undefined}
+                helperText={
+                  submitted && destination === undefined
+                    ? 'Please select a destination!'
+                    : undefined
+                }
               />
             </TimelineContent>
           </TimelineItem>
