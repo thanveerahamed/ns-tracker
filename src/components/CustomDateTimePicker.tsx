@@ -43,6 +43,8 @@ function DatePickerModal({
       setIsArrival(internalIsArrival);
     }
 
+    setInternalIsArrival(isArrival);
+
     onChange(dateTime);
   };
 
