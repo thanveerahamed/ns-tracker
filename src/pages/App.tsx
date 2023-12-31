@@ -5,6 +5,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import SplitscreenIcon from '@mui/icons-material/Splitscreen';
 import { BottomNavigation, BottomNavigationAction, Paper } from '@mui/material';
 import Toolbar from '@mui/material/Toolbar';
 
@@ -73,6 +74,12 @@ function App() {
             label="Favorites"
             icon={<FavoriteIcon />}
             onClick={() => handleBottomNavigation('/favourites')}
+          />
+          <BottomNavigationAction
+            value="/splitview"
+            label="Split View"
+            icon={<SplitscreenIcon sx={{ transform: 'rotate(90deg)' }} />}
+            onClick={() => handleBottomNavigation('/splitview')}
           />
           <BottomNavigationAction
             label="More"

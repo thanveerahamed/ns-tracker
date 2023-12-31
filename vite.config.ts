@@ -12,9 +12,9 @@ const manifestForPlugin: Partial<VitePWAOptions> = {
     description: 'An app that can help with better NS Train tracking',
     icons: [
       {
-        src: '/train_256.png',
+        src: '/train.svg',
         sizes: '256X256',
-        type: 'image/png',
+        type: 'image/svg',
         purpose: 'any maskable',
       },
     ],

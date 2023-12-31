@@ -1,18 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 
 import { SearchFilterProvider } from './context/SearchFilterContext.tsx';
 import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import { TripsInformationProvider } from './context/TrpsInformationContext.tsx';
-import App from './pages/App.tsx';
-import Dashboard from './pages/Dashboard.tsx';
-import ErrorScreen from './pages/Error.tsx';
-import Favourites from './pages/Favourites.tsx';
-import Login from './pages/Login.tsx';
-import Trip from './pages/Trip.tsx';
-import TripsInformation from './pages/TripsInformation.tsx';
+import { router } from './routes.tsx';
 import { ThemeProvider } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
@@ -33,37 +27,6 @@ const theme = createTheme({
     fontFamily: ['Ubuntu', 'sans-serif'].join(','),
   },
 });
-
-const router = createBrowserRouter([
-  {
-    path: '/login',
-    element: <Login />,
-    errorElement: <ErrorScreen />,
-  },
-  {
-    path: '/',
-    element: <App />,
-    errorElement: <ErrorScreen />,
-    children: [
-      {
-        index: true,
-        element: <Dashboard />,
-      },
-      {
-        path: '/tripsInformation',
-        element: <TripsInformation />,
-      },
-      {
-        path: '/trip',
-        element: <Trip />,
-      },
-      {
-        path: '/favourites',
-        element: <Favourites />,
-      },
-    ],
-  },
-]);
 
 const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,9 +1,12 @@
 import * as React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 
 import CustomTabPanel from '../components/CustomTabPanel.tsx';
 import FavouriteStations from '../components/favourites/FavouriteStations.tsx';
@@ -28,6 +31,13 @@ export default function Favourites() {
 
   return (
     <Box sx={{ width: '100%' }}>
+      <AppBar sx={{ position: 'relative' }}>
+        <Toolbar>
+          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
+            Favourites
+          </Typography>
+        </Toolbar>
+      </AppBar>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={tabIndex}
