@@ -1,19 +1,22 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Card, CardContent, CardHeader, TextField } from '@mui/material';
 import Box from '@mui/material/Box';
 
 import { useDialog } from '../../hooks/useDialog.ts';
+import { IView } from '../../types/splitView.ts';
 import { LocationType, NSStation } from '../../types/station.ts';
 import StationSelectionDialog from '../StationSelectionDialog.tsx';
 
 export default function SingleViewCard({
   title,
   onSelect,
+  view,
 }: {
   title: string;
   onSelect: (station: NSStation, type: LocationType) => void;
+  view?: IView;
 }) {
   const dialog = useDialog();
   const [origin, setOrigin] = useState<NSStation | undefined>(undefined);
@@ -42,6 +45,13 @@ export default function SingleViewCard({
 
     dialog.close();
   };
+
+  useEffect(() => {
+    if (view) {
+      setOrigin(view.origin);
+      setDestination(view.destination);
+    }
+  }, [view]);
 
   return (
     <>

@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import LoadingButton from '@mui/lab/LoadingButton';
-import { Button, Stack } from '@mui/material';
+import { Button, LinearProgress, Stack } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -16,7 +16,11 @@ import SingleViewCard from '../../components/splitView/SingleViewCard.tsx';
 import { useLoading } from '../../hooks/useLoading.ts';
 import { useSubmitted } from '../../hooks/useSubmitted.ts';
 import { auth } from '../../services/firebase.ts';
-import { addSplitView } from '../../services/splitView.ts';
+import {
+  addSplitView,
+  updateSplitView,
+  useSplitViewDocument,
+} from '../../services/splitView.ts';
 import { IView } from '../../types/splitView.ts';
 import { LocationType, NSStation } from '../../types/station.ts';
 
@@ -29,9 +33,15 @@ export default function SplitViewForm() {
   const [user] = useAuthState(auth);
   const navigate = useNavigate();
   const submitted = useSubmitted();
+  const [searchParams] = useSearchParams();
+  const splitViewId = searchParams.get('id');
   const loading = useLoading();
   const [leftView, setLeftView] = useState<Partial<IView> | undefined>();
   const [rightView, setRightView] = useState<Partial<IView> | undefined>();
+  const [splitViewSnapshot, splitViewIsLoading] = useSplitViewDocument(
+    splitViewId ?? undefined,
+    user?.uid,
+  );
 
   const handleSingViewCardSelect = (
     station: NSStation,
@@ -73,11 +83,19 @@ export default function SplitViewForm() {
       (async () => {
         loading.startLoading();
         try {
-          await addSplitView(user.uid, {
-            view1: leftView as IView,
-            view2: rightView as IView,
-            createdAt: dayjs().toString(),
-          });
+          if (splitViewId) {
+            await updateSplitView(user.uid, splitViewId, {
+              view1: leftView as IView,
+              view2: rightView as IView,
+              createdAt: dayjs().toString(),
+            });
+          } else {
+            await addSplitView(user.uid, {
+              view1: leftView as IView,
+              view2: rightView as IView,
+              createdAt: dayjs().toString(),
+            });
+          }
 
           navigate(-1);
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,6 +108,13 @@ export default function SplitViewForm() {
     }
   };
 
+  useEffect(() => {
+    if (splitViewId && splitViewSnapshot) {
+      setLeftView(splitViewSnapshot.view1);
+      setRightView(splitViewSnapshot.view2);
+    }
+  }, [splitViewSnapshot, splitViewId]);
+
   return (
     <>
       <AppBar sx={{ position: 'relative' }}>
@@ -99,6 +124,7 @@ export default function SplitViewForm() {
           </Typography>
         </Toolbar>
       </AppBar>
+      {splitViewIsLoading && <LinearProgress />}
       {submitted.isSubmitted && isInvalidForm() && (
         <Alert severity="error">Please complete the form</Alert>
       )}
@@ -107,6 +133,7 @@ export default function SplitViewForm() {
         onSelect={(station, type) =>
           handleSingViewCardSelect(station, type, ViewLocation.Left)
         }
+        view={leftView ? (leftView as IView) : undefined}
       />
 
       <SingleViewCard
@@ -114,6 +141,7 @@ export default function SplitViewForm() {
         onSelect={(station, type) =>
           handleSingViewCardSelect(station, type, ViewLocation.Right)
         }
+        view={leftView ? (rightView as IView) : undefined}
       />
 
       <Stack direction="row" justifyContent="flex-end" p={2} spacing={2}>

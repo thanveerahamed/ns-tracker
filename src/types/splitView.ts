@@ -10,3 +10,7 @@ export interface ISplitView {
   view2: IView;
   createdAt: string;
 }
+
+export interface ISplitViewWithId extends ISplitView {
+  id: string;
+}
