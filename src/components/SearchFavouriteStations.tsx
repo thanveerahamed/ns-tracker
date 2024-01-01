@@ -4,7 +4,7 @@ import TrainIcon from '@mui/icons-material/Train';
 import {
   Card,
   CardContent,
-  CircularProgress,
+  LinearProgress,
   ListSubheader,
 } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -27,7 +27,7 @@ export default function SearchFavouriteStations({
   return (
     <List>
       <ListSubheader>Favourites</ListSubheader>
-      {showLoader && <CircularProgress />}
+      {showLoader && <LinearProgress />}
       <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
         {stations.map((station) => {
           return (

@@ -4,7 +4,20 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
 import AddIcon from '@mui/icons-material/Add';
-import { Button, IconButton, LinearProgress } from '@mui/material';
+import Timeline from '@mui/lab/Timeline';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
+import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
+import {
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  LinearProgress,
+  Stack,
+} from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
@@ -43,7 +56,7 @@ export default function SplitViewDashboard() {
             Split view
           </Typography>
           {splitViews.length > 0 && (
-            <IconButton onClick={handleOpenForm}>
+            <IconButton onClick={handleOpenForm} color="primary">
               <AddIcon />
             </IconButton>
           )}
@@ -66,7 +79,66 @@ export default function SplitViewDashboard() {
         )}
         {!isLoading &&
           splitViews.map((splitView) => {
-            return <>{splitView.view1.origin}</>;
+            return (
+              <Card key={splitView.id}>
+                <CardContent>
+                  <Stack direction="row">
+                    <Timeline
+                      sx={{
+                        [`& .${timelineItemClasses.root}:before`]: {
+                          flex: 0,
+                          padding: 0,
+                        },
+                      }}
+                    >
+                      <TimelineItem>
+                        <TimelineSeparator>
+                          <TimelineDot />
+                          <TimelineConnector />
+                        </TimelineSeparator>
+                        <TimelineContent>
+                          {splitView.view1.origin.namen.lang}
+                        </TimelineContent>
+                      </TimelineItem>
+                      <TimelineItem>
+                        <TimelineSeparator>
+                          <TimelineDot />
+                        </TimelineSeparator>
+                        <TimelineContent>
+                          {splitView.view1.destination.namen.lang}
+                        </TimelineContent>
+                      </TimelineItem>
+                    </Timeline>
+                    <Timeline
+                      sx={{
+                        [`& .${timelineItemClasses.root}:before`]: {
+                          flex: 0,
+                          padding: 0,
+                        },
+                      }}
+                    >
+                      <TimelineItem>
+                        <TimelineSeparator>
+                          <TimelineDot />
+                          <TimelineConnector />
+                        </TimelineSeparator>
+                        <TimelineContent>
+                          {splitView.view2.origin.namen.lang}
+                        </TimelineContent>
+                      </TimelineItem>
+                      <TimelineItem>
+                        <TimelineSeparator>
+                          <TimelineDot />
+                        </TimelineSeparator>
+                        <TimelineContent>
+                          {splitView.view2.destination.namen.lang}
+                        </TimelineContent>
+                      </TimelineItem>
+                    </Timeline>
+                  </Stack>
+                </CardContent>
+              </Card>
+            );
           })}
       </Box>
     </>

@@ -1,4 +1,4 @@
-import { Fragment, useCallback } from 'react';
+import React, { Fragment, useCallback } from 'react';
 
 import TrainIcon from '@mui/icons-material/Train';
 import TimelineConnector from '@mui/lab/TimelineConnector';
@@ -78,9 +78,9 @@ export default function LegTimeLineItem({
                 )}
 
                 {leg.transferMessages &&
-                  leg.transferMessages.map((transferMessage) => {
+                  leg.transferMessages.map((transferMessage, index) => {
                     return (
-                      <>
+                      <React.Fragment key={index}>
                         <br />
                         <Typography
                           sx={{
@@ -92,7 +92,7 @@ export default function LegTimeLineItem({
                         >
                           {transferMessage.message}
                         </Typography>
-                      </>
+                      </React.Fragment>
                     );
                   })}
               </>

@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Chip, CircularProgress } from '@mui/material';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
 
 import { auth } from '../../services/firebase.ts';
@@ -46,13 +45,11 @@ function FavouriteTripItem(props: { trip: Trip }) {
         </Typography>
       }
     >
-      <ListItem sx={{ p: 0 }}>
-        <TripInfoCard
-          trip={props.trip}
-          onSelect={() => navigate(`/trip?ctxRecon=${props.trip.ctxRecon}`)}
-          isFavourite
-        />
-      </ListItem>
+      <TripInfoCard
+        trip={props.trip}
+        onSelect={() => navigate(`/trip?ctxRecon=${props.trip.ctxRecon}`)}
+        isFavourite
+      />
     </List>
   );
 }
