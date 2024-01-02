@@ -14,7 +14,6 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import {
   Button,
   Card,
-  CardActions,
   CardContent,
   Divider,
   IconButton,
@@ -39,6 +38,7 @@ function TimeLineView({ from, to }: { from: string; to: string }) {
           flex: 0,
           padding: 0,
         },
+        width: '150px',
       }}
     >
       <TimelineItem sx={{ minHeight: '50px' }}>
@@ -90,6 +90,10 @@ export default function SplitViewDashboard() {
     navigate(`/splitview/form?id=${splitView.id}`);
   };
 
+  const handleView = (splitView: ISplitViewWithId) => {
+    navigate(`/splitview/tripsInformation/${splitView.id}`);
+  };
+
   return (
     <>
       <AppBar sx={{ position: 'relative' }}>
@@ -122,31 +126,33 @@ export default function SplitViewDashboard() {
         {!isLoading &&
           splitViews.map((splitView) => {
             return (
-              <Card key={splitView.id}>
-                <CardContent sx={{ p: 0 }}>
+              <Card key={splitView.id} sx={{ mb: 1 }}>
+                <CardContent sx={{ padding: '0px !important' }}>
                   <Stack direction="row">
-                    <TimeLineView
-                      from={splitView.view1.origin.namen.lang}
-                      to={splitView.view1.destination.namen.lang}
-                    />
-                    <Divider orientation="vertical" flexItem>
-                      AND
-                    </Divider>
-                    <TimeLineView
-                      from={splitView.view2.origin.namen.lang}
-                      to={splitView.view2.destination.namen.lang}
-                    />
+                    <Stack
+                      direction="row"
+                      onClick={() => handleView(splitView)}
+                    >
+                      <TimeLineView
+                        from={splitView.view1.origin.namen.lang}
+                        to={splitView.view1.destination.namen.lang}
+                      />
+                      <Divider orientation="vertical" flexItem>
+                        AND
+                      </Divider>
+                      <TimeLineView
+                        from={splitView.view2.origin.namen.lang}
+                        to={splitView.view2.destination.namen.lang}
+                      />
+                    </Stack>
+                    <IconButton
+                      color="primary"
+                      onClick={() => handleEdit(splitView)}
+                    >
+                      <EditIcon />
+                    </IconButton>
                   </Stack>
                 </CardContent>
-                <CardActions sx={{ justifyContent: 'flex-end' }}>
-                  <Button
-                    startIcon={<EditIcon />}
-                    onClick={() => handleEdit(splitView)}
-                  >
-                    EDIT
-                  </Button>
-                  <Button variant="outlined">VIEW</Button>
-                </CardActions>
               </Card>
             );
           })}

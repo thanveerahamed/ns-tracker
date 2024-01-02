@@ -12,7 +12,7 @@ export const updateSplitView = (
   userId: string,
   id: string,
   splitView: ISplitView,
-) => setDoc(doc(db, 'users', userId, 'favouriteStations', id), splitView);
+) => setDoc(doc(db, 'users', userId, 'splitViews', id), splitView);
 
 export const useSplitView = (userId?: string) =>
   useCollection(collection(db, 'users', userId ?? '', 'splitViews'), {

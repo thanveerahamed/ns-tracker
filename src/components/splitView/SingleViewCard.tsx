@@ -33,13 +33,13 @@ export default function SingleViewCard({
   };
 
   const handleStationSelectorClosed = (station?: NSStation) => {
-    if (locationTypeClicked === LocationType.Origin) {
-      setOrigin(station);
-    } else {
-      setDestination(station);
-    }
-
     if (station) {
+      if (locationTypeClicked === LocationType.Origin) {
+        setOrigin(station);
+      } else {
+        setDestination(station);
+      }
+
       onSelect(station, locationTypeClicked);
     }
 

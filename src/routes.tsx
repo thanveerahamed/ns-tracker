@@ -11,6 +11,7 @@ import TripsInformation from './pages/TripsInformation.tsx';
 import SplitView from './pages/splitView/SplitView.tsx';
 import SplitViewDashboard from './pages/splitView/SplitViewDashboard.tsx';
 import SplitViewForm from './pages/splitView/SplitViewForm.tsx';
+import SplitViewTripsInformation from './pages/splitView/SplitViewTripsInformation.tsx';
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +51,10 @@ export const router = createBrowserRouter([
           {
             path: '/splitview/form',
             element: <SplitViewForm />,
+          },
+          {
+            path: '/splitview/tripsInformation/:id',
+            element: <SplitViewTripsInformation />,
           },
         ],
       },

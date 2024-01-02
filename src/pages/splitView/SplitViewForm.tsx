@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import DeleteIcon from '@mui/icons-material/Delete';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { Button, LinearProgress, Stack } from '@mui/material';
 import Alert from '@mui/material/Alert';
@@ -13,11 +14,13 @@ import dayjs from 'dayjs';
 
 import SingleViewCard from '../../components/splitView/SingleViewCard.tsx';
 
+import { useSnackbarContext } from '../../context';
 import { useLoading } from '../../hooks/useLoading.ts';
 import { useSubmitted } from '../../hooks/useSubmitted.ts';
 import { auth } from '../../services/firebase.ts';
 import {
   addSplitView,
+  removeSplitView,
   updateSplitView,
   useSplitViewDocument,
 } from '../../services/splitView.ts';
@@ -33,6 +36,7 @@ export default function SplitViewForm() {
   const [user] = useAuthState(auth);
   const navigate = useNavigate();
   const submitted = useSubmitted();
+  const { showNotification } = useSnackbarContext();
   const [searchParams] = useSearchParams();
   const splitViewId = searchParams.get('id');
   const loading = useLoading();
@@ -65,17 +69,41 @@ export default function SplitViewForm() {
 
   const handleCancel = () => navigate(-1);
 
-  const isInvalidForm = () =>
-    !leftView ||
-    !leftView.origin ||
-    !leftView.destination ||
-    !rightView ||
-    !rightView.origin ||
-    !rightView.destination;
+  const handleDelete = () => {
+    (async () => {
+      if (user && splitViewId) {
+        removeSplitView(user.uid, splitViewId)
+          .then(() => {
+            navigate(-1);
+          })
+          .catch(() => showNotification('Some error occurred!', 'error'));
+      }
+    })();
+  };
+
+  const isInvalidForm = useCallback(
+    () =>
+      !leftView ||
+      !leftView.origin ||
+      !leftView.destination ||
+      !rightView ||
+      !rightView.origin ||
+      !rightView.destination,
+    [leftView, rightView],
+  );
+
+  const isOriginDestinationSame = useCallback(
+    () =>
+      (leftView &&
+        leftView.origin?.UICCode === leftView.destination?.UICCode) ||
+      (rightView &&
+        rightView.origin?.UICCode === rightView.destination?.UICCode),
+    [leftView, rightView],
+  );
 
   const handleSave = () => {
     submitted.submit();
-    if (isInvalidForm()) {
+    if (isInvalidForm() || isOriginDestinationSame()) {
       return;
     }
 
@@ -108,6 +136,18 @@ export default function SplitViewForm() {
     }
   };
 
+  const getErrorMessage = useCallback(() => {
+    if (isInvalidForm()) {
+      return 'Please complete the form';
+    }
+
+    if (isOriginDestinationSame()) {
+      return 'Please use different origin or destination';
+    }
+
+    return 'Some error. Please try later.';
+  }, [isInvalidForm, isOriginDestinationSame]);
+
   useEffect(() => {
     if (splitViewId && splitViewSnapshot) {
       setLeftView(splitViewSnapshot.view1);
@@ -120,14 +160,15 @@ export default function SplitViewForm() {
       <AppBar sx={{ position: 'relative' }}>
         <Toolbar>
           <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            New split view
+            {!splitViewId ? 'New split view' : 'Manage split view'}
           </Typography>
         </Toolbar>
       </AppBar>
       {splitViewIsLoading && <LinearProgress />}
-      {submitted.isSubmitted && isInvalidForm() && (
-        <Alert severity="error">Please complete the form</Alert>
-      )}
+      {submitted.isSubmitted &&
+        (isInvalidForm() || isOriginDestinationSame()) && (
+          <Alert severity="error">{getErrorMessage()}</Alert>
+        )}
       <SingleViewCard
         title="Left view"
         onSelect={(station, type) =>
@@ -145,14 +186,29 @@ export default function SplitViewForm() {
       />
 
       <Stack direction="row" justifyContent="flex-end" p={2} spacing={2}>
-        <Button color="secondary" variant="outlined" onClick={handleCancel}>
+        <Button
+          startIcon={<DeleteIcon />}
+          color="error"
+          variant="contained"
+          onClick={handleDelete}
+          sx={{ position: 'absolute', left: 20 }}
+          disabled={splitViewIsLoading}
+        >
+          Delete
+        </Button>
+        <Button
+          color="secondary"
+          variant="outlined"
+          onClick={handleCancel}
+          disabled={splitViewIsLoading}
+        >
           Cancel
         </Button>
         <LoadingButton
           color="primary"
           variant="outlined"
           onClick={handleSave}
-          loading={loading.isLoading}
+          loading={loading.isLoading || splitViewIsLoading}
         >
           Save
         </LoadingButton>
