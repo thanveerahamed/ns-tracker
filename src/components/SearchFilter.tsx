@@ -96,10 +96,13 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
 
   const handleDateTimeChange = (
     value: Dayjs | 'now',
-    isArrivalValue: boolean,
+    isArrivalValue?: boolean,
   ) => {
     setSelectedDateTime(value);
-    setIsArrival(isArrivalValue);
+
+    if (isArrivalValue) {
+      setIsArrival(isArrivalValue);
+    }
   };
 
   const areStationsSame = () =>

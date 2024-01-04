@@ -5,12 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import Timeline from '@mui/lab/Timeline';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import {
   Button,
   Card,
@@ -26,45 +20,11 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
+import SplitViewTimeLineView from '../../components/splitView/SplitViewTimeLineView.tsx';
+
 import { auth } from '../../services/firebase.ts';
 import { useSplitView } from '../../services/splitView.ts';
 import { ISplitView, ISplitViewWithId } from '../../types/splitView.ts';
-
-function TimeLineView({ from, to }: { from: string; to: string }) {
-  return (
-    <Timeline
-      sx={{
-        [`& .${timelineItemClasses.root}:before`]: {
-          flex: 0,
-          padding: 0,
-        },
-        width: '150px',
-      }}
-    >
-      <TimelineItem sx={{ minHeight: '50px' }}>
-        <TimelineSeparator>
-          <TimelineDot color="primary" />
-          <TimelineConnector />
-        </TimelineSeparator>
-        <TimelineContent>
-          <Typography variant="subtitle2" sx={{ color: 'primary.main' }}>
-            {from}
-          </Typography>
-        </TimelineContent>
-      </TimelineItem>
-      <TimelineItem sx={{ minHeight: '20px' }}>
-        <TimelineSeparator>
-          <TimelineDot color="secondary" />
-        </TimelineSeparator>
-        <TimelineContent>
-          <Typography variant="subtitle2" sx={{ color: 'secondary.main' }}>
-            {to}
-          </Typography>
-        </TimelineContent>
-      </TimelineItem>
-    </Timeline>
-  );
-}
 
 export default function SplitViewDashboard() {
   const navigate = useNavigate();
@@ -133,14 +93,14 @@ export default function SplitViewDashboard() {
                       direction="row"
                       onClick={() => handleView(splitView)}
                     >
-                      <TimeLineView
+                      <SplitViewTimeLineView
                         from={splitView.view1.origin.namen.lang}
                         to={splitView.view1.destination.namen.lang}
                       />
                       <Divider orientation="vertical" flexItem>
                         AND
                       </Divider>
-                      <TimeLineView
+                      <SplitViewTimeLineView
                         from={splitView.view2.origin.namen.lang}
                         to={splitView.view2.destination.namen.lang}
                       />
