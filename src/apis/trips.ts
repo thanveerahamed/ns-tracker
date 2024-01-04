@@ -1,23 +1,28 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import dayjs from 'dayjs';
 
 import { getTrip, getTripsInformation } from '../services/trip.ts';
-import { GetTripsInformationProps } from '../types/trip.ts';
+import { GetTripsInformationProps, LoadMoreAction } from '../types/trip.ts';
 
-const createUseTripsInformationQuery = ({
-  originUicCode,
-  viaUicCode,
-  destinationUicCode,
-  context,
-  searchForArrival,
-}: Partial<GetTripsInformationProps>) => [
-  ...(originUicCode ? [originUicCode] : []),
-  ...(viaUicCode ? [viaUicCode] : []),
-  ...(destinationUicCode ? [destinationUicCode] : []),
-  ...(context ? [context] : []),
-  ...(searchForArrival ? [searchForArrival] : []),
-];
+const createUseTripsInformationQuery = (
+  props: Partial<GetTripsInformationProps>,
+) => {
+  const { dateTime, searchForArrival, ...rest } = props;
+  const values = Object.values(rest);
+
+  if (dateTime) {
+    values.push(dateTime.millisecond().toString());
+  }
+
+  if (searchForArrival) {
+    values.push('arrival');
+  } else {
+    values.push('departure');
+  }
+
+  return values;
+};
 
 export const useTripsInformation = (
   props: Partial<GetTripsInformationProps>,
@@ -27,7 +32,7 @@ export const useTripsInformation = (
       props.originUicCode !== undefined &&
       props.destinationUicCode !== undefined &&
       props.dateTime !== undefined,
-    queryKey: ['stations', createUseTripsInformationQuery(props)],
+    queryKey: ['stations', ...createUseTripsInformationQuery(props)],
     queryFn: async () => {
       return await getTripsInformation({
         originUicCode: props.originUicCode ?? '',
@@ -40,26 +45,26 @@ export const useTripsInformation = (
   });
 };
 
-export const useTripsInformationWithContext = (
-  props: Partial<GetTripsInformationProps>,
-  enabled: boolean,
-) => {
-  return useQuery({
-    enabled:
-      enabled &&
-      props.originUicCode !== undefined &&
-      props.destinationUicCode !== undefined &&
-      props.dateTime !== undefined,
-    queryKey: ['stations', 'context', createUseTripsInformationQuery(props)],
-    queryFn: async () => {
-      return await getTripsInformation({
-        originUicCode: props.originUicCode ?? '',
-        destinationUicCode: props.destinationUicCode ?? '',
-        dateTime: props.dateTime ?? dayjs(),
-        searchForArrival: props.searchForArrival,
-        viaUicCode: props.viaUicCode,
-        context: props.context,
-      });
+export const useTripsInformationWithContext = () => {
+  return useMutation({
+    mutationFn: async ({
+      props,
+      action,
+    }: {
+      props: Partial<GetTripsInformationProps>;
+      action: LoadMoreAction;
+    }) => {
+      return {
+        action,
+        response: await getTripsInformation({
+          originUicCode: props.originUicCode ?? '',
+          destinationUicCode: props.destinationUicCode ?? '',
+          dateTime: props.dateTime ?? dayjs(),
+          searchForArrival: props.searchForArrival,
+          viaUicCode: props.viaUicCode,
+          context: props.context,
+        }),
+      };
     },
   });
 };

@@ -6,6 +6,7 @@ import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PinDropIcon from '@mui/icons-material/PinDrop';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SwapVertIcon from '@mui/icons-material/SwapVert';
@@ -31,9 +32,10 @@ import { LocationType, NSStation } from '../types/station.ts';
 
 interface Props {
   onSearch: () => void;
+  variant?: 'refresh' | 'search';
 }
 
-export default function SearchFilter({ onSearch }: Props) {
+export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
   const {
     setHasIntermediateStop,
     hasIntermediateStop,
@@ -280,13 +282,19 @@ export default function SearchFilter({ onSearch }: Props) {
               <SettingsIcon />
             </Badge>
           </IconButton>
-          <Button
-            color="primary"
-            variant="contained"
-            onClick={internalOnSearch}
-          >
-            <SearchIcon />
-          </Button>
+          {variant === 'search' ? (
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={internalOnSearch}
+            >
+              <SearchIcon />
+            </Button>
+          ) : (
+            <IconButton color="primary" onClick={internalOnSearch}>
+              <RefreshIcon />
+            </IconButton>
+          )}
         </Box>
       </Box>
 

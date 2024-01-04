@@ -472,3 +472,8 @@ export interface GetTripsInformationProps {
 export interface FavouriteTrip extends Trip {
   docId: string;
 }
+
+export enum LoadMoreAction {
+  Earlier,
+  Later,
+}

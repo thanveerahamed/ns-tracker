@@ -57,7 +57,7 @@ export default function TripsInformation() {
           justifyContent: 'space-between',
         }}
       >
-        <SearchFilter onSearch={reload} />
+        <SearchFilter onSearch={reload} variant="refresh" />
       </Paper>
       {!isInitialLoading && (
         <Stack direction="row" justifyContent="space-between">

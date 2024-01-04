@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 
-import { getTripsInformation } from '../services/trip.ts';
-import { Trip, TripsInformation } from '../types/trip.ts';
+import {
+  useTripsInformation,
+  useTripsInformationWithContext,
+} from '../apis/trips.ts';
+import { LoadMoreAction, Trip } from '../types/trip.ts';
 
 interface Props {
   originUicCode?: string;
@@ -27,92 +30,95 @@ export const useTrips = ({
   const [laterJourneyContext, setLaterJourneyContext] = useState<
     string | undefined
   >(undefined);
-  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(false);
-  const [isLoadMoreLoading, setIsLoadMoreLoading] = useState<boolean>(false);
 
-  const makeFetch = useCallback(
-    async (
-      context?: string,
-      callback?: (tripsInformation: TripsInformation) => void,
-    ) => {
-      const response = await getTripsInformation({
-        originUicCode: originUicCode ?? '',
-        destinationUicCode: destinationUicCode ?? '',
-        dateTime: dateTime ?? dayjs(),
-        searchForArrival,
-        viaUicCode: viaUicCode,
-        context,
-      });
+  const {
+    isLoading,
+    data: initialTripData,
+    refetch,
+  } = useTripsInformation({
+    originUicCode,
+    destinationUicCode,
+    viaUicCode,
+    searchForArrival,
+    dateTime,
+  });
 
-      if (callback) {
-        callback(response);
-      }
-    },
-    [dateTime, destinationUicCode, originUicCode, searchForArrival, viaUicCode],
-  );
+  const {
+    mutate: loadMore,
+    data: loadMoreTripsData,
+    isSuccess,
+    reset,
+    isPending,
+  } = useTripsInformationWithContext();
 
   const handleLoadEarlier = () => {
-    setIsLoadMoreLoading(true);
-    (async () => {
-      try {
-        await makeFetch(earlierJourneyContext, (response) => {
-          setTrips((prevState) => {
-            return [...response.trips, ...prevState];
-          });
-          setEarlierJourneyContext(response.scrollRequestBackwardContext);
-        });
-      } finally {
-        setIsLoadMoreLoading(false);
-      }
-    })();
+    reset();
+    loadMore({
+      props: {
+        originUicCode,
+        destinationUicCode,
+        viaUicCode,
+        searchForArrival,
+        dateTime,
+        context: earlierJourneyContext,
+      },
+      action: LoadMoreAction.Earlier,
+    });
   };
 
   const handleLoadLater = () => {
-    setIsLoadMoreLoading(true);
-    (async () => {
-      try {
-        await makeFetch(laterJourneyContext, (response) => {
-          setTrips((prevState) => {
-            return [...prevState, ...response.trips];
-          });
-          setLaterJourneyContext(response.scrollRequestForwardContext);
-        });
-      } finally {
-        setIsLoadMoreLoading(false);
-      }
-    })();
-  };
-
-  const fetchTrips = useCallback(() => {
-    setIsInitialLoading(true);
-    (async () => {
-      try {
-        await makeFetch(undefined, (response) => {
-          setTrips(response.trips);
-          setEarlierJourneyContext(response.scrollRequestBackwardContext);
-          setLaterJourneyContext(response.scrollRequestForwardContext);
-        });
-      } finally {
-        setIsInitialLoading(false);
-      }
-    })();
-  }, [makeFetch]);
-
-  const handleReload = () => {
-    fetchTrips();
+    reset();
+    loadMore({
+      props: {
+        originUicCode,
+        destinationUicCode,
+        viaUicCode,
+        searchForArrival,
+        dateTime,
+        context: laterJourneyContext,
+      },
+      action: LoadMoreAction.Later,
+    });
   };
 
   useEffect(() => {
-    fetchTrips();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!loadMoreTripsData) {
+      return;
+    }
+
+    if (loadMoreTripsData.action === LoadMoreAction.Earlier) {
+      setTrips((prevState) => {
+        return [...loadMoreTripsData.response.trips, ...prevState];
+      });
+      setEarlierJourneyContext(
+        loadMoreTripsData.response.scrollRequestBackwardContext,
+      );
+    } else {
+      setTrips((prevState) => {
+        return [...prevState, ...loadMoreTripsData.response.trips];
+      });
+      setLaterJourneyContext(
+        loadMoreTripsData.response.scrollRequestForwardContext,
+      );
+    }
+
+    reset();
+  }, [loadMoreTripsData, reset]);
+
+  useEffect(() => {
+    if (initialTripData) {
+      setTrips(initialTripData.trips);
+      setEarlierJourneyContext(initialTripData.scrollRequestBackwardContext);
+      setLaterJourneyContext(initialTripData.scrollRequestForwardContext);
+    }
+  }, [initialTripData]);
 
   return {
     trips,
-    isInitialLoading,
-    isLoadMoreLoading,
+    isInitialLoading: isLoading,
+    isLoadMoreLoading: isPending && !isSuccess,
     loadLater: handleLoadLater,
     loadEarlier: handleLoadEarlier,
-    reload: handleReload,
+    reload: refetch,
   };
 };
