@@ -15,10 +15,10 @@ import dayjs, { Dayjs } from 'dayjs';
 
 interface DatePickerModalProps {
   open: boolean;
-  onChange: (currentTime?: Dayjs | 'now') => void;
+  onChange: (currentTime: Dayjs | 'now', isArrival: boolean) => void;
   value: Dayjs;
   isArrival: boolean;
-  setIsArrival: (flag: boolean) => void;
+  onClose: () => void;
 }
 
 function DatePickerModal({
@@ -26,7 +26,7 @@ function DatePickerModal({
   onChange,
   value,
   isArrival,
-  setIsArrival,
+  onClose,
 }: DatePickerModalProps) {
   const [currentDateTime, setCurrentDateTime] = useState<Dayjs>(value);
   const [internalIsArrival, setInternalIsArrival] =
@@ -38,21 +38,20 @@ function DatePickerModal({
     }
   };
 
-  const handleClose = (dateTime?: Dayjs | 'now') => {
-    if (internalIsArrival !== isArrival) {
-      setIsArrival(internalIsArrival);
-    }
-
-    setInternalIsArrival(isArrival);
-
-    onChange(dateTime);
-  };
-
   const handleArrivalChange = (
     _event: MouseEvent<HTMLElement>,
     newAlignment: string,
   ) => {
     setInternalIsArrival(newAlignment === 'arrival');
+  };
+
+  const handleSave = () => onChange(currentDateTime, internalIsArrival);
+
+  const handleNow = () => {
+    setCurrentDateTime(dayjs());
+    setInternalIsArrival(false);
+
+    onChange(dayjs(), false);
   };
 
   useEffect(() => {
@@ -76,11 +75,7 @@ function DatePickerModal({
                 <ToggleButton value="arrival">Arrival</ToggleButton>
               </ToggleButtonGroup>
             </Box>
-            <Button
-              onClick={() => handleClose('now')}
-              color="secondary"
-              variant="contained"
-            >
+            <Button onClick={handleNow} color="secondary" variant="contained">
               NOW
             </Button>
           </Box>
@@ -92,10 +87,10 @@ function DatePickerModal({
         />
         <Paper variant="outlined" sx={{ padding: '5px' }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button onClick={() => handleClose()} color="warning">
+            <Button onClick={onClose} color="warning">
               CANCEL
             </Button>
-            <Button onClick={() => handleClose(currentDateTime)}>OK</Button>
+            <Button onClick={handleSave}>OK</Button>
           </Box>
         </Paper>
       </DialogContent>
@@ -104,26 +99,28 @@ function DatePickerModal({
 }
 
 interface CustomDateTimePickerProps {
-  onChange: (currentTime?: Dayjs | 'now') => void;
+  onChange: (currentTime: Dayjs | 'now', isArrival: boolean) => void;
   value: Dayjs | 'now';
   isArrival: boolean;
-  setIsArrival: (flag: boolean) => void;
 }
 export default function CustomDateTimePicker({
   onChange,
   value,
   isArrival,
-  setIsArrival,
 }: CustomDateTimePickerProps) {
   const [openDateTimeSelectorModel, setOpenDateTimeSelectorModel] =
     useState<boolean>(false);
 
-  const handleModalOnChange = (currentTime?: Dayjs | 'now') => {
-    if (currentTime) {
-      onChange(currentTime);
-    }
-
+  const handleModalClose = () => {
     setOpenDateTimeSelectorModel(false);
+  };
+
+  const handleModalOnChange = (
+    currentTime: Dayjs | 'now',
+    newIsArrival: boolean,
+  ) => {
+    onChange(currentTime, newIsArrival);
+    handleModalClose();
   };
 
   return (
@@ -142,7 +139,7 @@ export default function CustomDateTimePicker({
         onChange={handleModalOnChange}
         value={value === 'now' ? dayjs() : dayjs(value)}
         isArrival={isArrival}
-        setIsArrival={setIsArrival}
+        onClose={handleModalClose}
       />
     </>
   );

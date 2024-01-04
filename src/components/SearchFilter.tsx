@@ -19,7 +19,7 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Badge, Button, IconButton, TextField } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 
 import CustomDateTimePicker from '../components/CustomDateTimePicker.tsx';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
@@ -92,21 +92,12 @@ export default function SearchFilter({ onSearch }: Props) {
     setVia(undefined);
   };
 
-  const handleDateTimeChange = (value?: Dayjs | 'now') => {
-    if (value) {
-      setSelectedDateTime(value);
-    }
-
-    if (value === 'now') {
-      setIsArrival(false);
-    }
-  };
-
-  const handleIsArrivalChange = (newState: boolean) => {
-    if (newState && selectedDateTime === 'now') {
-      setSelectedDateTime(dayjs());
-    }
-    setIsArrival(newState);
+  const handleDateTimeChange = (
+    value: Dayjs | 'now',
+    isArrivalValue: boolean,
+  ) => {
+    setSelectedDateTime(value);
+    setIsArrival(isArrivalValue);
   };
 
   const areStationsSame = () =>
@@ -267,7 +258,6 @@ export default function SearchFilter({ onSearch }: Props) {
             onChange={handleDateTimeChange}
             value={selectedDateTime}
             isArrival={isArrival}
-            setIsArrival={handleIsArrivalChange}
           />
           <IconButton
             color={hasIntermediateStop ? 'error' : 'warning'}

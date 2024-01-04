@@ -139,7 +139,7 @@ export const SearchFilterProvider = ({
     setFilters((prevState) => {
       return {
         ...prevState,
-        newValue,
+        isArrival: newValue,
       };
     });
   };
