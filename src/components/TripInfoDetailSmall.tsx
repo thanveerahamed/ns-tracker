@@ -1,31 +1,24 @@
-import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
-import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
 import TripStartAndEndTime from './TripStartAndEndTime.tsx';
-import StarIcon from '@mui/icons-material/Star';
-import TrainIcon from '@mui/icons-material/Train';
-import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStation';
-import { Chip, Grid, Stack } from '@mui/material';
+import { Chip, Grid } from '@mui/material';
 import Typography from '@mui/material/Typography';
 
 import { Trip } from '../types/trip.ts';
 import { getPaletteColorFromNesProperties } from '../utils/trips.ts';
 
-export function TripInfoDetail({
+export function TripInfoDetailSmall({
   trip,
-  isChangeInIntermediateStop,
   hideStartAndEndTime,
-  isFavourite,
 }: {
   trip: Trip;
-  isChangeInIntermediateStop: boolean;
-  isFavourite: boolean;
   hideStartAndEndTime?: boolean;
 }) {
   return (
     <Grid container>
-      <Grid item xs={9}>
-        {!hideStartAndEndTime && <TripStartAndEndTime trip={trip} />}
+      <Grid item xs={12}>
+        {!hideStartAndEndTime && (
+          <TripStartAndEndTime trip={trip} variant="caption" />
+        )}
         {trip.legs.map((leg, index) => (
           <Chip
             sx={{
@@ -34,11 +27,10 @@ export function TripInfoDetail({
                 display: 'block',
                 whiteSpace: 'normal',
               },
-              'margin': '5px',
+              'marginBottom': '5px',
               'borderRadius': '0',
             }}
             key={index}
-            icon={<TrainIcon />}
             label={`${leg.product.displayName} (Track: ${
               leg.origin.actualTrack ?? leg.origin.plannedTrack
             })`}
@@ -46,6 +38,7 @@ export function TripInfoDetail({
             color="primary"
           />
         ))}
+        <DurationDisplay trip={trip} />
         {trip.labelListItems && trip.labelListItems.length > 0 && (
           <Chip
             label={trip.labelListItems.map((item) => item.label).join(',')}
@@ -65,27 +58,6 @@ export function TripInfoDetail({
             {trip.primaryMessage.title}
           </Typography>
         )}
-      </Grid>
-      <Grid item xs={3}>
-        <Grid container>
-          <Grid xs={12}>
-            <DurationDisplay trip={trip} />
-          </Grid>
-          <Grid xs={6}>
-            <NumberOfConnectionsDisplay connections={trip.legs.length - 1} />
-          </Grid>
-          <Grid xs={6}>
-            {trip.crowdForecast !== 'UNKNOWN' && (
-              <Stack direction="row" alignItems="center" gap={1}>
-                <CrowdForecast crowdForecast={trip.crowdForecast} />
-              </Stack>
-            )}
-          </Grid>
-          <Grid xs={6}>
-            {isChangeInIntermediateStop && <TransferWithinAStationIcon />}
-          </Grid>
-          <Grid xs={6}> {isFavourite && <StarIcon color="primary" />}</Grid>
-        </Grid>
       </Grid>
     </Grid>
   );

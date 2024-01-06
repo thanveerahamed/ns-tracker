@@ -23,6 +23,7 @@ export default function SplitViewTimeLineView({
           padding: 0,
         },
         minWidth: '150px',
+        margin: 0,
       }}
     >
       <TimelineItem sx={{ minHeight: '50px' }}>

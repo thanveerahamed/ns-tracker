@@ -2,12 +2,18 @@ import { useMemo } from 'react';
 
 import TripTiming from './TripTiming.tsx';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Stack } from '@mui/material';
+import { Stack, TypographyVariant } from '@mui/material';
 
 import { Trip } from '../types/trip.ts';
 import { getCompleteTripEndLocations } from '../utils/trips.ts';
 
-export default function TripStartAndEndTime({ trip }: { trip: Trip }) {
+export default function TripStartAndEndTime({
+  trip,
+  variant = 'h6',
+}: {
+  trip: Trip;
+  variant?: TypographyVariant;
+}) {
   const { completeTripOrigin, completeTripDestination } = useMemo(() => {
     return getCompleteTripEndLocations(trip);
   }, [trip]);
@@ -16,13 +22,13 @@ export default function TripStartAndEndTime({ trip }: { trip: Trip }) {
     <Stack direction="row" alignItems="center">
       <TripTiming
         location={completeTripOrigin}
-        variant="h6"
+        variant={variant}
         sx={{ marginRight: '2px' }}
       />
       <ArrowForwardIcon />
       <TripTiming
         location={completeTripDestination}
-        variant="h6"
+        variant={variant}
         sx={{ marginLeft: '2px' }}
       />
     </Stack>

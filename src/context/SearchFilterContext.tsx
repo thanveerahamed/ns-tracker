@@ -93,7 +93,7 @@ export const SearchFilterProvider = ({
         origin: props.origin,
         destination: props.destination,
         via: props.via,
-        selectedDateTime: 'now',
+        selectedDateTime: dayjs(),
         hasIntermediateStop: Boolean(props.via),
       };
     });

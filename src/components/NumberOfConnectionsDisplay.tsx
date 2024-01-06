@@ -4,12 +4,14 @@ import Typography from '@mui/material/Typography';
 
 export default function ConnectionCounts({
   connections,
+  hideIcon = false,
 }: {
   connections: number;
+  hideIcon?: boolean;
 }) {
   return (
     <Stack direction="row" alignItems="center" gap={1}>
-      <SyncIcon />
+      {!hideIcon && <SyncIcon />}
       <Typography display="block" gutterBottom>
         {connections}
       </Typography>

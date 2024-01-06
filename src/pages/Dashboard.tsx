@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [user] = useAuthState(auth);
   const [recentSearchSnapshots] = useRecentSearch(user?.uid);
 
-  const { updateRecentSearch, reload } = useTripsInformationContext();
+  const { updateRecentSearch } = useTripsInformationContext();
 
   const recentSearch = useMemo(() => {
     return (
@@ -41,14 +41,12 @@ export default function Dashboard() {
   }, [recentSearchSnapshots]);
 
   const handleSearch = () => {
-    setTimeout(() => {
-      reload();
-      navigate('/tripsInformation');
-    }, 1000);
+    navigate('/tripsInformation');
   };
 
   const handleRecentSearchClicked = (props: UpdateRecentSearchProps) => {
     updateRecentSearch(props);
+    handleSearch();
   };
 
   return (

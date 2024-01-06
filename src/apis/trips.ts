@@ -12,7 +12,7 @@ const createUseTripsInformationQuery = (
   const values = Object.values(rest);
 
   if (dateTime) {
-    values.push(dateTime.millisecond().toString());
+    values.push(dateTime.toISOString());
   }
 
   if (searchForArrival) {

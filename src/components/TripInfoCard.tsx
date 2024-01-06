@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { TripInfoDetail } from './TripInfoDetail.tsx';
+import { TripInfoDetailSmall } from './TripInfoDetailSmall.tsx';
 import TripStartAndEndTime from './TripStartAndEndTime.tsx';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -24,6 +25,7 @@ interface Props {
   via?: NSStation;
   isFavourite: boolean;
   onSelect: (trip: Trip) => void;
+  variant?: 'small' | 'regular';
 }
 
 export default function TripInfoCard({
@@ -31,6 +33,7 @@ export default function TripInfoCard({
   via,
   onSelect,
   isFavourite,
+  variant = 'regular',
 }: Props) {
   const isChangeInIntermediateStop = useCallback(
     (trip: Trip) => {
@@ -63,12 +66,16 @@ export default function TripInfoCard({
           onClick={() => onSelect(trip)}
           sx={{ border: '1px solid rgb(118 66 66)' }}
         >
-          <TripInfoDetail
-            trip={trip}
-            isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
-            hideStartAndEndTime
-            isFavourite={isFavourite}
-          />
+          {variant === 'small' ? (
+            <TripInfoDetailSmall trip={trip} hideStartAndEndTime />
+          ) : (
+            <TripInfoDetail
+              trip={trip}
+              isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
+              hideStartAndEndTime
+              isFavourite={isFavourite}
+            />
+          )}
         </AccordionDetails>
       </Accordion>
     </ListItem>
@@ -92,11 +99,15 @@ export default function TripInfoCard({
             <Alert severity="warning">{trip.status}</Alert>
           )}
           <CardContent>
-            <TripInfoDetail
-              trip={trip}
-              isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
-              isFavourite={isFavourite}
-            />
+            {variant === 'small' ? (
+              <TripInfoDetailSmall trip={trip} />
+            ) : (
+              <TripInfoDetail
+                trip={trip}
+                isChangeInIntermediateStop={isChangeInIntermediateStop(trip)}
+                isFavourite={isFavourite}
+              />
+            )}
           </CardContent>
         </Card>
       </ListItemButton>
