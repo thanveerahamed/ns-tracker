@@ -35,6 +35,7 @@ export const useTrips = ({
     isLoading,
     data: initialTripData,
     refetch,
+    isRefetching,
   } = useTripsInformation({
     originUicCode,
     destinationUicCode,
@@ -107,6 +108,7 @@ export const useTrips = ({
 
   useEffect(() => {
     if (initialTripData) {
+      setTrips([]);
       setTrips(initialTripData.trips);
       setEarlierJourneyContext(initialTripData.scrollRequestBackwardContext);
       setLaterJourneyContext(initialTripData.scrollRequestForwardContext);
@@ -115,7 +117,7 @@ export const useTrips = ({
 
   return {
     trips,
-    isInitialLoading: isLoading,
+    isInitialLoading: isLoading || isRefetching,
     isLoadMoreLoading: isPending && !isSuccess,
     loadLater: handleLoadLater,
     loadEarlier: handleLoadEarlier,

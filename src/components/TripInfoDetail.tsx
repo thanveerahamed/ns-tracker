@@ -68,23 +68,25 @@ export function TripInfoDetail({
       </Grid>
       <Grid item xs={3}>
         <Grid container>
-          <Grid xs={12}>
+          <Grid xs={12} item>
             <DurationDisplay trip={trip} />
           </Grid>
-          <Grid xs={6}>
+          <Grid xs={6} item>
             <NumberOfConnectionsDisplay connections={trip.legs.length - 1} />
           </Grid>
-          <Grid xs={6}>
+          <Grid xs={6} item>
             {trip.crowdForecast !== 'UNKNOWN' && (
               <Stack direction="row" alignItems="center" gap={1}>
                 <CrowdForecast crowdForecast={trip.crowdForecast} />
               </Stack>
             )}
           </Grid>
-          <Grid xs={6}>
+          <Grid xs={6} item>
             {isChangeInIntermediateStop && <TransferWithinAStationIcon />}
           </Grid>
-          <Grid xs={6}> {isFavourite && <StarIcon color="primary" />}</Grid>
+          <Grid xs={6} item>
+            {isFavourite && <StarIcon color="primary" />}
+          </Grid>
         </Grid>
       </Grid>
     </Grid>

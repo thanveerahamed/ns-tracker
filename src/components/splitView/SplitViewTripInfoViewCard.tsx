@@ -4,6 +4,7 @@ import { useState } from 'react';
 import SplitViewTimeLineView from './SplitViewTimeLineView.tsx';
 import CloseIcon from '@mui/icons-material/Close';
 import {
+  Button,
   Chip,
   Divider,
   IconButton,
@@ -17,8 +18,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import dayjs, { Dayjs } from 'dayjs';
 
-import { useTripsInformation } from '../../apis/trips.ts';
 import { useDialog } from '../../hooks/useDialog.ts';
+import { useTrips } from '../../hooks/useTrips.ts';
 import { IView } from '../../types/splitView.ts';
 import { Trip } from '../../types/trip.ts';
 import TripInfoCard from '../TripInfoCard.tsx';
@@ -33,7 +34,13 @@ export default function SplitViewTripInfoViewCard({ view }: Props) {
   const [dateTime, setDateTime] = useState<Dayjs>(dayjs());
   const dateTimeDialog = useDialog();
   const journeyInfoDialog = useDialog();
-  const { isLoading, data } = useTripsInformation({
+  const {
+    isInitialLoading: isLoading,
+    trips: data,
+    loadLater,
+    loadEarlier,
+    isLoadMoreLoading,
+  } = useTrips({
     dateTime,
     originUicCode: view.origin.UICCode,
     destinationUicCode: view.destination.UICCode,
@@ -77,9 +84,16 @@ export default function SplitViewTripInfoViewCard({ view }: Props) {
           <Typography variant="caption">Departures</Typography>
         </Divider>
         {isLoading && <LinearProgress />}
-
+        <Button
+          fullWidth
+          size="small"
+          onClick={loadEarlier}
+          disabled={isLoadMoreLoading}
+        >
+          {isLoadMoreLoading ? 'Loading...' : 'Earlier'}
+        </Button>
         {data &&
-          data.trips
+          data
             .filter((trip) => trip.status !== 'CANCELLED')
             .map((trip) => {
               return (
@@ -91,6 +105,14 @@ export default function SplitViewTripInfoViewCard({ view }: Props) {
                 />
               );
             })}
+        <Button
+          fullWidth
+          size="small"
+          onClick={loadLater}
+          disabled={isLoadMoreLoading}
+        >
+          {isLoadMoreLoading ? 'Loading...' : 'Later'}
+        </Button>
       </Box>
 
       {dateTimeDialog.isOpen && (
