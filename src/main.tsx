@@ -31,6 +31,7 @@ const theme = createTheme({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      staleTime: 30000,
       retry: false,
     },
     mutations: {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SearchSettings from './SearchSettings.tsx';
+import styled from '@emotion/styled';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -164,17 +165,19 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
               flex: 0,
               padding: 0,
             },
+            margin: '5px 0',
           }}
         >
-          <TimelineItem>
+          <TimelineItem sx={{ minHeight: '60px' }}>
             <TimelineSeparator>
               <TimelineDot color="secondary">
-                <LocationOnIcon />
+                <LocationOnIcon fontSize="small" />
               </TimelineDot>
               <TimelineConnector />
             </TimelineSeparator>
             <TimelineContent sx={{ paddingRight: '0' }}>
               <TextField
+                size="small"
                 label="Origin"
                 variant="outlined"
                 fullWidth
@@ -191,15 +194,16 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
             </TimelineContent>
           </TimelineItem>
           {hasIntermediateStop && (
-            <TimelineItem>
+            <TimelineItem sx={{ minHeight: '60px' }}>
               <TimelineSeparator>
                 <TimelineDot color="warning">
-                  <AddLocationIcon />
+                  <AddLocationIcon fontSize="small" />
                 </TimelineDot>
                 <TimelineConnector />
               </TimelineSeparator>
               <TimelineContent sx={{ paddingRight: '0' }}>
                 <TextField
+                  size="small"
                   label="Via"
                   variant="outlined"
                   fullWidth
@@ -216,14 +220,15 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
               </TimelineContent>
             </TimelineItem>
           )}
-          <TimelineItem>
+          <TimelineItem sx={{ minHeight: '60px' }}>
             <TimelineSeparator>
               <TimelineDot color="primary">
-                <PinDropIcon />
+                <PinDropIcon fontSize="small" />
               </TimelineDot>
             </TimelineSeparator>
             <TimelineContent sx={{ paddingRight: '0' }}>
               <TextField
+                size="small"
                 label="Destination"
                 variant="outlined"
                 fullWidth
@@ -265,10 +270,7 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
             value={selectedDateTime}
             isArrival={isArrival}
           />
-          <IconButton
-            color={hasIntermediateStop ? 'error' : 'warning'}
-            onClick={handleToggleIntermediateStop}
-          >
+          <IconButton color="warning" onClick={handleToggleIntermediateStop}>
             {hasIntermediateStop ? (
               <WrongLocationIcon />
             ) : (
@@ -288,6 +290,7 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
           </IconButton>
           {variant === 'search' ? (
             <Button
+              size="small"
               color="primary"
               variant="contained"
               onClick={internalOnSearch}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import DateTimePickerModal from './DateTimePickerModal.tsx';
-import { TextField } from '@mui/material';
+import { Button, TextField } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 
 interface CustomDateTimePickerProps {
@@ -29,9 +29,14 @@ export default function CustomDateTimePicker({
     handleModalClose();
   };
 
+  const handleNowClick = () => {
+    onChange(dayjs(), false);
+  };
+
   return (
     <>
       <TextField
+        size="small"
         label={isArrival ? 'Arrival' : 'Departure'}
         variant="outlined"
         value={
@@ -40,6 +45,7 @@ export default function CustomDateTimePicker({
         onClick={() => setOpenDateTimeSelectorModel(true)}
         onFocus={(event) => event.target.blur()}
       />
+      <Button onClick={handleNowClick}>NOW</Button>
       {openDateTimeSelectorModel && (
         <DateTimePickerModal
           open={openDateTimeSelectorModel}

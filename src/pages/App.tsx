@@ -20,6 +20,9 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [dashboardState, setDashboardState] = useState<'dashboard' | 'info'>(
+    'info',
+  );
 
   const handleMenuDrawerClose = () => {
     setShowMenu(false);
@@ -32,6 +35,16 @@ function App() {
 
   const handleBottomNavigation = (route: string) => {
     navigate(route);
+  };
+
+  const handlePlannerBottonNavigationClick = () => {
+    if (dashboardState === 'info') {
+      setDashboardState('dashboard');
+      handleBottomNavigation('/tripsInformation');
+    } else {
+      setDashboardState('info');
+      handleBottomNavigation('/');
+    }
   };
 
   useEffect(() => {
@@ -67,7 +80,7 @@ function App() {
             value="/"
             label="Planner"
             icon={<DashboardIcon />}
-            onClick={() => handleBottomNavigation('/')}
+            onClick={handlePlannerBottonNavigationClick}
           />
           <BottomNavigationAction
             value="/favourites"
