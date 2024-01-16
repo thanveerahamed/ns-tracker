@@ -73,9 +73,9 @@ export default function Trip() {
     if (trip?.ctxRecon) {
       const result = (
         favouriteTripsSnapshots?.docs.map((doc) => {
-          const data = doc.data() as FavouriteTrip;
+          const data = doc.data() as { trip: string };
           return {
-            ...data,
+            ...(JSON.parse(data.trip) as FavouriteTrip),
             docId: doc.id,
           };
         }) ?? []

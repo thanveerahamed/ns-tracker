@@ -16,7 +16,7 @@ import TripInfoCard from '../components/TripInfoCard.tsx';
 import { useTripsInformationContext } from '../context';
 import { auth } from '../services/firebase.ts';
 import { useFavouriteTrip } from '../services/trip.ts';
-import { Trip } from '../types/trip.ts';
+import { FavouriteTrip, Trip } from '../types/trip.ts';
 
 export default function TripsInformation() {
   const navigate = useNavigate();
@@ -38,7 +38,10 @@ export default function TripsInformation() {
     (trip: Trip) => {
       return (
         favouriteTripsSnapshots?.docs
-          .map((doc) => doc.data().ctxRecon)
+          .map((doc) => {
+            const data = doc.data() as { trip: string };
+            return (JSON.parse(data.trip) as FavouriteTrip).ctxRecon;
+          })
           .includes(trip.ctxRecon) ?? false
       );
     },

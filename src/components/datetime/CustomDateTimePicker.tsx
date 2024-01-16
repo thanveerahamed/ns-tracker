@@ -40,13 +40,15 @@ export default function CustomDateTimePicker({
         onClick={() => setOpenDateTimeSelectorModel(true)}
         onFocus={(event) => event.target.blur()}
       />
-      <DateTimePickerModal
-        open={openDateTimeSelectorModel}
-        onChange={handleModalOnChange}
-        value={value === 'now' ? dayjs() : dayjs(value)}
-        isArrival={isArrival}
-        onClose={handleModalClose}
-      />
+      {openDateTimeSelectorModel && (
+        <DateTimePickerModal
+          open={openDateTimeSelectorModel}
+          onChange={handleModalOnChange}
+          value={value === 'now' ? dayjs() : dayjs(value)}
+          isArrival={isArrival}
+          onClose={handleModalClose}
+        />
+      )}
     </>
   );
 }

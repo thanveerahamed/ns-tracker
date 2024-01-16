@@ -38,7 +38,9 @@ export const getTrip = async ({
 };
 
 export const addFavouriteTrip = (userId: string, trip: Trip) =>
-  addDoc(collection(db, 'users', userId, 'favouriteTrips'), trip);
+  addDoc(collection(db, 'users', userId, 'favouriteTrips'), {
+    trip: JSON.stringify(trip),
+  });
 
 export const useFavouriteTrip = (userId?: string) =>
   useCollection(collection(db, 'users', userId ?? '', 'favouriteTrips'), {

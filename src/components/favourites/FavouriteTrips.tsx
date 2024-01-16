@@ -62,7 +62,8 @@ export default function FavouriteTrips() {
   const trips = useMemo(() => {
     const memoizedTrips = favouriteTripsSnapshots?.docs.reduce(
       (result: MemoizedTrips, tripDoc): MemoizedTrips => {
-        const currentTrip = tripDoc.data() as FavouriteTrip;
+        const tripData = tripDoc.data() as { trip: string };
+        const currentTrip = JSON.parse(tripData.trip) as FavouriteTrip;
         const isCurrent = dayjs().isBetween(
           currentTrip.legs[0].origin.actualDateTime,
           currentTrip.legs[currentTrip.legs.length - 1].destination

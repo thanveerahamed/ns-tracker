@@ -25,7 +25,7 @@ import { Dayjs } from 'dayjs';
 import StationSelectionDialog from '../components/StationSelectionDialog.tsx';
 import CustomDateTimePicker from '../components/datetime/CustomDateTimePicker.tsx';
 
-import { useSearchFilterContext } from '../context';
+import { useSearchFilterContext, useTripsInformationContext } from '../context';
 import { auth } from '../services/firebase.ts';
 import { createRecentSearch } from '../services/recent.ts';
 import { LocationType, NSStation } from '../types/station.ts';
@@ -52,6 +52,7 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
     isArrival,
     settingsEnabled,
   } = useSearchFilterContext();
+  const { isInitialLoading } = useTripsInformationContext();
   const [user] = useAuthState(auth);
   const [openStationSelection, setOpenStationSelection] =
     useState<boolean>(false);
@@ -100,7 +101,7 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
   ) => {
     setSelectedDateTime(value);
 
-    if (isArrivalValue) {
+    if (isArrivalValue !== undefined) {
       setIsArrival(isArrivalValue);
     }
   };
@@ -295,7 +296,23 @@ export default function SearchFilter({ onSearch, variant = 'search' }: Props) {
             </Button>
           ) : (
             <IconButton color="primary" onClick={internalOnSearch}>
-              <RefreshIcon />
+              <RefreshIcon
+                sx={
+                  isInitialLoading
+                    ? {
+                        'animation': 'spin 2s linear infinite',
+                        '@keyframes spin': {
+                          '0%': {
+                            transform: 'rotate(0)',
+                          },
+                          '100%': {
+                            transform: 'rotate(360deg)',
+                          },
+                        },
+                      }
+                    : {}
+                }
+              />
             </IconButton>
           )}
         </Box>
