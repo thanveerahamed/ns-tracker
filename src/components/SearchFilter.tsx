@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SearchSettings from './SearchSettings.tsx';
-import styled from '@emotion/styled';
 import AddLocationIcon from '@mui/icons-material/AddLocation';
 import AddLocationAltIcon from '@mui/icons-material/AddLocationAlt';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
