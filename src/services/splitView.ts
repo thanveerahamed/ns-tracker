@@ -1,7 +1,15 @@
 import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 
 import { db } from './firebase.ts';
-import { addDoc, collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { Dayjs } from 'dayjs';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore';
 
 import { ISplitView } from '../types/splitView.ts';
 
@@ -28,3 +36,24 @@ export const useSplitViewDocument = (docId?: string, userId?: string) =>
       ? doc(db, 'users', userId ?? '', 'splitViews', docId)
       : undefined,
   );
+
+export const updateSplitViewDate = (
+  userId: string,
+  id: string,
+  view: 'view1' | 'view2',
+  dateTime: Dayjs,
+) => {
+  const updateElement = `${view}.dateTime`;
+  return updateDoc(doc(db, 'users', userId, 'splitViews', id), {
+    [updateElement]: dateTime.toString(),
+  });
+};
+
+export const toggleSplitViewOpened = (
+  userId: string,
+  id: string,
+  opened: boolean,
+) =>
+  updateDoc(doc(db, 'users', userId, 'splitViews', id), {
+    opened,
+  });

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SplitViewTimeLineView from './SplitViewTimeLineView.tsx';
 import CloseIcon from '@mui/icons-material/Close';
@@ -20,6 +21,8 @@ import dayjs, { Dayjs } from 'dayjs';
 
 import { useDialog } from '../../hooks/useDialog.ts';
 import { useTrips } from '../../hooks/useTrips.ts';
+import { auth } from '../../services/firebase.ts';
+import { updateSplitViewDate } from '../../services/splitView.ts';
 import { IView } from '../../types/splitView.ts';
 import { Trip } from '../../types/trip.ts';
 import TripInfoCard from '../TripInfoCard.tsx';
@@ -28,10 +31,17 @@ import DateTimePickerModal from '../datetime/DateTimePickerModal.tsx';
 import { SlideUpTransition } from '../transitions/SlideUp.tsx';
 
 interface Props {
+  splitViewId: string;
   view: IView;
+  viewType: 'view1' | 'view2';
 }
-export default function SplitViewTripInfoViewCard({ view }: Props) {
-  const [dateTime, setDateTime] = useState<Dayjs>(dayjs());
+export default function SplitViewTripInfoViewCard({
+  view,
+  splitViewId,
+  viewType,
+}: Props) {
+  const [user] = useAuthState(auth);
+  const [dateTime, setDateTime] = useState<Dayjs>(dayjs(view.dateTime));
   const dateTimeDialog = useDialog();
   const journeyInfoDialog = useDialog();
   const {
@@ -50,6 +60,12 @@ export default function SplitViewTripInfoViewCard({ view }: Props) {
   const handleDateTimeChange = (newDateTime: Dayjs | 'now') => {
     if (newDateTime !== 'now') {
       setDateTime(newDateTime);
+      updateSplitViewDate(
+        user?.uid ?? '',
+        splitViewId,
+        viewType,
+        newDateTime,
+      ).then(() => console.log('time updated'));
     }
 
     dateTimeDialog.close();

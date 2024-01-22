@@ -1,13 +1,13 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as React from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
 import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
 import {
   Button,
   Card,
+  CardActions,
   CardContent,
   Divider,
   IconButton,
@@ -34,8 +34,9 @@ export default function SplitViewDashboard() {
   const splitViews = useMemo(() => {
     return (
       splitViewSnapshots?.docs.map((doc) => {
+        const data = doc.data() as ISplitView;
         return {
-          ...(doc.data() as ISplitView),
+          ...data,
           id: doc.id,
         } as ISplitViewWithId;
       }) ?? []
@@ -53,6 +54,15 @@ export default function SplitViewDashboard() {
   const handleView = (splitView: ISplitViewWithId) => {
     navigate(`/splitview/tripsInformation/${splitView.id}`);
   };
+
+  useEffect(() => {
+    const previouslyOpenedSplitView = splitViews.find((x) => x.opened === true);
+    if (previouslyOpenedSplitView) {
+      handleView(previouslyOpenedSplitView);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [splitViews]);
 
   return (
     <>
@@ -93,26 +103,28 @@ export default function SplitViewDashboard() {
                       direction="row"
                       onClick={() => handleView(splitView)}
                     >
-                      <SplitViewTimeLineView
-                        from={splitView.view1.origin.namen.lang}
-                        to={splitView.view1.destination.namen.lang}
-                      />
+                      <Box sx={{ width: '45%' }}>
+                        <SplitViewTimeLineView
+                          from={splitView.view1.origin.namen.lang}
+                          to={splitView.view1.destination.namen.lang}
+                        />
+                      </Box>
                       <Divider orientation="vertical" flexItem>
                         AND
                       </Divider>
-                      <SplitViewTimeLineView
-                        from={splitView.view2.origin.namen.lang}
-                        to={splitView.view2.destination.namen.lang}
-                      />
+                      <Box sx={{ width: '45%' }}>
+                        <SplitViewTimeLineView
+                          from={splitView.view2.origin.namen.lang}
+                          to={splitView.view2.destination.namen.lang}
+                        />
+                      </Box>
                     </Stack>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleEdit(splitView)}
-                    >
-                      <EditIcon />
-                    </IconButton>
                   </Stack>
                 </CardContent>
+                <CardActions sx={{ justifyContent: 'flex-end' }}>
+                  <Button onClick={() => handleView(splitView)}>VIEW</Button>
+                  <Button onClick={() => handleEdit(splitView)}>EDIT</Button>
+                </CardActions>
               </Card>
             );
           })}

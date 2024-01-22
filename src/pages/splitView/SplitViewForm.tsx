@@ -119,8 +119,14 @@ export default function SplitViewForm() {
             });
           } else {
             await addSplitView(user.uid, {
-              view1: leftView as IView,
-              view2: rightView as IView,
+              view1: {
+                ...leftView,
+                dateTime: dayjs().toString(),
+              } as IView,
+              view2: {
+                ...rightView,
+                dateTime: dayjs().toString(),
+              } as IView,
               createdAt: dayjs().toString(),
             });
           }

@@ -20,7 +20,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState<boolean>(false);
-  const [dashboardState, setDashboardState] = useState<'dashboard' | 'info'>(
+  const [dashboardState, setDashboardState] = useState<'initial' | 'info'>(
     'info',
   );
 
@@ -35,15 +35,16 @@ function App() {
 
   const handleBottomNavigation = (route: string) => {
     navigate(route);
+    setDashboardState('info');
   };
 
-  const handlePlannerBottonNavigationClick = () => {
+  const handlePlannerBottomNavigationClick = () => {
     if (dashboardState === 'info') {
-      setDashboardState('dashboard');
-      handleBottomNavigation('/tripsInformation');
+      setDashboardState('initial');
+      navigate('/tripsInformation');
     } else {
       setDashboardState('info');
-      handleBottomNavigation('/');
+      navigate('/');
     }
   };
 
@@ -80,7 +81,7 @@ function App() {
             value="/"
             label="Planner"
             icon={<DashboardIcon />}
-            onClick={handlePlannerBottonNavigationClick}
+            onClick={handlePlannerBottomNavigationClick}
           />
           <BottomNavigationAction
             value="/favourites"
