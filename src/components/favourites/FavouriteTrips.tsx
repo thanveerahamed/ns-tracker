@@ -3,20 +3,21 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
 import styled from '@emotion/styled';
-import { Chip, CircularProgress } from '@mui/material';
+import { Button, Chip, CircularProgress } from '@mui/material';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 
+import { useSnackbarContext } from '../../context';
 import { auth } from '../../services/firebase.ts';
-import { useFavouriteTrip } from '../../services/trip.ts';
-import { FavouriteTrip, Trip } from '../../types/trip.ts';
+import { removeFavouriteTrip, useFavouriteTrip } from '../../services/trip.ts';
+import { FavouriteTrip } from '../../types/trip.ts';
 import { extendedDayjs as dayjs } from '../../utils/date.ts';
 import TripInfoCard from '../TripInfoCard.tsx';
 
 interface MemoizedTrips {
-  old: Trip[];
-  upcoming: Trip[];
-  current: Trip[];
+  old: FavouriteTrip[];
+  upcoming: FavouriteTrip[];
+  current: FavouriteTrip[];
 }
 
 const SectionTitle = styled(Chip)`
@@ -25,17 +26,20 @@ const SectionTitle = styled(Chip)`
   justify-content: flex-start;
 `;
 
-const sortDesc = (doc1: Trip, doc2: Trip) =>
+const sortDesc = (doc1: FavouriteTrip, doc2: FavouriteTrip) =>
   dayjs(doc2.legs[0].origin.actualDateTime).diff(
     dayjs(doc1.legs[0].origin.actualDateTime),
   );
 
-const sortAsc = (doc1: Trip, doc2: Trip) =>
+const sortAsc = (doc1: FavouriteTrip, doc2: FavouriteTrip) =>
   dayjs(doc1.legs[0].origin.actualDateTime).diff(
     dayjs(doc2.legs[0].origin.actualDateTime),
   );
 
-function FavouriteTripItem(props: { trip: Trip }) {
+function FavouriteTripItem(props: {
+  trip: FavouriteTrip;
+  onRemove: (tripToRemove: FavouriteTrip) => void;
+}) {
   const navigate = useNavigate();
   return (
     <List
@@ -50,12 +54,16 @@ function FavouriteTripItem(props: { trip: Trip }) {
         onSelect={() => navigate(`/trip?ctxRecon=${props.trip.ctxRecon}`)}
         isFavourite
       />
+      <Button color="error" onClick={() => props.onRemove(props.trip)}>
+        Remove
+      </Button>
     </List>
   );
 }
 
 export default function FavouriteTrips() {
   const [user] = useAuthState(auth);
+  const { showNotification } = useSnackbarContext();
   const [favouriteTripsSnapshots, isFavouriteTripsSnapshotsLoading] =
     useFavouriteTrip(user?.uid);
 
@@ -63,7 +71,11 @@ export default function FavouriteTrips() {
     const memoizedTrips = favouriteTripsSnapshots?.docs.reduce(
       (result: MemoizedTrips, tripDoc): MemoizedTrips => {
         const tripData = tripDoc.data() as { trip: string };
-        const currentTrip = JSON.parse(tripData.trip) as FavouriteTrip;
+        const tripDocId = tripDoc.id;
+        const currentTrip = {
+          ...JSON.parse(tripData.trip),
+          docId: tripDocId,
+        } as FavouriteTrip;
         const isCurrent = dayjs().isBetween(
           currentTrip.legs[0].origin.actualDateTime,
           currentTrip.legs[currentTrip.legs.length - 1].destination
@@ -105,6 +117,14 @@ export default function FavouriteTrips() {
     };
   }, [favouriteTripsSnapshots]);
 
+  const handleRemoveFavourite = (tripToRemove: FavouriteTrip) => {
+    if (user?.uid) {
+      removeFavouriteTrip(user.uid, tripToRemove.docId)
+        .then(() => showNotification('Removed from favourite!', 'success'))
+        .catch(() => showNotification('Some error occurred!', 'error'));
+    }
+  };
+
   return (
     <>
       {isFavouriteTripsSnapshotsLoading && <CircularProgress />}
@@ -112,7 +132,11 @@ export default function FavouriteTrips() {
         <>
           <SectionTitle label="Current" />
           {trips.current.map((trip, index) => (
-            <FavouriteTripItem key={`trip_info_${index}`} trip={trip} />
+            <FavouriteTripItem
+              key={`trip_info_${index}`}
+              trip={trip}
+              onRemove={handleRemoveFavourite}
+            />
           ))}
         </>
       )}
@@ -120,7 +144,11 @@ export default function FavouriteTrips() {
         <>
           <SectionTitle label="Upcoming" />
           {trips.upcoming.map((trip, index) => (
-            <FavouriteTripItem key={`trip_info_${index}`} trip={trip} />
+            <FavouriteTripItem
+              key={`trip_info_${index}`}
+              trip={trip}
+              onRemove={handleRemoveFavourite}
+            />
           ))}
         </>
       )}
@@ -128,7 +156,11 @@ export default function FavouriteTrips() {
         <>
           <SectionTitle label="Old" />
           {trips.old.map((trip, index) => (
-            <FavouriteTripItem key={`trip_info_${index}`} trip={trip} />
+            <FavouriteTripItem
+              key={`trip_info_${index}`}
+              trip={trip}
+              onRemove={handleRemoveFavourite}
+            />
           ))}
         </>
       )}
