@@ -83,7 +83,7 @@ export default function SplitViewTripInfoViewCard({
 
   return (
     <>
-      <Box sx={{ p: 1, overflow: 'scroll', height: '93vh' }}>
+      <Box sx={{ p: 1, overflow: 'scroll', height: '87vh' }}>
         <Box sx={{ minHeight: '130px' }}>
           <SplitViewTimeLineView
             from={view.origin.namen.lang}
