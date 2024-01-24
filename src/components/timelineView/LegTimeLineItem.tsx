@@ -17,6 +17,7 @@ import {
 } from '../../utils/trips.ts';
 import CrowdForecast from '../CrowdForecast.tsx';
 import { StyledDivider } from '../StyledDivider.tsx';
+import Track from '../Track.tsx';
 import TripTiming from '../TripTiming.tsx';
 
 export default function LegTimeLineItem({
@@ -100,13 +101,15 @@ export default function LegTimeLineItem({
           </Box>
           <Stack direction="column" justifyContent="space-evenly">
             {index > 0 && (
-              <Typography sx={{ color: 'primary.main' }}>
-                Track: {legs[index - 1].destination.plannedTrack}
-              </Typography>
+              <Track
+                plannedTrack={legs[index - 1].destination.plannedTrack}
+                actualTrack={legs[index - 1].destination.actualTrack}
+              />
             )}
-            <Typography sx={{ color: 'primary.main' }}>
-              Track: {leg.origin.plannedTrack}
-            </Typography>
+            <Track
+              plannedTrack={leg.origin.plannedTrack}
+              actualTrack={leg.origin.actualTrack}
+            />
           </Stack>
         </Stack>
         <StyledDivider />

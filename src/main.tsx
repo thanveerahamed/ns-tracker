@@ -7,6 +7,7 @@ import { SearchFilterProvider } from './context/SearchFilterContext.tsx';
 import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import { TripsInformationProvider } from './context/TrpsInformationContext.tsx';
 import { router } from './routes.tsx';
+import './utils/date.ts';
 import { ThemeProvider } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';

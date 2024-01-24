@@ -111,9 +111,10 @@ export default function SplitViewTripInfoViewCard({
         {data &&
           data
             .filter((trip) => trip.status !== 'CANCELLED')
-            .map((trip) => {
+            .map((trip, index) => {
               return (
                 <TripInfoCard
+                  key={index}
                   trip={trip}
                   isFavourite={false}
                   onSelect={() => handleTripModalOpen(trip)}

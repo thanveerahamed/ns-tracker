@@ -9,6 +9,7 @@ import { Stack, Typography } from '@mui/material';
 
 import { Leg } from '../../types/trip.ts';
 import { isInValidLeg } from '../../utils/trips.ts';
+import Track from '../Track.tsx';
 import TripTiming from '../TripTiming.tsx';
 
 export default function DestinationLegTimeLineItem({
@@ -45,11 +46,10 @@ export default function DestinationLegTimeLineItem({
           <Typography sx={{ color: getCurrentLegColor() }}>
             {destinationLeg.destination.name}
           </Typography>
-          <Typography sx={{ color: 'primary.main' }}>
-            Track:{' '}
-            {destinationLeg.destination.actualTrack ??
-              destinationLeg.destination.plannedTrack}
-          </Typography>
+          <Track
+            plannedTrack={destinationLeg.destination.plannedTrack}
+            actualTrack={destinationLeg.destination.actualTrack}
+          />
         </Stack>
         {destinationLeg.destination.exitSide && (
           <Typography variant="caption">
