@@ -4,7 +4,7 @@ import { db } from './firebase.ts';
 import { collection, deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 import { apiGet } from '../clients/nsClient.ts';
-import { NSStation } from '../types/station.ts';
+import { JourneyPayload, NSStation } from '../types/station.ts';
 
 export const getStations = async (
   query: string,
@@ -15,6 +15,22 @@ export const getStations = async (
     q: query,
     countryCodes,
     limit,
+  });
+};
+
+export const getDepartures = async ({
+  uicCode,
+  dateTime,
+  maxJourneys,
+}: {
+  uicCode: string;
+  dateTime: string;
+  maxJourneys?: number;
+}): Promise<{ payload: JourneyPayload }> => {
+  return apiGet<{ payload: JourneyPayload }>('/v2/departures', {
+    uicCode,
+    dateTime,
+    maxJourneys,
   });
 };
 

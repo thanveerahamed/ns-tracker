@@ -6,7 +6,12 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
+  Card,
+  CardContent,
+  Checkbox,
   CircularProgress,
+  Divider,
+  FormControlLabel,
   IconButton,
   LinearProgress,
   Typography,
@@ -17,10 +22,12 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import { AnimatePresence, motion } from 'framer-motion';
 
+import ArrivalDepartures from '../components/ArrivalDepartures.tsx';
 import TripInformation from '../components/TripInformation.tsx';
 
 import { useTrip } from '../apis/trips.ts';
 import { useSnackbarContext } from '../context';
+import { useShow } from '../hooks/useShow.ts';
 import { useUrlQuery } from '../hooks/useUrlQuery.ts';
 import { auth } from '../services/firebase.ts';
 import {
@@ -35,6 +42,7 @@ export default function Trip() {
   const query = useUrlQuery();
   const ctxRecon = query.get('ctxRecon');
   const navigate = useNavigate();
+  const show = useShow();
   const { showNotification } = useSnackbarContext();
   const { isLoading, data: trip } = useTrip({
     ctxRecon: ctxRecon ?? undefined,
@@ -142,11 +150,33 @@ export default function Trip() {
           <Box sx={{ padding: '5px 0' }}>
             <TripInformation trip={trip} />
           </Box>
-        )}{' '}
+        )}
         {!isLoading && !trip && (
           <Alert severity="info">
             No information available for current route
           </Alert>
+        )}
+
+        {trip && !isLoading && (
+          <Card>
+            <CardContent>
+              <FormControlLabel
+                value="end"
+                control={
+                  <Checkbox checked={show.visible} onClick={show.toggle} />
+                }
+                label="Show arrival/departures from destination/origin"
+                labelPlacement="end"
+              />
+
+              {show.visible && (
+                <>
+                  <Divider sx={{ mt: 2, mb: 2 }} />
+                  <ArrivalDepartures trip={trip} />
+                </>
+              )}
+            </CardContent>
+          </Card>
         )}
       </motion.div>
     </AnimatePresence>
