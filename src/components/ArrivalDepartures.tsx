@@ -8,17 +8,21 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
 
-import { useStationDeparturesQuery } from '../apis/stations.ts';
+import {
+  useStationArrivalsQuery,
+  useStationDeparturesQuery,
+} from '../apis/stations.ts';
+import { JourneyInformation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
 
 const journeyOptions = [
   {
-    label: 'Arrival',
-    value: 'arrival',
+    label: 'Arrivals',
+    value: 'arrivals',
   },
   {
-    label: 'Departure',
-    value: 'departure',
+    label: 'Departures',
+    value: 'departures',
   },
 ];
 
@@ -37,12 +41,51 @@ interface Props {
   trip: Trip;
 }
 
+function DisplayList({
+  journeyInformationList,
+}: {
+  journeyInformationList: JourneyInformation[];
+}) {
+  return (
+    <List>
+      {journeyInformationList.map((information: JourneyInformation) => (
+        <ListItem
+          divider
+          sx={{ color: information.cancelled ? 'error.main' : 'inherit' }}
+        >
+          <ListItemText
+            primary={`${information.direction ?? information.origin} (${
+              information.product.longCategoryName
+            }) - Track: ${information.actualTrack ?? information.plannedTrack}`}
+            secondary={`${dayjs(
+              information.actualDateTime ?? information.plannedDateTime,
+            ).format('LLL')} - ${
+              information.departureStatus ?? information.arrivalStatus
+            }`}
+          />
+        </ListItem>
+      ))}
+    </List>
+  );
+}
+
 export default function ArrivalDepartures({ trip }: Props) {
-  const [journeyType, setJourneyType] = useState<string>('departure');
+  const [journeyType, setJourneyType] = useState<string>('departures');
   const [location, setLocation] = useState<string>('destination');
 
-  const { data: journey } = useStationDeparturesQuery({
-    enabled: journeyType === 'departure',
+  const { data: departureJourney } = useStationDeparturesQuery({
+    enabled: journeyType === 'departures',
+    query: {
+      uicCode: trip.legs[trip.legs.length - 1].destination.uicCode,
+      dateTime:
+        trip.legs[trip.legs.length - 1].destination.actualDateTime ??
+        trip.legs[trip.legs.length - 1].destination.plannedDateTime,
+      maxJourneys: 5,
+    },
+  });
+
+  const { data: arrivalJourney } = useStationArrivalsQuery({
+    enabled: journeyType === 'arrivals',
     query: {
       uicCode: trip.legs[trip.legs.length - 1].destination.uicCode,
       dateTime:
@@ -70,24 +113,13 @@ export default function ArrivalDepartures({ trip }: Props) {
 
       <Typography>{journeyType.toUpperCase()}</Typography>
       <Divider />
-      <List>
-        {journey?.departures &&
-          journey.departures.map((departure) => (
-            <ListItem
-              divider
-              sx={{ color: departure.cancelled ? 'error.main' : 'inherit' }}
-            >
-              <ListItemText
-                primary={`${departure.direction} (${
-                  departure.product.longCategoryName
-                }) - Track: ${departure.actualTrack ?? departure.plannedTrack}`}
-                secondary={`${dayjs(
-                  departure.actualDateTime ?? departure.plannedDateTime,
-                ).format('LLL')} - ${departure.departureStatus}`}
-              />
-            </ListItem>
-          ))}
-      </List>
+      <DisplayList
+        journeyInformationList={
+          journeyType === 'arrivals'
+            ? arrivalJourney?.arrivals ?? []
+            : departureJourney?.departures ?? []
+        }
+      />
     </>
   );
 }

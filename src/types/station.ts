@@ -41,18 +41,24 @@ export interface NSSporen {
 }
 
 export interface Journey {
-  payload: JourneyPayload;
+  payload: DeparturesJourneyPayload | ArrivalsJourneyPayload;
   links: Links;
   meta: Meta;
 }
 
-export interface JourneyPayload {
+export interface DeparturesJourneyPayload {
   source: string;
-  departures: Departure[];
+  departures?: JourneyInformation[];
 }
 
-export interface Departure {
-  direction: string;
+export interface ArrivalsJourneyPayload {
+  source: string;
+  arrivals?: JourneyInformation[];
+}
+
+export interface JourneyInformation {
+  direction?: string;
+  origin?: string;
   name: string;
   plannedDateTime: string;
   plannedTimeZoneOffset: number;
@@ -65,7 +71,8 @@ export interface Departure {
   cancelled: boolean;
   routeStations: RouteStation[];
   messages: Message[];
-  departureStatus: string;
+  departureStatus?: string;
+  arrivalStatus?: string;
 }
 
 export interface Product {
