@@ -8,9 +8,7 @@ interface Props {
 export default function Track({ actualTrack, plannedTrack }: Props) {
   if (actualTrack && actualTrack !== plannedTrack) {
     return (
-      <Typography sx={{ color: 'error.main' }}>
-        Track: {actualTrack}
-      </Typography>
+      <Typography sx={{ color: 'error.main' }}>Track: {actualTrack}</Typography>
     );
   }
 

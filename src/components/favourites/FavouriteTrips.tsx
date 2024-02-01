@@ -3,7 +3,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
 import styled from '@emotion/styled';
-import { Button, Chip, CircularProgress } from '@mui/material';
+import { Chip, CircularProgress } from '@mui/material';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 
@@ -53,10 +53,14 @@ function FavouriteTripItem(props: {
         trip={props.trip}
         onSelect={() => navigate(`/trip?ctxRecon=${props.trip.ctxRecon}`)}
         isFavourite
+        actions={[
+          {
+            color: 'secondary',
+            onClick: () => props.onRemove(props.trip),
+            name: 'Remove',
+          },
+        ]}
       />
-      <Button color="error" onClick={() => props.onRemove(props.trip)}>
-        Remove
-      </Button>
     </List>
   );
 }

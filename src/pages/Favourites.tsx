@@ -44,15 +44,15 @@ export default function Favourites() {
           onChange={handleChange}
           aria-label="basic tabs example"
         >
-          <Tab label="Stations" {...a11yProps(0)} />
           <Tab label="Trips" {...a11yProps(1)} />
+          <Tab label="Stations" {...a11yProps(0)} />
         </Tabs>
       </Box>
-      <CustomTabPanel value={tabIndex} index={0} sx={{ p: 1 }}>
-        <FavouriteStations />
-      </CustomTabPanel>
-      <CustomTabPanel value={tabIndex} index={1}>
+      <CustomTabPanel value={tabIndex} index={0}>
         <FavouriteTrips />
+      </CustomTabPanel>
+      <CustomTabPanel value={tabIndex} index={1} sx={{ p: 1 }}>
+        <FavouriteStations />
       </CustomTabPanel>
     </Box>
   );

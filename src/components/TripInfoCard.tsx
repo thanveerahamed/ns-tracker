@@ -8,9 +8,12 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Button,
   ListItemButton,
+  Stack,
   Typography,
 } from '@mui/material';
+import { ButtonOwnProps } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -20,12 +23,19 @@ import ListItem from '@mui/material/ListItem';
 import { NSStation } from '../types/station.ts';
 import { Trip } from '../types/trip.ts';
 
+interface TripInfoCardActions {
+  name: string;
+  onClick: () => void;
+  color: ButtonOwnProps['color'];
+}
+
 interface Props {
   trip: Trip;
   via?: NSStation;
   isFavourite: boolean;
   onSelect: (trip: Trip) => void;
   variant?: 'small' | 'regular';
+  actions?: TripInfoCardActions[];
 }
 
 export default function TripInfoCard({
@@ -33,6 +43,7 @@ export default function TripInfoCard({
   via,
   onSelect,
   isFavourite,
+  actions,
   variant = 'regular',
 }: Props) {
   const isChangeInIntermediateStop = useCallback(
@@ -76,6 +87,19 @@ export default function TripInfoCard({
               isFavourite={isFavourite}
             />
           )}
+          {actions && actions.length > 0 && (
+            <Stack direction="row" justifyContent="flex-end">
+              {actions.map((action) => (
+                <Button
+                  key={action.name}
+                  onClick={action.onClick}
+                  color={action.color}
+                >
+                  {action.name}
+                </Button>
+              ))}
+            </Stack>
+          )}
         </AccordionDetails>
       </Accordion>
     </ListItem>
@@ -109,6 +133,15 @@ export default function TripInfoCard({
               />
             )}
           </CardContent>
+          {actions && actions.length > 0 && (
+            <Stack direction="row" justifyContent="flex-end">
+              {actions.map((action) => (
+                <Button onClick={action.onClick} color={action.color}>
+                  {action.name}
+                </Button>
+              ))}
+            </Stack>
+          )}
         </Card>
       </ListItemButton>
     </ListItem>
