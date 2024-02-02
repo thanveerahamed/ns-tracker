@@ -2,23 +2,21 @@ import { useCallback } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
 
+import TripInfoCard from './TripInfoCard.tsx';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { LinearProgress, Paper, Stack, Typography } from '@mui/material';
+import { LinearProgress, Stack, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import List from '@mui/material/List';
 import dayjs from 'dayjs';
-
-import SearchFilter from '../components/SearchFilter.tsx';
-import TripInfoCard from '../components/TripInfoCard.tsx';
 
 import { useTripsInformationContext } from '../context';
 import { auth } from '../services/firebase.ts';
 import { useFavouriteTrip } from '../services/trip.ts';
 import { FavouriteTrip, Trip } from '../types/trip.ts';
 
-export default function TripsInformation() {
+export default function TripsList() {
   const navigate = useNavigate();
   const {
     isInitialLoading,
@@ -26,7 +24,6 @@ export default function TripsInformation() {
     loadLater,
     loadEarlier,
     trips,
-    reload,
     via,
     dateTime,
   } = useTripsInformationContext();
@@ -50,18 +47,6 @@ export default function TripsInformation() {
 
   return (
     <>
-      <Paper
-        variant="elevation"
-        elevation={10}
-        sx={{
-          paddingBottom: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}
-      >
-        <SearchFilter onSearch={reload} variant="refresh" />
-      </Paper>
       {!isInitialLoading && (
         <Stack direction="row" justifyContent="space-between">
           <LoadingButton

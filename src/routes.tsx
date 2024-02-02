@@ -7,7 +7,7 @@ import ErrorScreen from './pages/Error.tsx';
 import Favourites from './pages/Favourites.tsx';
 import Login from './pages/Login.tsx';
 import Trip from './pages/Trip.tsx';
-import TripsInformation from './pages/TripsInformation.tsx';
+import Trips from './pages/Trips.tsx';
 import SplitView from './pages/splitView/SplitView.tsx';
 import SplitViewDashboard from './pages/splitView/SplitViewDashboard.tsx';
 import SplitViewForm from './pages/splitView/SplitViewForm.tsx';
@@ -29,8 +29,8 @@ export const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: '/tripsInformation',
-        element: <TripsInformation />,
+        path: '/trips',
+        element: <Trips />,
       },
       {
         path: '/trip',

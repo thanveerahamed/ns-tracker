@@ -41,7 +41,7 @@ function App() {
   const handlePlannerBottomNavigationClick = () => {
     if (dashboardState === 'info') {
       setDashboardState('initial');
-      navigate('/tripsInformation');
+      navigate('/trips');
     } else {
       setDashboardState('info');
       navigate('/');

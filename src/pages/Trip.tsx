@@ -10,7 +10,6 @@ import {
   CardContent,
   Checkbox,
   CircularProgress,
-  Divider,
   FormControlLabel,
   IconButton,
   LinearProgress,
@@ -22,7 +21,7 @@ import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import ArrivalDepartures from '../components/ArrivalDepartures.tsx';
+import ForwardTripPlanner from '../components/ForwardTripPlanner.tsx';
 import TripInformation from '../components/TripInformation.tsx';
 
 import { useTrip } from '../apis/trips.ts';
@@ -42,7 +41,7 @@ export default function Trip() {
   const query = useUrlQuery();
   const ctxRecon = query.get('ctxRecon');
   const navigate = useNavigate();
-  const show = useShow();
+  const showInternalPlanner = useShow();
   const { showNotification } = useSnackbarContext();
   const { isLoading, data: trip } = useTrip({
     ctxRecon: ctxRecon ?? undefined,
@@ -163,16 +162,18 @@ export default function Trip() {
               <FormControlLabel
                 value="end"
                 control={
-                  <Checkbox checked={show.visible} onClick={show.toggle} />
+                  <Checkbox
+                    checked={showInternalPlanner.visible}
+                    onClick={showInternalPlanner.toggle}
+                  />
                 }
-                label="Show arrival/departures from destination/origin"
+                label="Plan another trip from destination"
                 labelPlacement="end"
               />
 
-              {show.visible && (
+              {showInternalPlanner.visible && (
                 <>
-                  <Divider sx={{ mt: 2, mb: 2 }} />
-                  <ArrivalDepartures trip={trip} />
+                  <ForwardTripPlanner />
                 </>
               )}
             </CardContent>
