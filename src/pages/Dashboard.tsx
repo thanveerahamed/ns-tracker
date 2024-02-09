@@ -41,7 +41,7 @@ export default function Dashboard() {
   }, [recentSearchSnapshots]);
 
   const handleSearch = () => {
-    navigate('/tripsInformation');
+    navigate('/trips');
   };
 
   const handleRecentSearchClicked = (props: UpdateRecentSearchProps) => {
