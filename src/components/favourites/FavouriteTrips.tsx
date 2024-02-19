@@ -168,6 +168,10 @@ export default function FavouriteTrips() {
           ))}
         </>
       )}
+      {!isFavouriteTripsSnapshotsLoading &&
+        favouriteTripsSnapshots?.size === 0 && (
+          <Typography p={2}>No favourites.</Typography>
+        )}
     </>
   );
 }

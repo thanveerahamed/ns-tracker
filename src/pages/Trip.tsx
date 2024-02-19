@@ -1,15 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
 import {
   Card,
   CardContent,
   Checkbox,
-  CircularProgress,
   FormControlLabel,
   IconButton,
   LinearProgress,
@@ -25,16 +21,8 @@ import ForwardTripPlanner from '../components/ForwardTripPlanner.tsx';
 import TripInformation from '../components/TripInformation.tsx';
 
 import { useTrip } from '../apis/trips.ts';
-import { useSnackbarContext } from '../context';
 import { useShow } from '../hooks/useShow.ts';
 import { useUrlQuery } from '../hooks/useUrlQuery.ts';
-import { auth } from '../services/firebase.ts';
-import {
-  addFavouriteTrip,
-  removeFavouriteTrip,
-  useFavouriteTrip,
-} from '../services/trip.ts';
-import { FavouriteTrip } from '../types/trip.ts';
 import { getCompleteTripEndLocations } from '../utils/trips.ts';
 
 export default function Trip() {
@@ -42,16 +30,14 @@ export default function Trip() {
   const ctxRecon = query.get('ctxRecon');
   const navigate = useNavigate();
   const showInternalPlanner = useShow();
-  const { showNotification } = useSnackbarContext();
   const { isLoading, data: trip } = useTrip({
     ctxRecon: ctxRecon ?? undefined,
   });
-  const [user] = useAuthState(auth);
-  const [favouriteTripsSnapshots, isFavouriteTripsSnapshotsLoading] =
-    useFavouriteTrip(user?.uid);
-  const [favouriteTrip, setFavouriteTrip] = useState<
-    FavouriteTrip | undefined
-  >();
+
+  const handleFavouriteRemoved = () => {
+    navigate(-1);
+  };
+
   const { completeTripOrigin: origin, completeTripDestination: destination } =
     useMemo(() => {
       if (trip) {
@@ -63,34 +49,6 @@ export default function Trip() {
         completeTripDestination: undefined,
       };
     }, [trip]);
-
-  const handleFavouriteClick = () => {
-    if (favouriteTrip) {
-      removeFavouriteTrip(user?.uid ?? '', favouriteTrip.docId ?? '')
-        .then(() => showNotification('Removed from favourite!', 'success'))
-        .catch(() => showNotification('Some error occurred!', 'error'));
-    } else {
-      addFavouriteTrip(user?.uid ?? '', trip!)
-        .then(() => showNotification('Added to favourite!', 'success'))
-        .catch(() => showNotification('Some error occurred!', 'error'));
-    }
-  };
-
-  useEffect(() => {
-    if (trip?.ctxRecon) {
-      const result = (
-        favouriteTripsSnapshots?.docs.map((doc) => {
-          const data = doc.data() as { trip: string };
-          return {
-            ...(JSON.parse(data.trip) as FavouriteTrip),
-            docId: doc.id,
-          };
-        }) ?? []
-      ).find((favTrip) => favTrip.ctxRecon === trip?.ctxRecon);
-
-      setFavouriteTrip(result);
-    }
-  }, [favouriteTripsSnapshots, trip]);
 
   return (
     <AnimatePresence>
@@ -126,28 +84,15 @@ export default function Trip() {
                 {isLoading ? 'Fetching information' : 'No information'}
               </Typography>
             )}
-            {trip && trip.status !== 'CANCELLED' && (
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={handleFavouriteClick}
-                aria-label="close"
-              >
-                {isFavouriteTripsSnapshotsLoading ? (
-                  <CircularProgress size={24} />
-                ) : favouriteTrip ? (
-                  <StarIcon />
-                ) : (
-                  <StarBorderIcon />
-                )}
-              </IconButton>
-            )}
           </Toolbar>
         </AppBar>
         {isLoading && <LinearProgress />}
         {trip && (
           <Box sx={{ padding: '5px 0' }}>
-            <TripInformation trip={trip} />
+            <TripInformation
+              trip={trip}
+              onFavouriteRemoved={handleFavouriteRemoved}
+            />
           </Box>
         )}
         {!isLoading && !trip && (
