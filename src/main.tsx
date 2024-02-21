@@ -5,7 +5,7 @@ import { RouterProvider } from 'react-router-dom';
 
 import { SearchFilterProvider } from './context/SearchFilterContext.tsx';
 import { SnackbarProvider } from './context/SnackbarContext.tsx';
-import { TripsInformationProvider } from './context/TrpsInformationContext.tsx';
+import { TripsInformationProvider } from './context/TripsInformationContext.tsx';
 import { router } from './routes.tsx';
 import './utils/date.ts';
 import { ThemeProvider } from '@mui/material';

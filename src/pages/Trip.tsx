@@ -118,7 +118,7 @@ export default function Trip() {
 
               {showInternalPlanner.visible && (
                 <>
-                  <ForwardTripPlanner />
+                  <ForwardTripPlanner trip={trip} />
                 </>
               )}
             </CardContent>

@@ -6,7 +6,7 @@ import TripsList from '../components/TripsList.tsx';
 import { useTripsInformationContext } from '../context';
 
 export default function Trips() {
-  const { reload } = useTripsInformationContext();
+  const { reload, ...rest } = useTripsInformationContext();
 
   return (
     <>
@@ -22,7 +22,7 @@ export default function Trips() {
       >
         <SearchFilter onSearch={reload} variant="refresh" />
       </Paper>
-      <TripsList />
+      <TripsList {...rest} />
     </>
   );
 }

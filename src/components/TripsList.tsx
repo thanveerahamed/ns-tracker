@@ -11,22 +11,26 @@ import Alert from '@mui/material/Alert';
 import List from '@mui/material/List';
 import dayjs from 'dayjs';
 
-import { useTripsInformationContext } from '../context';
+import { TripsInformationContextValue } from '../context/TripsInformationContext.tsx';
 import { auth } from '../services/firebase.ts';
 import { useFavouriteTrip } from '../services/trip.ts';
 import { FavouriteTrip, Trip } from '../types/trip.ts';
 
-export default function TripsList() {
+type Props = Omit<
+  TripsInformationContextValue,
+  'reload' | 'updateRecentSearch'
+>;
+
+export default function TripsList({
+  isInitialLoading,
+  isLoadMoreLoading,
+  loadLater,
+  loadEarlier,
+  trips,
+  via,
+  dateTime,
+}: Props) {
   const navigate = useNavigate();
-  const {
-    isInitialLoading,
-    isLoadMoreLoading,
-    loadLater,
-    loadEarlier,
-    trips,
-    via,
-    dateTime,
-  } = useTripsInformationContext();
 
   const [user] = useAuthState(auth);
   const [favouriteTripsSnapshots] = useFavouriteTrip(user?.uid);

@@ -1,6 +1,10 @@
 import { useContext } from 'react';
 
 import {
+  ForwardTripsInformationContext,
+  ForwardTripsInformationContextValue,
+} from './ForwardTripsInformationContext.tsx';
+import {
   SearchFilterContext,
   SearchFilterContextValue,
 } from './SearchFilterContext.tsx';
@@ -8,7 +12,7 @@ import { SnackbarContext, SnackbarContextValue } from './SnackbarContext.tsx';
 import {
   TripsInformationContext,
   TripsInformationContextValue,
-} from './TrpsInformationContext.tsx';
+} from './TripsInformationContext.tsx';
 
 export const useSnackbarContext = (): SnackbarContextValue => {
   const context = useContext(SnackbarContext);
@@ -45,3 +49,16 @@ export const useTripsInformationContext = (): TripsInformationContextValue => {
 
   return context;
 };
+
+export const useForwardTripsInformationContext =
+  (): ForwardTripsInformationContextValue => {
+    const context = useContext(ForwardTripsInformationContext);
+
+    if (context === null) {
+      throw new Error(
+        'useForwardTripsInformationContext must be used within a ForwardTripsInformationProvider',
+      );
+    }
+
+    return context;
+  };
