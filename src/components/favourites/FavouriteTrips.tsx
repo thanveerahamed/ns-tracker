@@ -137,7 +137,7 @@ export default function FavouriteTrips() {
           <SectionTitle label="Current" />
           {trips.current.map((trip, index) => (
             <FavouriteTripItem
-              key={`trip_info_${index}`}
+              key={`trip_info_current_${index}`}
               trip={trip}
               onRemove={handleRemoveFavourite}
             />
@@ -149,7 +149,7 @@ export default function FavouriteTrips() {
           <SectionTitle label="Upcoming" />
           {trips.upcoming.map((trip, index) => (
             <FavouriteTripItem
-              key={`trip_info_${index}`}
+              key={`trip_info_upcoming_${index}`}
               trip={trip}
               onRemove={handleRemoveFavourite}
             />
@@ -161,7 +161,7 @@ export default function FavouriteTrips() {
           <SectionTitle label="Old" />
           {trips.old.map((trip, index) => (
             <FavouriteTripItem
-              key={`trip_info_${index}`}
+              key={`trip_info_old_${index}`}
               trip={trip}
               onRemove={handleRemoveFavourite}
             />

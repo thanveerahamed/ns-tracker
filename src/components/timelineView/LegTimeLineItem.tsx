@@ -16,6 +16,7 @@ import {
   isInValidLeg,
 } from '../../utils/trips.ts';
 import CrowdForecast from '../CrowdForecast.tsx';
+import LegShowMore from '../LegShowMore.tsx';
 import { StyledDivider } from '../StyledDivider.tsx';
 import Track from '../Track.tsx';
 import TripTiming from '../TripTiming.tsx';
@@ -146,6 +147,7 @@ export default function LegTimeLineItem({
             </Fragment>
           );
         }) ?? <></>}
+        <LegShowMore leg={leg} />
       </TimelineContent>
     </TimelineItem>
   );

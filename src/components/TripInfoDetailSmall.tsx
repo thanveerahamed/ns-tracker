@@ -17,7 +17,7 @@ export function TripInfoDetailSmall({
     <Grid container>
       <Grid item xs={12}>
         {!hideStartAndEndTime && (
-          <TripStartAndEndTime trip={trip} variant="caption" />
+          <TripStartAndEndTime trip={trip} variant="body1" />
         )}
         {trip.legs.map((leg, index) => (
           <Chip

@@ -20,6 +20,8 @@ export const makeDateTimeWithDelay = (location: TripLocation) => {
   return {
     formattedTime: dayjs(location.plannedDateTime).format('LT'),
     delayTimeString,
+    isDelayed: Boolean(delayTimeString),
+    delayedTime: dayjs(location.actualDateTime).format('LT'),
   };
 };
 
