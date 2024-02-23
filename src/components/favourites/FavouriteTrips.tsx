@@ -56,7 +56,10 @@ function FavouriteTripItem(props: {
         actions={[
           {
             color: 'secondary',
-            onClick: () => props.onRemove(props.trip),
+            onClick: (event) => {
+              event.stopPropagation();
+              props.onRemove(props.trip);
+            },
             name: 'Remove',
           },
         ]}

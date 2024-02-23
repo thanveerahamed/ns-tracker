@@ -25,7 +25,9 @@ import { Trip } from '../types/trip.ts';
 
 interface TripInfoCardActions {
   name: string;
-  onClick: () => void;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  onClick: (event?: MouseEvent<HTMLElement>) => void;
   color: ButtonOwnProps['color'];
 }
 
