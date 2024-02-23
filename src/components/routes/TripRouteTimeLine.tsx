@@ -10,6 +10,7 @@ import TimelineOppositeContent, {
 } from '@mui/lab/TimelineOppositeContent';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Stack, Typography } from '@mui/material';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 
 import { Stop } from '../../types/trip.ts';
@@ -21,25 +22,39 @@ export default function TripRouteTimeLine({ stops }: { stops: Stop[] }) {
     return stops.slice(1, -1).filter((stop) => !stop.passing);
   }, [stops]);
 
+  if (stopsWithoutDestinationAndOrigin.length === 0) {
+    return (
+      <Alert variant="outlined" severity="info">
+        Single stop journey
+      </Alert>
+    );
+  }
+
   return (
     <Timeline
       sx={{
         [`& .${timelineOppositeContentClasses.root}`]: {
-          flex: 0.3,
+          flex: 0.4,
         },
         padding: 0,
       }}
     >
       {stopsWithoutDestinationAndOrigin.map((stop, index) => (
         <TimelineItem key={index}>
-          <TimelineOppositeContent color="textSecondary">
+          <TimelineOppositeContent
+            color="textSecondary"
+            sx={{ paddingLeft: '5px', paddingRight: '5px' }}
+          >
             <StopTiming
               actualTime={stop.actualArrivalDateTime}
               plannedTime={stop.plannedArrivalDateTime}
+              variant="caption"
             />
+            <br />
             <StopTiming
               actualTime={stop.actualDepartureDateTime}
               plannedTime={stop.plannedDepartureDateTime}
+              variant="caption"
             />
           </TimelineOppositeContent>
           <TimelineSeparator>
