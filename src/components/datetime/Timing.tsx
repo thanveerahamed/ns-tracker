@@ -1,11 +1,13 @@
 import * as React from 'react';
 
 import { Stack, Typography, TypographyProps } from '@mui/material';
+import { StackOwnProps } from '@mui/material/Stack/Stack';
 
 interface Props extends TypographyProps {
   originalTime: string;
   isDelayed: boolean;
   delayedTime?: string;
+  stackProps?: StackOwnProps;
 }
 
 export default function Timing({

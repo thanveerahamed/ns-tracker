@@ -116,11 +116,10 @@ export default function Trip() {
                 labelPlacement="end"
               />
 
-              {showInternalPlanner.visible && (
-                <>
-                  <ForwardTripPlanner trip={trip} />
-                </>
-              )}
+              <ForwardTripPlanner
+                trip={trip}
+                show={showInternalPlanner.visible}
+              />
             </CardContent>
           </Card>
         )}

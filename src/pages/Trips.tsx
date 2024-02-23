@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+
 import { Paper } from '@mui/material';
 
 import SearchFilter from '../components/SearchFilter.tsx';
@@ -6,6 +8,7 @@ import TripsList from '../components/TripsList.tsx';
 import { useTripsInformationContext } from '../context';
 
 export default function Trips() {
+  const navigate = useNavigate();
   const { reload, ...rest } = useTripsInformationContext();
 
   return (
@@ -22,7 +25,10 @@ export default function Trips() {
       >
         <SearchFilter onSearch={reload} variant="refresh" />
       </Paper>
-      <TripsList {...rest} />
+      <TripsList
+        {...rest}
+        onTripSelected={(trip) => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
+      />
     </>
   );
 }

@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import StationSelectionDialog from './StationSelectionDialog.tsx';
+import TripInformationDialog from './TripInformationDialog.tsx';
 import TripsList from './TripsList.tsx';
 import { TextField } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -14,10 +16,40 @@ import { Trip } from '../types/trip.ts';
 
 function ForwardTripPlannerTripList() {
   const context = useForwardTripsInformationContext();
-  return <TripsList {...context} />;
+  const journeyInfoDialog = useDialog();
+  const [selectedTrip, setSelectedTrip] = useState<Trip>();
+
+  const handleTripSelected = (trip: Trip) => {
+    setSelectedTrip(trip);
+    journeyInfoDialog.open();
+  };
+
+  const handleTripModalClose = () => {
+    setSelectedTrip(undefined);
+    journeyInfoDialog.close();
+  };
+
+  return (
+    <>
+      <TripsList {...context} onTripSelected={handleTripSelected} />
+      {journeyInfoDialog.isOpen && selectedTrip && (
+        <TripInformationDialog
+          journeyInfoDialog={journeyInfoDialog}
+          onClose={handleTripModalClose}
+          trip={selectedTrip}
+        />
+      )}
+    </>
+  );
 }
 
-export default function ForwardTripPlanner({ trip }: { trip: Trip }) {
+export default function ForwardTripPlanner({
+  trip,
+  show,
+}: {
+  trip: Trip;
+  show: boolean;
+}) {
   const [destination, setDestination] = useState<NSStation>();
   const origin = trip.legs[trip.legs.length - 1].destination;
   const destinationSelectionDialog = useDialog();
@@ -26,6 +58,16 @@ export default function ForwardTripPlanner({ trip }: { trip: Trip }) {
     setDestination(newDestination);
     destinationSelectionDialog.close();
   };
+
+  useEffect(() => {
+    if (!show) {
+      setDestination(undefined);
+    }
+  }, [show]);
+
+  if (!show) {
+    return <></>;
+  }
 
   return (
     <>

@@ -3,19 +3,8 @@ import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SplitViewTimeLineView from './SplitViewTimeLineView.tsx';
-import CloseIcon from '@mui/icons-material/Close';
-import {
-  Button,
-  Chip,
-  Divider,
-  IconButton,
-  LinearProgress,
-  Stack,
-} from '@mui/material';
-import AppBar from '@mui/material/AppBar';
+import { Button, Chip, Divider, LinearProgress, Stack } from '@mui/material';
 import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import dayjs, { Dayjs } from 'dayjs';
 
@@ -26,15 +15,15 @@ import { updateSplitViewDate } from '../../services/splitView.ts';
 import { IView } from '../../types/splitView.ts';
 import { Trip } from '../../types/trip.ts';
 import TripInfoCard from '../TripInfoCard.tsx';
-import TripInformation from '../TripInformation.tsx';
+import TripInformationDialog from '../TripInformationDialog.tsx';
 import DateTimePickerModal from '../datetime/DateTimePickerModal.tsx';
-import { SlideUpTransition } from '../transitions/SlideUp.tsx';
 
 interface Props {
   splitViewId: string;
   view: IView;
   viewType: 'view1' | 'view2';
 }
+
 export default function SplitViewTripInfoViewCard({
   view,
   splitViewId,
@@ -142,31 +131,11 @@ export default function SplitViewTripInfoViewCard({
       )}
 
       {journeyInfoDialog.isOpen && selectedTrip && (
-        <Dialog
-          fullScreen
-          open={journeyInfoDialog.isOpen}
+        <TripInformationDialog
+          journeyInfoDialog={journeyInfoDialog}
           onClose={handleTripModalClose}
-          TransitionComponent={SlideUpTransition}
-        >
-          <AppBar sx={{ position: 'relative' }}>
-            <Toolbar>
-              <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-                Trip info
-              </Typography>
-              <IconButton
-                edge="start"
-                color="inherit"
-                onClick={handleTripModalClose}
-                aria-label="close"
-              >
-                <CloseIcon />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-          <Box sx={{ p: 1 }}>
-            <TripInformation trip={selectedTrip} />
-          </Box>
-        </Dialog>
+          trip={selectedTrip}
+        />
       )}
     </>
   );

@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useNavigate } from 'react-router-dom';
 
 import TripInfoCard from './TripInfoCard.tsx';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -19,7 +18,7 @@ import { FavouriteTrip, Trip } from '../types/trip.ts';
 type Props = Omit<
   TripsInformationContextValue,
   'reload' | 'updateRecentSearch'
->;
+> & { onTripSelected: (trip: Trip) => void };
 
 export default function TripsList({
   isInitialLoading,
@@ -29,9 +28,8 @@ export default function TripsList({
   trips,
   via,
   dateTime,
+  onTripSelected,
 }: Props) {
-  const navigate = useNavigate();
-
   const [user] = useAuthState(auth);
   const [favouriteTripsSnapshots] = useFavouriteTrip(user?.uid);
 
@@ -77,7 +75,7 @@ export default function TripsList({
             key={`trip_info_${index}`}
             trip={trip}
             via={via}
-            onSelect={() => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
+            onSelect={onTripSelected}
             isFavourite={isFavouriteTrip(trip)}
           />
         ))}
