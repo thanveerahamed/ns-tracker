@@ -2,7 +2,14 @@ import { useCollection } from 'react-firebase-hooks/firestore';
 
 import { db } from './firebase.ts';
 import dayjs from 'dayjs';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+} from 'firebase/firestore';
 
 import { NSStation } from '../types/station.ts';
 
@@ -27,6 +34,13 @@ export const createRecentSearch = async ({
 };
 
 export const useRecentSearch = (userId?: string) =>
-  useCollection(collection(db, 'users', userId ?? '', 'recentSearch'), {
-    snapshotListenOptions: { includeMetadataChanges: true },
-  });
+  useCollection(
+    query(
+      collection(db, 'users', userId ?? '', 'recentSearch'),
+      orderBy('lastUpdatedAt', 'desc'),
+      limit(5),
+    ),
+    {
+      snapshotListenOptions: { includeMetadataChanges: true },
+    },
+  );

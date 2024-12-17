@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCollection } from 'react-firebase-hooks/firestore';
 
 import { db } from './firebase.ts';
@@ -35,6 +36,18 @@ export const getTrip = async ({
   };
 
   return apiGet<Trip>('/v3/trips/trip', params);
+};
+
+export const getJourneyInformation = async ({
+  id,
+}: {
+  id: string;
+}): Promise<any> => {
+  const params = {
+    id,
+  };
+
+  return apiGet<any>('/v2/journey', params);
 };
 
 export const addFavouriteTrip = (userId: string, trip: Trip) =>

@@ -7,19 +7,28 @@ interface Props extends TypographyProps {
   originalTime: string;
   isDelayed: boolean;
   delayedTime?: string;
+  direction?: StackOwnProps['direction'];
   stackProps?: StackOwnProps;
+  mb?: StackOwnProps['mb'];
 }
 
 export default function Timing({
   isDelayed,
   delayedTime,
   originalTime,
+  direction = 'column',
+  mb = 2,
   ...rest
 }: Props) {
   return (
     <>
       {isDelayed ? (
-        <Stack direction="column" mb={2}>
+        <Stack
+          direction={direction}
+          mb={mb}
+          spacing={direction === 'row' ? 1 : undefined}
+          alignItems="center"
+        >
           <Typography {...rest} sx={{ color: 'error.main' }}>
             {delayedTime}
           </Typography>

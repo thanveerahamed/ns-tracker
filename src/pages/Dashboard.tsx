@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
-import dayjs from 'dayjs';
 
 import SearchFilter from '../components/SearchFilter.tsx';
 
@@ -24,6 +23,7 @@ import { auth } from '../services/firebase.ts';
 import { useRecentSearch } from '../services/recent.ts';
 import { RecentSearch } from '../types/recent.ts';
 import { UpdateRecentSearchProps } from '../types/search.ts';
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ export default function Dashboard() {
   const recentSearch = useMemo(() => {
     return (
       recentSearchSnapshots?.docs.map((doc) => doc.data() as RecentSearch) ?? []
-    ).sort((search1, search2) =>
-      dayjs(search1.lastUpdatedAt) > dayjs(search2.lastUpdatedAt) ? -1 : 1,
     );
   }, [recentSearchSnapshots]);
 

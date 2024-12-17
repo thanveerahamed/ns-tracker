@@ -9,6 +9,7 @@ import { makeDateTimeWithDelay } from '../utils/trips.ts';
 
 interface Props extends TypographyProps {
   location: TripLocation;
+  direction?: 'column' | 'row';
 }
 
 export default function TripTiming({ location, ...rest }: Props) {

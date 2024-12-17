@@ -5,7 +5,6 @@ import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Stack, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -52,13 +51,14 @@ export default function LegTimeLineItem({
 
   return (
     <TimelineItem key={index}>
-      <TimelineOppositeContent color="textSecondary">
-        {index > 0 && <TripTiming location={legs[index - 1].destination} />}
-        <TripTiming location={leg.origin} />
-        <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />
-      </TimelineOppositeContent>
+      {/*<TimelineOppositeContent color="textSecondary">*/}
+      {/*  */}
+      {/*  <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />*/}
+      {/*</TimelineOppositeContent>*/}
       <TimelineSeparator>
-        <TimelineDot color={getTimeLineDotColor()} />
+        <TimelineDot color={getTimeLineDotColor()}>
+          <TrainIcon />
+        </TimelineDot>
         <TimelineConnector
           sx={{
             bgcolor: getCurrentLegColor(),
@@ -68,6 +68,14 @@ export default function LegTimeLineItem({
       <TimelineContent>
         <Stack direction="row" justifyContent="space-between">
           <Box>
+            {index > 0 && (
+              <TripTiming
+                location={legs[index - 1].destination}
+                direction="row"
+                variant="caption"
+              />
+            )}
+            <TripTiming location={leg.origin} direction="row" />
             <Typography sx={{ color: getCurrentLegColor() }}>
               {leg.origin.name}
             </Typography>

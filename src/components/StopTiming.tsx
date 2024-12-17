@@ -44,6 +44,8 @@ export default function StopTiming({
       originalTime={formattedTime}
       isDelayed={isDelayed}
       delayedTime={delayedTime}
+      direction={'row'}
+      mb={0}
     />
   );
 }

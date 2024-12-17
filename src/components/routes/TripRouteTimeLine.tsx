@@ -4,14 +4,12 @@ import { Timeline } from '@mui/lab';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineOppositeContent, {
-  timelineOppositeContentClasses,
-} from '@mui/lab/TimelineOppositeContent';
+import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Stack, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
 
 import { Stop } from '../../types/trip.ts';
 import StopTiming from '../StopTiming.tsx';
@@ -33,30 +31,14 @@ export default function TripRouteTimeLine({ stops }: { stops: Stop[] }) {
   return (
     <Timeline
       sx={{
-        [`& .${timelineOppositeContentClasses.root}`]: {
-          flex: 0.4,
+        [`& .${timelineItemClasses.root}:before`]: {
+          flex: 0,
+          padding: 0,
         },
-        padding: 0,
       }}
     >
       {stopsWithoutDestinationAndOrigin.map((stop, index) => (
         <TimelineItem key={index}>
-          <TimelineOppositeContent
-            color="textSecondary"
-            sx={{ paddingLeft: '5px', paddingRight: '5px' }}
-          >
-            <StopTiming
-              actualTime={stop.actualArrivalDateTime}
-              plannedTime={stop.plannedArrivalDateTime}
-              variant="caption"
-            />
-            <br />
-            <StopTiming
-              actualTime={stop.actualDepartureDateTime}
-              plannedTime={stop.plannedDepartureDateTime}
-              variant="caption"
-            />
-          </TimelineOppositeContent>
           <TimelineSeparator>
             {index === 0 && (
               <TimelineConnector
@@ -65,7 +47,7 @@ export default function TripRouteTimeLine({ stops }: { stops: Stop[] }) {
                 }}
               />
             )}
-            <TimelineDot color="primary" />
+            <TimelineDot color="primary" variant={'outlined'} />
             <TimelineConnector
               sx={{
                 bgcolor: 'primary.main',
@@ -74,6 +56,18 @@ export default function TripRouteTimeLine({ stops }: { stops: Stop[] }) {
           </TimelineSeparator>
           <TimelineContent sx={{ alignItems: 'center' }}>
             <Stack direction="row" justifyContent="space-between">
+              <Box>
+                <StopTiming
+                  actualTime={stop.actualArrivalDateTime}
+                  plannedTime={stop.plannedArrivalDateTime}
+                  variant="caption"
+                />
+                <StopTiming
+                  actualTime={stop.actualDepartureDateTime}
+                  plannedTime={stop.plannedDepartureDateTime}
+                  variant="caption"
+                />
+              </Box>
               <Box>
                 <Typography sx={{ color: 'primary.main' }}>
                   {stop.name}
@@ -84,6 +78,7 @@ export default function TripRouteTimeLine({ stops }: { stops: Stop[] }) {
                 />
               </Box>
             </Stack>
+            <Divider />
           </TimelineContent>
         </TimelineItem>
       ))}

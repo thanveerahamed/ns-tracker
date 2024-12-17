@@ -2,7 +2,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import dayjs from 'dayjs';
 
-import { getTrip, getTripsInformation } from '../services/trip.ts';
+import {
+  getJourneyInformation,
+  getTrip,
+  getTripsInformation,
+} from '../services/trip.ts';
 import { GetTripsInformationProps, LoadMoreAction } from '../types/trip.ts';
 
 const createUseTripsInformationQuery = (
@@ -75,6 +79,15 @@ export const useTrip = ({ ctxRecon }: { ctxRecon?: string }) => {
     queryKey: ['trips', 'trip', ctxRecon],
     queryFn: async () => {
       return await getTrip({ ctxRecon: ctxRecon ?? '' });
+    },
+  });
+};
+
+export const useJourney = ({ id }: { id: string }) => {
+  return useQuery({
+    queryKey: ['trips', 'trip', 'journey', id],
+    queryFn: async () => {
+      return await getJourneyInformation({ id });
     },
   });
 };

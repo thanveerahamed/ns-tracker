@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 
+import TrainIcon from '@mui/icons-material/Train';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
 import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent';
 import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import { Stack, Typography } from '@mui/material';
 
@@ -35,13 +35,16 @@ export default function DestinationLegTimeLineItem({
 
   return (
     <TimelineItem>
-      <TimelineOppositeContent color="textSecondary">
-        <TripTiming location={destinationLeg.destination} />
-      </TimelineOppositeContent>
+      {/*<TimelineOppositeContent color="textSecondary">*/}
+      {/*  <TripTiming location={destinationLeg.destination} />*/}
+      {/*</TimelineOppositeContent>*/}
       <TimelineSeparator>
-        <TimelineDot color={getTimeLineDotColor()} />
+        <TimelineDot color={getTimeLineDotColor()}>
+          <TrainIcon />
+        </TimelineDot>
       </TimelineSeparator>
       <TimelineContent>
+        <TripTiming location={destinationLeg.destination} direction="row" />
         <Stack direction="row" justifyContent="space-between">
           <Typography sx={{ color: getCurrentLegColor() }}>
             {destinationLeg.destination.name}
