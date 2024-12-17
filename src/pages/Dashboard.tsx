@@ -24,7 +24,6 @@ import { useRecentSearch } from '../services/recent.ts';
 import { RecentSearch } from '../types/recent.ts';
 import { UpdateRecentSearchProps } from '../types/search.ts';
 
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
