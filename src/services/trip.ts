@@ -5,6 +5,7 @@ import { db } from './firebase.ts';
 import { addDoc, collection, deleteDoc, doc } from 'firebase/firestore';
 
 import { apiGet } from '../clients/nsClient.ts';
+import { JourneyResponse } from '../types/journey.ts';
 import {
   GetTripsInformationProps,
   Trip,
@@ -42,7 +43,7 @@ export const getJourneyInformation = async ({
   id,
 }: {
   id: string;
-}): Promise<any> => {
+}): Promise<JourneyResponse> => {
   const params = {
     id,
   };
