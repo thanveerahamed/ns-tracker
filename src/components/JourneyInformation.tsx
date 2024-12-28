@@ -21,6 +21,8 @@ import { useJourney } from '../apis/trips.ts';
 import { JourneyStop } from '../types/journey.ts';
 import { Coordinate } from '../types/trip.ts';
 
+const env = import.meta.env;
+
 interface TransportStop {
   id: string;
   name: string;
@@ -41,7 +43,7 @@ interface PublicTransportMapProps {
 
 const PublicTransportMap = ({ stops, routes }: PublicTransportMapProps) => {
   const mapRef = useRef(null);
-  const googleMapsApiKey = process.env.VITE_GOOGLE_MAP_API;
+  const googleMapsApiKey = env.VITE_GOOGLE_MAP_API;
 
   useEffect(() => {
     if (!mapRef.current) return;
