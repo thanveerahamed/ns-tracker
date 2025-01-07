@@ -5,14 +5,14 @@ import {
   Map,
   MapCameraChangedEvent,
   Pin,
-  useMap,
-  useMapsLibrary,
 } from '@vis.gl/react-google-maps';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
+import { DeckGlOverlay } from './DeckLayer.tsx';
 import StopTiming from './StopTiming.tsx';
 import Track from './Track.tsx';
 import { SlideUpTransition } from './transitions/SlideUp.tsx';
+import { GeoJsonLayer } from '@deck.gl/layers/typed';
 import CloseIcon from '@mui/icons-material/Close';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
@@ -25,7 +25,7 @@ import { Chip, Dialog, IconButton, Stack, Typography } from '@mui/material';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import dayjs from 'dayjs';
+import type { GeoJSON } from 'geojson';
 
 import { useJourney } from '../apis/trips.ts';
 import { JourneyStop } from '../types/journey.ts';
@@ -40,83 +40,63 @@ interface TransportStop {
   plotMarker: boolean;
 }
 
-interface Route {
-  from: string;
-  to: string;
-}
-
 interface PublicTransportMapProps {
   stops: TransportStop[];
-  routes: Route[];
-  departureTime: string;
 }
 
-function Directions({ stops, departureTime }: PublicTransportMapProps) {
-  const map = useMap();
-  const routesLibrary = useMapsLibrary('routes');
-  const [directionsService, setDirectionsService] =
-    useState<google.maps.DirectionsService>();
-  const [directionsRenderer, setDirectionsRenderer] =
-    useState<google.maps.DirectionsRenderer>();
-  const [routeIndex] = useState(0);
+function getDeckGlLayers(data: GeoJSON | null) {
+  if (!data) return [];
 
-  // Initialize directions service and renderer
-  useEffect(() => {
-    if (!routesLibrary || !map) return;
-    setDirectionsService(new routesLibrary.DirectionsService());
-    setDirectionsRenderer(
-      new routesLibrary.DirectionsRenderer({ map, suppressMarkers: true }),
-    );
-  }, [routesLibrary, map]);
+  return [
+    new GeoJsonLayer({
+      id: 'geojson-layer',
+      data,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      pointType: 'circle',
+      lineWidthScale: 20,
+      lineWidthMinPixels: 4,
+      getFillColor: [160, 160, 180, 200],
+      getLineColor: [43, 130, 86],
+      getPointRadius: 200,
+      getLineWidth: 1,
+      getElevation: 30,
+    }),
+  ];
+}
 
-  // Use directions service
-  useEffect(() => {
-    if (!directionsService || !directionsRenderer) return;
+function generateGeoJson({ stops }: PublicTransportMapProps): GeoJSON {
+  const coordinates = stops.map((stop) => [stop.lng, stop.lat]);
 
-    const origin = stops[0];
-    const destination = stops[stops.length - 1];
-
-    directionsService
-      .route({
-        origin: { lat: origin.lat, lng: origin.lng },
-        destination: { lat: destination.lat, lng: destination.lng },
-        travelMode: google.maps.TravelMode.TRANSIT, // For public transport
-        transitOptions: {
-          modes: [google.maps.TransitMode.TRAIN],
-          departureTime: dayjs(departureTime).toDate(),
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates,
         },
-      })
-      .then((response) => {
-        directionsRenderer.setDirections(response);
-      });
-
-    return () => directionsRenderer.setMap(null);
-  }, [directionsService, directionsRenderer, stops, departureTime]);
-
-  // Update direction route
-  useEffect(() => {
-    if (!directionsRenderer) return;
-    directionsRenderer.setRouteIndex(routeIndex);
-  }, [routeIndex, directionsRenderer]);
-
-  return <></>;
+      },
+    ],
+  };
 }
 
-const PublicTransportMap = ({
-  stops,
-  routes,
-  departureTime,
-}: PublicTransportMapProps) => {
+const PublicTransportMap = ({ stops }: PublicTransportMapProps) => {
   const googleMapsApiKey = env.VITE_GOOGLE_MAP_API;
+  const geoJson = generateGeoJson({ stops });
 
   return (
     <APIProvider
       apiKey={googleMapsApiKey}
       onLoad={() => console.log('Maps API has loaded.')}
     >
+      {/*<DeckGL controller>*/}
       <Map
         style={{ width: '100%', height: '500px' }}
-        mapId="journey_id"
+        mapId="503d8b250ce1efd6"
         defaultZoom={12}
         defaultCenter={{ lat: stops[0].lat, lng: stops[0].lng }}
         onCameraChanged={(ev: MapCameraChangedEvent) =>
@@ -128,11 +108,6 @@ const PublicTransportMap = ({
           )
         }
       >
-        <Directions
-          stops={stops}
-          routes={routes}
-          departureTime={departureTime}
-        />
         {stops
           .filter((stop) => stop.plotMarker)
           .map((poi) => (
@@ -147,7 +122,9 @@ const PublicTransportMap = ({
               />
             </AdvancedMarker>
           ))}
+        <DeckGlOverlay layers={getDeckGlLayers(geoJson)} />
       </Map>
+      {/*</DeckGL>*/}
     </APIProvider>
   );
 };
@@ -164,9 +141,6 @@ const JourneyTimeline = ({ journeyStop }: { journeyStop: JourneyStop[] }) => {
     lng: j.stop.lng,
     plotMarker: j.status !== 'PASSING',
   }));
-  const journeyRoutes = stopsToDisplay.map(
-    (j: JourneyStop): Route => ({ from: j.id, to: j.nextStopId[0] }),
-  );
 
   return (
     <>
@@ -233,11 +207,7 @@ const JourneyTimeline = ({ journeyStop }: { journeyStop: JourneyStop[] }) => {
           </TimelineItem>
         ))}
       </Timeline>
-      <PublicTransportMap
-        stops={stopsForMap}
-        routes={journeyRoutes}
-        departureTime={stopsToDisplay[0]?.departures[0]?.plannedTime}
-      />
+      <PublicTransportMap stops={stopsForMap} />
     </>
   );
 };
