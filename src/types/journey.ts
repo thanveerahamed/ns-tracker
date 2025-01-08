@@ -2,6 +2,8 @@ export interface JourneyResponse {
   payload: Payload;
 }
 
+export type PartOfLeg = 'origin' | 'destination' | 'intermediate' | undefined;
+
 export interface Payload {
   productNumbers: string[];
   stops: JourneyStop[];
@@ -22,6 +24,7 @@ export interface JourneyStop {
   plannedStock?: Stock;
   platformFeatures?: never[];
   coachCrowdForecast?: never[];
+  partOfLeg: PartOfLeg;
 }
 
 export interface StopCoordinates {
