@@ -170,7 +170,7 @@ const PublicTransportMap = ({ stops }: PublicTransportMapProps) => {
   return (
     <Map
       style={{ width: '100%', height: '500px' }}
-      mapId="503d8b250ce1efd6"
+      mapId="71f9bff9b20626404f4d5f93"
       defaultZoom={12}
       defaultCenter={{ lat: stops[0].lat, lng: stops[0].lng }}
       disableDefaultUI
