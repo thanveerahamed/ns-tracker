@@ -1,36 +1,37 @@
+import { ArrowRight } from 'lucide-react';
 import { useMemo } from 'react';
 
 import TripTiming from './TripTiming.tsx';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Stack, TypographyVariant } from '@mui/material';
 
 import { Trip } from '../types/trip.ts';
 import { getCompleteTripEndLocations } from '../utils/trips.ts';
 
 export default function TripStartAndEndTime({
   trip,
-  variant = 'h6',
+  large,
 }: {
   trip: Trip;
-  variant?: TypographyVariant;
+  large?: boolean;
 }) {
   const { completeTripOrigin, completeTripDestination } = useMemo(() => {
     return getCompleteTripEndLocations(trip);
   }, [trip]);
 
+  const cls = large ? 'text-[17px] font-bold' : 'text-sm font-semibold';
+
   return (
-    <Stack direction="row" alignItems="center">
+    <div className="flex items-center gap-1.5">
       <TripTiming
         location={completeTripOrigin}
-        variant={variant}
-        sx={{ marginRight: '2px' }}
+        className={cls}
+        direction="row"
       />
-      <ArrowForwardIcon />
+      <ArrowRight size={large ? 14 : 12} className="text-white/25 shrink-0" />
       <TripTiming
         location={completeTripDestination}
-        variant={variant}
-        sx={{ marginLeft: '2px' }}
+        className={cls}
+        direction="row"
       />
-    </Stack>
+    </div>
   );
 }

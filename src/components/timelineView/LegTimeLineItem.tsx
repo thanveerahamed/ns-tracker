@@ -1,13 +1,5 @@
-import React, { Fragment, useCallback } from 'react';
-
-import TrainIcon from '@mui/icons-material/Train';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import { Stack, Typography } from '@mui/material';
-import Box from '@mui/material/Box';
+import { Train } from 'lucide-react';
+import React, { Fragment } from 'react';
 
 import { Leg } from '../../types/trip.ts';
 import {
@@ -29,86 +21,79 @@ export default function LegTimeLineItem({
   leg: Leg;
   index: number;
 }) {
-  const getTimeLineDotColor = useCallback(() => {
-    if (index === 0 && isInValidLeg(leg)) {
-      return 'error';
-    }
+  const isValid = !isInValidLeg(leg);
+  const prevIsValid = index === 0 || !isInValidLeg(legs[index - 1]);
 
-    if (index > 0 && isInValidLeg(legs[index - 1])) {
-      return 'error';
-    }
+  const dotColor =
+    !isValid || (index > 0 && !prevIsValid)
+      ? 'bg-error border-error/50'
+      : 'bg-primary border-primary/50';
 
-    return 'primary';
-  }, [legs, leg, index]);
-
-  const getCurrentLegColor = useCallback(() => {
-    if (isInValidLeg(leg)) {
-      return 'error.main';
-    }
-
-    return 'primary.main';
-  }, [leg]);
+  const lineColor = isValid ? 'bg-primary/60' : 'bg-error/60';
 
   return (
-    <TimelineItem key={index}>
-      {/*<TimelineOppositeContent color="textSecondary">*/}
-      {/*  */}
-      {/*  <TrainIcon sx={{ mt: index > 0 ? 7 : 4 }} />*/}
-      {/*</TimelineOppositeContent>*/}
-      <TimelineSeparator>
-        <TimelineDot color={getTimeLineDotColor()}>
-          <TrainIcon />
-        </TimelineDot>
-        <TimelineConnector
-          sx={{
-            bgcolor: getCurrentLegColor(),
-          }}
+    <div className="relative flex gap-4 mb-4">
+      {/* Timeline dot + connector */}
+      <div className="flex flex-col items-center z-10 shrink-0">
+        <div
+          className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${dotColor}`}
+        >
+          <Train size={12} className="text-white" />
+        </div>
+        <div
+          className={`w-0.5 flex-1 mt-1 ${lineColor}`}
+          style={{ minHeight: 40 }}
         />
-      </TimelineSeparator>
-      <TimelineContent>
-        <Stack direction="row" justifyContent="space-between">
-          <Box>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
             {index > 0 && (
               <TripTiming
                 location={legs[index - 1].destination}
                 direction="row"
-                variant="caption"
+                className="text-xs text-white/50"
               />
             )}
-            <TripTiming location={leg.origin} direction="row" />
-            <Typography sx={{ color: getCurrentLegColor() }}>
+            <TripTiming
+              location={leg.origin}
+              direction="row"
+              className="text-sm font-medium"
+            />
+            <p
+              className={`text-sm font-medium ${
+                isValid ? 'text-primary' : 'text-error'
+              }`}
+            >
               {leg.origin.name}
-            </Typography>
+            </p>
             {index > 0 && (
               <>
                 {leg.destination.exitSide && (
-                  <Typography variant="caption">
-                    Exit side: {leg.destination.exitSide}
-                  </Typography>
+                  <p className="text-xs text-white/50">
+                    Exit: {leg.destination.exitSide}
+                  </p>
                 )}
-
-                {leg.transferMessages &&
-                  leg.transferMessages.map((transferMessage, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        <br />
-                        <Typography
-                          sx={{
-                            color: getPaletteColorFromNesProperties(
-                              transferMessage.messageNesProperties,
-                            ),
-                          }}
-                          variant="caption"
-                        >
-                          {transferMessage.message}
-                        </Typography>
-                      </React.Fragment>
-                    );
-                  })}
+                {leg.transferMessages?.map((msg, i) => (
+                  <React.Fragment key={i}>
+                    <p
+                      className="text-xs"
+                      style={{
+                        color: getPaletteColorFromNesProperties(
+                          msg.messageNesProperties,
+                        ),
+                      }}
+                    >
+                      {msg.message}
+                    </p>
+                  </React.Fragment>
+                ))}
               </>
             )}
-          </Box>
-          <Stack direction="column" justifyContent="space-evenly">
+          </div>
+          <div className="flex flex-col gap-1 items-end shrink-0">
             {index > 0 && (
               <Track
                 plannedTrack={legs[index - 1].destination.plannedTrack}
@@ -119,44 +104,40 @@ export default function LegTimeLineItem({
               plannedTrack={leg.origin.plannedTrack}
               actualTrack={leg.origin.actualTrack}
             />
-          </Stack>
-        </Stack>
+          </div>
+        </div>
+
         <StyledDivider />
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Box>
-            <Typography>{leg.product.displayName}</Typography>
-            <Typography>to {leg.direction}</Typography>
-            {leg.notes?.find((note) => note.value === 'Supplement') && (
-              <Typography sx={{ color: 'error.main' }}>
-                Supplement required
-              </Typography>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">{leg.product.displayName}</p>
+            <p className="text-xs text-white/50">to {leg.direction}</p>
+            {leg.notes?.find((n) => n.value === 'Supplement') && (
+              <p className="text-xs text-error">Supplement required</p>
             )}
-          </Box>
+          </div>
           <CrowdForecast crowdForecast={leg.crowdForecast} />
-        </Stack>
+        </div>
+
         <StyledDivider />
-        {leg.messages?.map((message, index) => {
-          return (
-            <Fragment key={index}>
-              <Typography
-                sx={{
-                  color: getPaletteColorFromNesProperties(
-                    message.nesProperties,
-                  ),
-                }}
-              >
-                {message.text ?? message.head}
-              </Typography>
-              <StyledDivider />
-            </Fragment>
-          );
-        }) ?? <></>}
+
+        {leg.messages?.map((msg, i) => (
+          <Fragment key={i}>
+            <p
+              className="text-xs"
+              style={{
+                color: getPaletteColorFromNesProperties(msg.nesProperties),
+              }}
+            >
+              {msg.text ?? msg.head}
+            </p>
+            <StyledDivider />
+          </Fragment>
+        ))}
+
         <LegShowMore leg={leg} />
-      </TimelineContent>
-    </TimelineItem>
+      </div>
+    </div>
   );
 }

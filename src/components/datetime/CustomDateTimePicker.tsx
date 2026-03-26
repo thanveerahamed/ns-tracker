@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import DateTimePickerModal from './DateTimePickerModal.tsx';
-import { Button, TextField } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 
 interface CustomDateTimePickerProps {
@@ -9,52 +8,44 @@ interface CustomDateTimePickerProps {
   value: Dayjs | 'now';
   isArrival?: boolean;
 }
+
 export default function CustomDateTimePicker({
   onChange,
   value,
   isArrival,
 }: CustomDateTimePickerProps) {
-  const [openDateTimeSelectorModel, setOpenDateTimeSelectorModel] =
-    useState<boolean>(false);
+  const [open, setOpen] = useState(false);
 
-  const handleModalClose = () => {
-    setOpenDateTimeSelectorModel(false);
-  };
-
-  const handleModalOnChange = (
-    currentTime: Dayjs | 'now',
-    newIsArrival?: boolean,
-  ) => {
-    onChange(currentTime, newIsArrival);
-    handleModalClose();
-  };
-
-  const handleNowClick = () => {
-    onChange(dayjs(), false);
-  };
+  const displayValue =
+    value === 'now' ? 'Now' : dayjs(value).format('DD MMM HH:mm');
 
   return (
     <>
-      <TextField
-        size="small"
-        label={isArrival ? 'Arrival' : 'Departure'}
-        variant="outlined"
-        value={
-          value === 'now' ? 'now' : dayjs(value).format('DD MMM YYYY hh:mm A')
-        }
-        onClick={() => setOpenDateTimeSelectorModel(true)}
-        onFocus={(event) => event.target.blur()}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setOpen(true)}
+          className="flex flex-col items-start px-2.5 py-1.5 rounded-xl bg-surface-2 border border-border text-xs hover:border-primary transition-colors"
+        >
+          <span className="text-white/40 text-[10px] uppercase tracking-wide">
+            {isArrival ? 'Arrival' : 'Departure'}
+          </span>
+          <span className="text-white font-medium">{displayValue}</span>
+        </button>
+        <button
+          onClick={() => onChange(dayjs(), false)}
+          className="px-2 py-1 text-[10px] font-bold rounded-lg bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 transition-colors"
+        >
+          NOW
+        </button>
+      </div>
+
+      <DateTimePickerModal
+        open={open}
+        onChange={onChange}
+        value={value === 'now' ? dayjs() : dayjs(value)}
+        isArrival={isArrival}
+        onClose={() => setOpen(false)}
       />
-      <Button onClick={handleNowClick}>NOW</Button>
-      {openDateTimeSelectorModel && (
-        <DateTimePickerModal
-          open={openDateTimeSelectorModel}
-          onChange={handleModalOnChange}
-          value={value === 'now' ? dayjs() : dayjs(value)}
-          isArrival={isArrival}
-          onClose={handleModalClose}
-        />
-      )}
     </>
   );
 }

@@ -1,5 +1,3 @@
-import { Typography } from '@mui/material';
-
 interface Props {
   plannedTrack: string;
   actualTrack?: string;
@@ -8,13 +6,14 @@ interface Props {
 export default function Track({ actualTrack, plannedTrack }: Props) {
   if (actualTrack && actualTrack !== plannedTrack) {
     return (
-      <Typography sx={{ color: 'error.main' }}>Track: {actualTrack}</Typography>
+      <span className="text-xs text-error font-medium">
+        Track {actualTrack}
+      </span>
     );
   }
-
   return (
-    <Typography sx={{ color: 'primary.main' }}>
-      Track: {plannedTrack}
-    </Typography>
+    <span className="text-xs text-primary font-medium">
+      Track {plannedTrack}
+    </span>
   );
 }

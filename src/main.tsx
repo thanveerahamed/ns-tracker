@@ -8,54 +8,34 @@ import { SnackbarProvider } from './context/SnackbarContext.tsx';
 import { TripsInformationProvider } from './context/TripsInformationContext.tsx';
 import { router } from './routes.tsx';
 import './utils/date.ts';
-import { ThemeProvider } from '@mui/material';
-import CssBaseline from '@mui/material/CssBaseline';
-import { createTheme } from '@mui/material/styles';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import '@fontsource-variable/geist';
+import { Toaster } from 'sonner';
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#2b8257',
-    },
-    secondary: {
-      main: '#f3b18d', // '#F06418',
-    },
-    mode: 'dark',
-  },
-  typography: {
-    fontFamily: ['Ubuntu', 'sans-serif'].join(','),
-  },
-});
+import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 30000,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
-    },
+    queries: { staleTime: 30000, retry: false },
+    mutations: { retry: false },
   },
 });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="nl">
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <SnackbarProvider>
-            <SearchFilterProvider>
-              <TripsInformationProvider>
-                <RouterProvider router={router} />
-              </TripsInformationProvider>
-            </SearchFilterProvider>
-          </SnackbarProvider>
-        </ThemeProvider>
-      </LocalizationProvider>
+      <Toaster
+        richColors
+        theme="dark"
+        position="top-center"
+        toastOptions={{ style: { fontFamily: 'Geist Variable, sans-serif' } }}
+      />
+      <SnackbarProvider>
+        <SearchFilterProvider>
+          <TripsInformationProvider>
+            <RouterProvider router={router} />
+          </TripsInformationProvider>
+        </SearchFilterProvider>
+      </SnackbarProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );

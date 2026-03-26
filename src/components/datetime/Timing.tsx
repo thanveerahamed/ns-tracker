@@ -1,15 +1,11 @@
 import * as React from 'react';
 
-import { Stack, Typography, TypographyProps } from '@mui/material';
-import { StackOwnProps } from '@mui/material/Stack/Stack';
-
-interface Props extends TypographyProps {
+interface Props {
   originalTime: string;
   isDelayed: boolean;
   delayedTime?: string;
-  direction?: StackOwnProps['direction'];
-  stackProps?: StackOwnProps;
-  mb?: StackOwnProps['mb'];
+  direction?: 'column' | 'row';
+  className?: string;
 }
 
 export default function Timing({
@@ -17,31 +13,21 @@ export default function Timing({
   delayedTime,
   originalTime,
   direction = 'column',
-  mb = 2,
-  ...rest
+  className,
 }: Props) {
-  return (
-    <>
-      {isDelayed ? (
-        <Stack
-          direction={direction}
-          mb={mb}
-          spacing={direction === 'row' ? 1 : undefined}
-          alignItems="center"
-        >
-          <Typography {...rest} sx={{ color: 'error.main' }}>
-            {delayedTime}
-          </Typography>
-          <Typography
-            variant="button"
-            sx={{ lineHeight: 1, mt: 0.5, textDecoration: 'line-through' }}
-          >
-            {originalTime}
-          </Typography>
-        </Stack>
-      ) : (
-        <Typography {...rest}>{originalTime}</Typography>
-      )}
-    </>
-  );
+  if (isDelayed) {
+    return (
+      <span
+        className={`flex ${
+          direction === 'row' ? 'flex-row gap-1.5 items-center' : 'flex-col'
+        } ${className ?? ''}`}
+      >
+        <span className="text-error font-medium">{delayedTime}</span>
+        <span className="text-xs line-through text-white/40">
+          {originalTime}
+        </span>
+      </span>
+    );
+  }
+  return <span className={className}>{originalTime}</span>;
 }

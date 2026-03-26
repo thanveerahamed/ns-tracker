@@ -1,24 +1,13 @@
+import { ChevronLeft } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import {
-  Card,
-  CardContent,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  LinearProgress,
-  Typography,
-} from '@mui/material';
-import Alert from '@mui/material/Alert';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import ForwardTripPlanner from '../components/ForwardTripPlanner.tsx';
 import TripInformation from '../components/TripInformation.tsx';
+import { Alert } from '../components/ui/alert.tsx';
+import { LinearProgress } from '../components/ui/progress.tsx';
 
 import { useTrip } from '../apis/trips.ts';
 import { useShow } from '../hooks/useShow.ts';
@@ -34,16 +23,11 @@ export default function Trip() {
     ctxRecon: ctxRecon ?? undefined,
   });
 
-  const handleFavouriteRemoved = () => {
-    navigate(-1);
-  };
+  const handleFavouriteRemoved = () => navigate(-1);
 
   const { completeTripOrigin: origin, completeTripDestination: destination } =
     useMemo(() => {
-      if (trip) {
-        return getCompleteTripEndLocations(trip);
-      }
-
+      if (trip) return getCompleteTripEndLocations(trip);
       return {
         completeTripOrigin: undefined,
         completeTripDestination: undefined,
@@ -51,77 +35,70 @@ export default function Trip() {
     }, [trip]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
-        initial={{ width: '0', x: '100vw' }}
-        animate={{ width: '100%', x: 0 }}
-        transition={{ duration: 0.5, origin: 0 }}
+        key="trip-page"
+        initial={{ x: '100%', opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: '100%', opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 280, damping: 30 }}
+        className="min-h-screen"
       >
-        <AppBar sx={{ position: 'relative' }}>
-          <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={() => navigate(-1)}
-              aria-label="close"
-            >
-              <ChevronLeftIcon />
-            </IconButton>
-            {origin && destination ? (
-              <Typography
-                sx={{ ml: 2, flex: 1 }}
-                variant="subtitle1"
-                component="div"
-              >
-                {origin.name} to {destination.name}
-              </Typography>
-            ) : (
-              <Typography
-                sx={{ ml: 2, flex: 1 }}
-                variant="subtitle1"
-                component="div"
-              >
-                {isLoading ? 'Fetching information' : 'No information'}
-              </Typography>
-            )}
-          </Toolbar>
-        </AppBar>
+        {/* App Bar */}
+        <header className="sticky top-0 z-10 flex items-center gap-2 px-2 py-3 bg-[rgba(14,14,14,0.92)] backdrop-blur border-b border-border">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-2 text-white/70 hover:text-white transition-colors"
+            aria-label="Go back"
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <span className="text-sm font-medium text-white/90 flex-1 truncate">
+            {origin && destination
+              ? `${origin.name} → ${destination.name}`
+              : isLoading
+                ? 'Fetching information…'
+                : 'No information'}
+          </span>
+        </header>
+
         {isLoading && <LinearProgress />}
+
         {trip && (
-          <Box sx={{ padding: '5px 0' }}>
+          <div className="p-2">
             <TripInformation
               trip={trip}
               onFavouriteRemoved={handleFavouriteRemoved}
             />
-          </Box>
+          </div>
         )}
+
         {!isLoading && !trip && (
-          <Alert severity="info">
-            No information available for current route
-          </Alert>
+          <div className="p-4">
+            <Alert severity="info">
+              No information available for current route
+            </Alert>
+          </div>
         )}
 
         {trip && !isLoading && (
-          <Card>
-            <CardContent>
-              <FormControlLabel
-                value="end"
-                control={
-                  <Checkbox
-                    checked={showInternalPlanner.visible}
-                    onClick={showInternalPlanner.toggle}
-                  />
-                }
-                label="Plan another trip from destination"
-                labelPlacement="end"
+          <div className="mx-2 mb-4 p-4 bg-surface rounded-2xl border border-border">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showInternalPlanner.visible}
+                onChange={showInternalPlanner.toggle}
+                className="w-4 h-4 accent-primary"
               />
-
-              <ForwardTripPlanner
-                trip={trip}
-                show={showInternalPlanner.visible}
-              />
-            </CardContent>
-          </Card>
+              <span className="text-sm text-white/80">
+                Plan another trip from destination
+              </span>
+            </label>
+            <ForwardTripPlanner
+              trip={trip}
+              show={showInternalPlanner.visible}
+            />
+          </div>
         )}
       </motion.div>
     </AnimatePresence>

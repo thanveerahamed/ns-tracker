@@ -1,9 +1,7 @@
-import * as React from 'react';
+import { Train } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
-import TrainIcon from '@mui/icons-material/Train';
-import { Card, CardContent } from '@mui/material';
-import Typography from '@mui/material/Typography';
+import { motion } from 'framer-motion';
 
 import { useSnackbarContext } from '../../context';
 import { useDialog } from '../../hooks/useDialog.ts';
@@ -36,26 +34,19 @@ export default function FavouriteStationCard({
         open={dialog.isOpen}
         onClose={dialog.close}
         onConfirm={handleClose}
-        ariaName="remove-favourite-station"
         title="Remove favourite station"
-        text={`Are you sure you want to remove ${station.namen.lang} from favourites?`}
+        text={`Remove ${station.namen.lang} from favourites?`}
       />
-      <Card
-        sx={{
-          marginRight: '5px',
-          marginTop: '5px',
-          flex: 1,
-          flexBasis: '25%',
-        }}
-        variant="elevation"
+      <motion.button
+        whileTap={{ scale: 0.95 }}
         onClick={dialog.open}
+        className="flex flex-col items-center gap-1 p-3 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors w-full text-center"
       >
-        <CardContent sx={{ textAlign: 'center' }}>
-          <TrainIcon />
-          <br />
-          <Typography variant="caption">{station.namen.lang}</Typography>
-        </CardContent>
-      </Card>
+        <Train size={20} className="text-primary" />
+        <span className="text-xs text-white/70 leading-tight">
+          {station.namen.lang}
+        </span>
+      </motion.button>
     </>
   );
 }

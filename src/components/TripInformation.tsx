@@ -3,17 +3,7 @@ import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
 import TripStartAndEndTime from './TripStartAndEndTime.tsx';
 import { TripTimelineView } from './timelineView/TripTimelineView.tsx';
-import {
-  AlertColor,
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
+import { Alert } from './ui/alert.tsx';
 import dayjs from 'dayjs';
 
 import { Trip } from '../types/trip.ts';
@@ -27,52 +17,42 @@ interface Props {
 export default function TripInformation({ trip, onFavouriteRemoved }: Props) {
   return (
     <>
-      <Card variant="elevation" sx={{ mb: 2 }}>
-        <CardContent>
-          <Grid container>
-            <Grid item xs={7}>
-              <TripStartAndEndTime trip={trip} />
-              <Typography variant="body1" component="div">
-                {dayjs(trip.legs[0].origin.plannedDateTime).format('LL')}
-              </Typography>
-            </Grid>
-            <Grid item xs={5}>
-              <Stack direction="row" justifyContent="space-around">
-                <Box>
-                  <NumberOfConnectionsDisplay
-                    connections={trip.legs.length - 1}
-                  />
-                  <DurationDisplay trip={trip} />
-                </Box>
-                <AddTripToFavourite
-                  trip={trip}
-                  onFavouriteRemoved={onFavouriteRemoved}
-                />
-              </Stack>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-      <Card variant="elevation">
-        {trip.primaryMessage && (
-          <CardHeader
-            title={
-              <Alert
-                severity={
-                  getColorFromNesProperties(
-                    trip.primaryMessage.nesProperties,
-                  ) as AlertColor
-                }
-              >
-                {trip.primaryMessage.title}
-              </Alert>
-            }
+      {/* Summary card */}
+      <div className="bg-surface rounded-2xl border border-border p-4 mb-3">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <TripStartAndEndTime trip={trip} large />
+            <p className="text-xs text-white/40 mt-1">
+              {dayjs(trip.legs[0].origin.plannedDateTime).format('LL')}
+            </p>
+            <div className="flex gap-3 mt-2">
+              <NumberOfConnectionsDisplay connections={trip.legs.length - 1} />
+              <DurationDisplay trip={trip} />
+            </div>
+          </div>
+          <AddTripToFavourite
+            trip={trip}
+            onFavouriteRemoved={onFavouriteRemoved}
           />
+        </div>
+      </div>
+
+      {/* Timeline card */}
+      <div className="bg-surface rounded-2xl border border-border overflow-hidden">
+        {trip.primaryMessage && (
+          <Alert
+            severity={
+              getColorFromNesProperties(
+                trip.primaryMessage.nesProperties,
+              ) as 'error' | 'warning' | 'success' | 'info'
+            }
+            className="rounded-none border-x-0 border-t-0 border-b"
+          >
+            {trip.primaryMessage.title}
+          </Alert>
         )}
-        <CardContent sx={{ p: 0, pb: '0px !important' }}>
-          <TripTimelineView trip={trip} />
-        </CardContent>
-      </Card>
+        <TripTimelineView trip={trip} />
+      </div>
     </>
   );
 }

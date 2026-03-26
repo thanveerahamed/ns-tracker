@@ -1,11 +1,4 @@
-import { useCallback } from 'react';
-
-import TrainIcon from '@mui/icons-material/Train';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import { Stack, Typography } from '@mui/material';
+import { Train } from 'lucide-react';
 
 import { Leg } from '../../types/trip.ts';
 import { isInValidLeg } from '../../utils/trips.ts';
@@ -17,49 +10,42 @@ export default function DestinationLegTimeLineItem({
 }: {
   destinationLeg: Leg;
 }) {
-  const getTimeLineDotColor = useCallback(() => {
-    if (isInValidLeg(destinationLeg)) {
-      return 'error';
-    }
-
-    return 'primary';
-  }, [destinationLeg]);
-
-  const getCurrentLegColor = useCallback(() => {
-    if (isInValidLeg(destinationLeg)) {
-      return 'error.main';
-    }
-
-    return 'primary.main';
-  }, [destinationLeg]);
+  const isValid = !isInValidLeg(destinationLeg);
+  const dotColor = isValid
+    ? 'bg-primary border-primary/50'
+    : 'bg-error border-error/50';
+  const textColor = isValid ? 'text-primary' : 'text-error';
 
   return (
-    <TimelineItem>
-      {/*<TimelineOppositeContent color="textSecondary">*/}
-      {/*  <TripTiming location={destinationLeg.destination} />*/}
-      {/*</TimelineOppositeContent>*/}
-      <TimelineSeparator>
-        <TimelineDot color={getTimeLineDotColor()}>
-          <TrainIcon />
-        </TimelineDot>
-      </TimelineSeparator>
-      <TimelineContent>
-        <TripTiming location={destinationLeg.destination} direction="row" />
-        <Stack direction="row" justifyContent="space-between">
-          <Typography sx={{ color: getCurrentLegColor() }}>
+    <div className="relative flex gap-4">
+      <div className="flex flex-col items-center z-10 shrink-0">
+        <div
+          className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${dotColor}`}
+        >
+          <Train size={12} className="text-white" />
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <TripTiming
+          location={destinationLeg.destination}
+          direction="row"
+          className="text-sm font-medium"
+        />
+        <div className="flex items-center justify-between">
+          <p className={`text-sm font-medium ${textColor}`}>
             {destinationLeg.destination.name}
-          </Typography>
+          </p>
           <Track
             plannedTrack={destinationLeg.destination.plannedTrack}
             actualTrack={destinationLeg.destination.actualTrack}
           />
-        </Stack>
+        </div>
         {destinationLeg.destination.exitSide && (
-          <Typography variant="caption">
-            Exit side: {destinationLeg.destination.exitSide}
-          </Typography>
+          <p className="text-xs text-white/50">
+            Exit: {destinationLeg.destination.exitSide}
+          </p>
         )}
-      </TimelineContent>
-    </TimelineItem>
+      </div>
+    </div>
   );
 }

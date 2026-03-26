@@ -1,9 +1,4 @@
-import { MouseEvent } from 'react';
-
-import { Stack } from '@mui/material';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import Typography from '@mui/material/Typography';
+import { cn } from '../utils/cn.ts';
 
 interface Props {
   label: string;
@@ -18,31 +13,25 @@ export default function ToggleWithLabel({
   onChange,
   options,
 }: Props) {
-  const handleChange = (_event: MouseEvent<HTMLElement>, newValue: string) => {
-    onChange(newValue);
-  };
-
   return (
-    <Stack
-      flexDirection="row"
-      justifyContent="space-between"
-      alignItems="center"
-      m={1}
-    >
-      <Typography>{label}</Typography>
-      <ToggleButtonGroup
-        color="primary"
-        value={value}
-        exclusive
-        onChange={handleChange}
-        aria-label={label}
-      >
+    <div className="flex items-center justify-between px-2 py-1.5">
+      <span className="text-sm text-white/80">{label}</span>
+      <div className="flex rounded-xl overflow-hidden border border-border">
         {options.map((option) => (
-          <ToggleButton key={option.value} value={option.value}>
+          <button
+            key={option.value}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium transition-colors',
+              value === option.value
+                ? 'bg-primary text-white'
+                : 'bg-surface-2 text-white/50 hover:text-white',
+            )}
+          >
             {option.label}
-          </ToggleButton>
+          </button>
         ))}
-      </ToggleButtonGroup>
-    </Stack>
+      </div>
+    </div>
   );
 }

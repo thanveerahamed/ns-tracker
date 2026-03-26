@@ -6,33 +6,14 @@ import {
   Pin,
   useMap,
 } from '@vis.gl/react-google-maps';
+import { Circle, Train, X } from 'lucide-react';
 import React, { useEffect, useMemo } from 'react';
 
 import { DeckGlOverlay } from './DeckLayer.tsx';
 import StopTiming from './StopTiming.tsx';
 import Track from './Track.tsx';
-import { SlideUpTransition } from './transitions/SlideUp.tsx';
 import { PathLayer } from '@deck.gl/layers/typed';
-import CloseIcon from '@mui/icons-material/Close';
-import PanoramaFishEyeIcon from '@mui/icons-material/PanoramaFishEye';
-import TrainIcon from '@mui/icons-material/Train';
-import { Timeline, TimelineSeparator } from '@mui/lab';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
-import {
-  Avatar,
-  Chip,
-  Dialog,
-  IconButton,
-  Stack,
-  Typography,
-} from '@mui/material';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import { green, orange } from '@mui/material/colors';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import { useJourney } from '../apis/trips.ts';
 import { JourneyStop, PartOfLeg } from '../types/journey.ts';
@@ -186,7 +167,7 @@ const PublicTransportMap = ({ stops }: PublicTransportMapProps) => {
       {stops
         .filter((stop) => stop.plotMarker)
         .map((poi) => {
-          const backgroundColor = poi.partOfLeg ? green[900] : orange[500];
+          const backgroundColor = poi.partOfLeg ? '#1b5e20' : '#e65100';
           return (
             <AdvancedMarker
               key={poi.id}
@@ -257,42 +238,41 @@ const JourneyTimeline = ({
 
   return (
     <>
-      <Timeline
-        sx={{
-          [`& .${timelineItemClasses.root}:before`]: {
-            flex: 0,
-            padding: 0,
-          },
-        }}
-      >
-        {stopsToDisplay.map((stop, index) => (
-          <TimelineItem key={stop.id}>
-            <TimelineSeparator>
-              {stop.partOfLeg ? (
-                <TimelineDot color="primary" variant="outlined">
-                  <TrainIcon color="primary" />
-                </TimelineDot>
-              ) : (
-                <TimelineDot variant="outlined" color="warning">
-                  <PanoramaFishEyeIcon color="warning" />
-                </TimelineDot>
-              )}
-
-              {index < stopsToDisplay.length - 1 && (
-                <TimelineConnector
-                  sx={{
-                    bgcolor:
-                      stop.partOfLeg && stop.partOfLeg !== 'destination'
-                        ? 'primary.main'
-                        : 'warning.main',
-                  }}
-                />
-              )}
-            </TimelineSeparator>
-            <TimelineContent>
-              <Stack direction="column" spacing={1}>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography variant="body1">{stop.stop.name}</Typography>
+      <div className="relative px-4 py-2">
+        <div className="absolute left-[28px] top-6 bottom-6 w-0.5 bg-border" />
+        {stopsToDisplay.map((stop, index) => {
+          const isLeg = Boolean(stop.partOfLeg);
+          const dotColor = isLeg
+            ? 'bg-primary border-primary/50'
+            : 'bg-warning/70 border-warning/40';
+          const lineColor =
+            stop.partOfLeg && stop.partOfLeg !== 'destination'
+              ? 'bg-primary/50'
+              : 'bg-warning/40';
+          return (
+            <div key={stop.id} className="relative flex gap-3 mb-3">
+              <div className="flex flex-col items-center z-10 shrink-0">
+                <div
+                  className={`w-7 h-7 rounded-full border-2 flex items-center justify-center ${dotColor}`}
+                >
+                  {isLeg ? (
+                    <Train size={12} className="text-white" />
+                  ) : (
+                    <Circle size={10} className="text-white" />
+                  )}
+                </div>
+                {index < stopsToDisplay.length - 1 && (
+                  <div
+                    className={`w-0.5 flex-1 mt-0.5 ${lineColor}`}
+                    style={{ minHeight: 24 }}
+                  />
+                )}
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium leading-tight">
+                    {stop.stop.name}
+                  </p>
                   <Track
                     plannedTrack={
                       stop.departures[0]?.plannedTrack ??
@@ -303,43 +283,32 @@ const JourneyTimeline = ({
                       stop.arrivals[0]?.actualTrack
                     }
                   />
-                </Stack>
-
-                {stop.arrivals.length > 0 && (
-                  <Chip
-                    size="small"
-                    sx={{ width: 'fit-content' }}
-                    avatar={<Avatar sx={{ bgcolor: orange[900] }}>A</Avatar>}
-                    label={
-                      <>
-                        <StopTiming
-                          actualTime={stop.arrivals[0]?.actualTime}
-                          plannedTime={stop.arrivals[0]?.plannedTime}
-                          variant="caption"
-                        />
-                      </>
-                    }
-                  />
-                )}
-                {stop.departures.length > 0 && (
-                  <Chip
-                    size="small"
-                    sx={{ width: 'fit-content' }}
-                    avatar={<Avatar sx={{ bgcolor: green[900] }}>D</Avatar>}
-                    label={
+                </div>
+                <div className="flex gap-2 mt-1 flex-wrap">
+                  {stop.arrivals.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-[#e65100]/20 border border-[#e65100]/30">
+                      <span className="font-bold text-[#e65100]">A</span>
+                      <StopTiming
+                        actualTime={stop.arrivals[0]?.actualTime}
+                        plannedTime={stop.arrivals[0]?.plannedTime}
+                      />
+                    </span>
+                  )}
+                  {stop.departures.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 border border-primary/30">
+                      <span className="font-bold text-primary">D</span>
                       <StopTiming
                         actualTime={stop.departures[0]?.actualTime}
                         plannedTime={stop.departures[0]?.plannedTime}
-                        variant="caption"
                       />
-                    }
-                  />
-                )}
-              </Stack>
-            </TimelineContent>
-          </TimelineItem>
-        ))}
-      </Timeline>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
       <APIProvider
         apiKey={env.VITE_GOOGLE_MAP_API}
         onLoad={() => console.log('Maps API has loaded.')}
@@ -361,37 +330,36 @@ export const JourneyInformation = ({
   const journey = useJourney({ id });
 
   return (
-    <Dialog
-      fullScreen
-      open={true}
-      onClose={onClose}
-      TransitionComponent={SlideUpTransition}
-    >
-      <AppBar sx={{ position: 'fixed' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+        className="fixed inset-0 z-[201] bg-bg flex flex-col overflow-y-auto"
+      >
+        <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b border-border bg-surface">
+          <button
             onClick={onClose}
-            aria-label="close"
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-2 text-white/60 hover:text-white transition-colors"
           >
-            <CloseIcon />
-          </IconButton>
-          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Journey information
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Box mt={6}>
-        {journey.isLoading ? (
-          <>Loading...</>
-        ) : (
-          <JourneyTimeline
-            journeyStop={journey.data?.payload.stops ?? []}
-            legInformation={legInformation}
-          />
-        )}
-      </Box>
-    </Dialog>
+            <X size={20} />
+          </button>
+          <span className="font-semibold text-sm">Journey information</span>
+        </div>
+        <div>
+          {journey.isLoading ? (
+            <div className="flex items-center justify-center py-12 text-sm text-white/40">
+              Loading…
+            </div>
+          ) : (
+            <JourneyTimeline
+              journeyStop={journey.data?.payload.stops ?? []}
+              legInformation={legInformation}
+            />
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };

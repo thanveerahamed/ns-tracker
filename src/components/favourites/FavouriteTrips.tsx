@@ -1,11 +1,7 @@
+import { Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate } from 'react-router-dom';
-
-import styled from '@emotion/styled';
-import { Chip, CircularProgress } from '@mui/material';
-import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
 
 import { useSnackbarContext } from '../../context';
 import { auth } from '../../services/firebase.ts';
@@ -20,161 +16,135 @@ interface MemoizedTrips {
   current: FavouriteTrip[];
 }
 
-const SectionTitle = styled(Chip)`
-  width: 100%;
-  border-radius: 0;
-  justify-content: flex-start;
-`;
-
-const sortDesc = (doc1: FavouriteTrip, doc2: FavouriteTrip) =>
-  dayjs(doc2.legs[0].origin.actualDateTime).diff(
-    dayjs(doc1.legs[0].origin.actualDateTime),
+const sortDesc = (a: FavouriteTrip, b: FavouriteTrip) =>
+  dayjs(b.legs[0].origin.actualDateTime).diff(
+    dayjs(a.legs[0].origin.actualDateTime),
+  );
+const sortAsc = (a: FavouriteTrip, b: FavouriteTrip) =>
+  dayjs(a.legs[0].origin.actualDateTime).diff(
+    dayjs(b.legs[0].origin.actualDateTime),
   );
 
-const sortAsc = (doc1: FavouriteTrip, doc2: FavouriteTrip) =>
-  dayjs(doc1.legs[0].origin.actualDateTime).diff(
-    dayjs(doc2.legs[0].origin.actualDateTime),
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/30">
+        {label}
+      </span>
+      <div className="flex-1 h-px bg-border" />
+    </div>
   );
+}
 
-function FavouriteTripItem(props: {
+function FavouriteTripItem({
+  trip,
+  onRemove,
+}: {
   trip: FavouriteTrip;
-  onRemove: (tripToRemove: FavouriteTrip) => void;
+  onRemove: (t: FavouriteTrip) => void;
 }) {
   const navigate = useNavigate();
   return (
-    <List
-      subheader={
-        <Typography variant="caption" sx={{ pl: 1 }}>
-          {dayjs(props.trip.legs[0].origin.actualDateTime).format('LL')}
-        </Typography>
-      }
-    >
+    <div>
       <TripInfoCard
-        trip={props.trip}
-        onSelect={() => navigate(`/trip?ctxRecon=${props.trip.ctxRecon}`)}
+        trip={trip}
+        onSelect={() => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
         isFavourite
         actions={[
           {
             color: 'secondary',
-            onClick: (event) => {
-              event.stopPropagation();
-              props.onRemove(props.trip);
+            onClick: (e) => {
+              e?.stopPropagation();
+              onRemove(trip);
             },
             name: 'Remove',
           },
         ]}
       />
-    </List>
+    </div>
   );
 }
 
 export default function FavouriteTrips() {
   const [user] = useAuthState(auth);
   const { showNotification } = useSnackbarContext();
-  const [favouriteTripsSnapshots, isFavouriteTripsSnapshotsLoading] =
-    useFavouriteTrip(user?.uid);
+  const [snapshots, isLoading] = useFavouriteTrip(user?.uid);
 
   const trips = useMemo(() => {
-    const memoizedTrips = favouriteTripsSnapshots?.docs.reduce(
-      (result: MemoizedTrips, tripDoc): MemoizedTrips => {
-        const tripData = tripDoc.data() as { trip: string };
-        const tripDocId = tripDoc.id;
-        const currentTrip = {
-          ...JSON.parse(tripData.trip),
-          docId: tripDocId,
+    const result = snapshots?.docs.reduce(
+      (acc: MemoizedTrips, doc) => {
+        const data = doc.data() as { trip: string };
+        const trip = {
+          ...JSON.parse(data.trip),
+          docId: doc.id,
         } as FavouriteTrip;
         const isCurrent = dayjs().isBetween(
-          currentTrip.legs[0].origin.actualDateTime,
-          currentTrip.legs[currentTrip.legs.length - 1].destination
-            .actualDateTime,
+          trip.legs[0].origin.actualDateTime,
+          trip.legs[trip.legs.length - 1].destination.actualDateTime,
           'seconds',
           '[)',
         );
-
-        if (isCurrent) {
-          return {
-            ...result,
-            current: [...result.current, currentTrip],
-          };
+        if (isCurrent) return { ...acc, current: [...acc.current, trip] };
+        if (dayjs(trip.legs[0].origin.actualDateTime).isBefore(dayjs())) {
+          return { ...acc, old: [...acc.old, trip] };
         }
-
-        const isOld = dayjs(currentTrip.legs[0].origin.actualDateTime).isBefore(
-          dayjs(),
-        );
-
-        if (isOld) {
-          return {
-            ...result,
-            old: [...result.old, currentTrip],
-          };
-        } else {
-          return {
-            ...result,
-            upcoming: [...result.upcoming, currentTrip],
-          };
-        }
+        return { ...acc, upcoming: [...acc.upcoming, trip] };
       },
       { old: [], upcoming: [], current: [] },
     ) ?? { old: [], upcoming: [], current: [] };
-
     return {
-      old: memoizedTrips.old.sort(sortDesc),
-      upcoming: memoizedTrips.upcoming.sort(sortAsc),
-      current: memoizedTrips.current.sort(sortAsc),
+      old: result.old.sort(sortDesc),
+      upcoming: result.upcoming.sort(sortAsc),
+      current: result.current.sort(sortAsc),
     };
-  }, [favouriteTripsSnapshots]);
+  }, [snapshots]);
 
-  const handleRemoveFavourite = (tripToRemove: FavouriteTrip) => {
+  const handleRemove = (trip: FavouriteTrip) => {
     if (user?.uid) {
-      removeFavouriteTrip(user.uid, tripToRemove.docId)
+      removeFavouriteTrip(user.uid, trip.docId)
         .then(() => showNotification('Removed from favourite!', 'success'))
         .catch(() => showNotification('Some error occurred!', 'error'));
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 size={24} className="animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!snapshots?.size) {
+    return <p className="p-4 text-sm text-white/40">No favourites.</p>;
+  }
+
   return (
-    <>
-      {isFavouriteTripsSnapshotsLoading && <CircularProgress />}
+    <div>
       {trips.current.length > 0 && (
         <>
-          <SectionTitle label="Current" />
-          {trips.current.map((trip, index) => (
-            <FavouriteTripItem
-              key={`trip_info_current_${index}`}
-              trip={trip}
-              onRemove={handleRemoveFavourite}
-            />
+          <SectionHeader label="Current" />
+          {trips.current.map((t, i) => (
+            <FavouriteTripItem key={`c${i}`} trip={t} onRemove={handleRemove} />
           ))}
         </>
       )}
       {trips.upcoming.length > 0 && (
         <>
-          <SectionTitle label="Upcoming" />
-          {trips.upcoming.map((trip, index) => (
-            <FavouriteTripItem
-              key={`trip_info_upcoming_${index}`}
-              trip={trip}
-              onRemove={handleRemoveFavourite}
-            />
+          <SectionHeader label="Upcoming" />
+          {trips.upcoming.map((t, i) => (
+            <FavouriteTripItem key={`u${i}`} trip={t} onRemove={handleRemove} />
           ))}
         </>
       )}
       {trips.old.length > 0 && (
         <>
-          <SectionTitle label="Old" />
-          {trips.old.map((trip, index) => (
-            <FavouriteTripItem
-              key={`trip_info_old_${index}`}
-              trip={trip}
-              onRemove={handleRemoveFavourite}
-            />
+          <SectionHeader label="Past" />
+          {trips.old.map((t, i) => (
+            <FavouriteTripItem key={`o${i}`} trip={t} onRemove={handleRemove} />
           ))}
         </>
       )}
-      {!isFavouriteTripsSnapshotsLoading &&
-        favouriteTripsSnapshots?.size === 0 && (
-          <Typography p={2}>No favourites.</Typography>
-        )}
-    </>
+    </div>
   );
 }

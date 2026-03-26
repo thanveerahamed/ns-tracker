@@ -1,13 +1,5 @@
 import * as React from 'react';
 
-import Timeline from '@mui/lab/Timeline';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import TimelineItem, { timelineItemClasses } from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import Typography from '@mui/material/Typography';
-
 export default function SplitViewTimeLineView({
   from,
   to,
@@ -16,37 +8,20 @@ export default function SplitViewTimeLineView({
   to: string;
 }) {
   return (
-    <Timeline
-      sx={{
-        [`& .${timelineItemClasses.root}:before`]: {
-          flex: 0,
-          padding: 0,
-        },
-        minWidth: '150px',
-        margin: 0,
-      }}
-    >
-      <TimelineItem sx={{ minHeight: '50px' }}>
-        <TimelineSeparator>
-          <TimelineDot color="primary" />
-          <TimelineConnector />
-        </TimelineSeparator>
-        <TimelineContent>
-          <Typography variant="subtitle2" sx={{ color: 'primary.main' }}>
-            {from}
-          </Typography>
-        </TimelineContent>
-      </TimelineItem>
-      <TimelineItem sx={{ minHeight: '20px' }}>
-        <TimelineSeparator>
-          <TimelineDot color="secondary" />
-        </TimelineSeparator>
-        <TimelineContent>
-          <Typography variant="subtitle2" sx={{ color: 'secondary.main' }}>
-            {to}
-          </Typography>
-        </TimelineContent>
-      </TimelineItem>
-    </Timeline>
+    <div className="flex gap-2 p-3 min-w-[130px]">
+      <div className="flex flex-col items-center gap-0">
+        <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
+        <span className="w-px flex-1 bg-border" style={{ minHeight: 16 }} />
+        <span className="w-2.5 h-2.5 rounded-full bg-secondary shrink-0" />
+      </div>
+      <div className="flex flex-col justify-between gap-2">
+        <span className="text-xs font-medium text-primary leading-tight">
+          {from}
+        </span>
+        <span className="text-xs font-medium text-secondary leading-tight">
+          {to}
+        </span>
+      </div>
+    </div>
   );
 }

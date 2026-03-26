@@ -1,8 +1,4 @@
-import * as React from 'react';
 import { useEffect, useState } from 'react';
-
-import { Card, CardContent, CardHeader, TextField } from '@mui/material';
-import Box from '@mui/material/Box';
 
 import { useDialog } from '../../hooks/useDialog.ts';
 import { IView } from '../../types/splitView.ts';
@@ -55,28 +51,29 @@ export default function SingleViewCard({
 
   return (
     <>
-      <Card sx={{ m: 1 }}>
-        <CardHeader title={title} />
-        <CardContent>
-          <TextField
-            label="Origin"
-            variant="outlined"
-            fullWidth
-            value={origin?.namen?.lang ?? ''}
+      <div className="m-2 rounded-2xl border border-border bg-surface p-3">
+        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
+          {title}
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
             onClick={() => handleTextClicked(LocationType.Origin)}
-            onFocus={(event) => event.target.blur()}
-          />
-          <Box sx={{ m: 2 }} />
-          <TextField
-            label="Destination"
-            variant="outlined"
-            fullWidth
-            value={destination?.namen?.lang ?? ''}
+            className="w-full px-3 py-2 text-left rounded-xl bg-surface-2 border border-border text-sm hover:border-primary/50 transition-colors"
+          >
+            <span className={origin ? 'text-white' : 'text-white/30'}>
+              {origin?.namen?.lang || 'Origin'}
+            </span>
+          </button>
+          <button
             onClick={() => handleTextClicked(LocationType.Destination)}
-            onFocus={(event) => event.target.blur()}
-          />
-        </CardContent>
-      </Card>
+            className="w-full px-3 py-2 text-left rounded-xl bg-surface-2 border border-border text-sm hover:border-primary/50 transition-colors"
+          >
+            <span className={destination ? 'text-white' : 'text-white/30'}>
+              {destination?.namen?.lang || 'Destination'}
+            </span>
+          </button>
+        </div>
+      </div>
 
       {dialog.isOpen && (
         <StationSelectionDialog

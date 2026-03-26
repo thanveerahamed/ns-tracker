@@ -1,24 +1,27 @@
 import { ReactNode } from 'react';
 
-import Box, { BoxProps } from '@mui/material/Box';
-
-interface TabPanelProps extends BoxProps {
+interface TabPanelProps {
   children?: ReactNode;
   index: number;
   value: number;
+  className?: string;
 }
 
-export default function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
+export default function CustomTabPanel({
+  children,
+  value,
+  index,
+  className,
+}: TabPanelProps) {
   return (
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      className={className}
     >
-      {value === index && <Box {...other}>{children}</Box>}
+      {value === index && children}
     </div>
   );
 }

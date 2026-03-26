@@ -1,9 +1,6 @@
+import { Loader2, Star, StarOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
-
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import { CircularProgress, IconButton } from '@mui/material';
 
 import { useSnackbarContext } from '../context';
 import { auth } from '../services/firebase.ts';
@@ -18,27 +15,24 @@ interface Props {
   trip?: Trip;
   onFavouriteRemoved?: () => void;
 }
+
 export default function AddTripToFavourite({
   trip,
   onFavouriteRemoved,
 }: Props) {
   const { showNotification } = useSnackbarContext();
   const [user] = useAuthState(auth);
-  const [favouriteTripsSnapshots, isFavouriteTripsSnapshotsLoading] =
-    useFavouriteTrip(user?.uid);
+  const [favouriteTripsSnapshots, isLoading] = useFavouriteTrip(user?.uid);
   const [favouriteTrip, setFavouriteTrip] = useState<
     FavouriteTrip | undefined
   >();
 
-  const handleFavouriteClick = () => {
+  const handleClick = () => {
     if (favouriteTrip) {
       removeFavouriteTrip(user?.uid ?? '', favouriteTrip.docId ?? '')
         .then(() => {
           showNotification('Removed from favourite!', 'success');
-
-          if (onFavouriteRemoved) {
-            onFavouriteRemoved();
-          }
+          onFavouriteRemoved?.();
         })
         .catch(() => showNotification('Some error occurred!', 'error'));
     } else {
@@ -53,35 +47,28 @@ export default function AddTripToFavourite({
       const result = (
         favouriteTripsSnapshots?.docs.map((doc) => {
           const data = doc.data() as { trip: string };
-          return {
-            ...(JSON.parse(data.trip) as FavouriteTrip),
-            docId: doc.id,
-          };
+          return { ...(JSON.parse(data.trip) as FavouriteTrip), docId: doc.id };
         }) ?? []
-      ).find((favTrip) => favTrip.ctxRecon === trip?.ctxRecon);
-
+      ).find((f) => f.ctxRecon === trip.ctxRecon);
       setFavouriteTrip(result);
     }
   }, [favouriteTripsSnapshots, trip]);
 
-  if (trip == undefined || trip.status === 'CANCELLED') {
-    return <></>;
-  }
+  if (!trip || trip.status === 'CANCELLED') return null;
 
   return (
-    <IconButton
-      edge="start"
-      color="inherit"
-      onClick={handleFavouriteClick}
-      aria-label="close"
+    <button
+      onClick={handleClick}
+      className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-2 text-white/60 hover:text-white transition-colors"
+      aria-label="Toggle favourite"
     >
-      {isFavouriteTripsSnapshotsLoading ? (
-        <CircularProgress size={24} />
+      {isLoading ? (
+        <Loader2 size={18} className="animate-spin text-primary" />
       ) : favouriteTrip ? (
-        <StarIcon />
+        <Star size={18} className="text-primary fill-primary" />
       ) : (
-        <StarBorderIcon />
+        <StarOff size={18} />
       )}
-    </IconButton>
+    </button>
   );
 }

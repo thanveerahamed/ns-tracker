@@ -1,6 +1,4 @@
-import SyncIcon from '@mui/icons-material/Sync';
-import { Stack } from '@mui/material';
-import Typography from '@mui/material/Typography';
+import { Repeat2 } from 'lucide-react';
 
 export default function ConnectionCounts({
   connections,
@@ -9,12 +7,12 @@ export default function ConnectionCounts({
   connections: number;
   hideIcon?: boolean;
 }) {
+  if (connections === 0) return null;
+
   return (
-    <Stack direction="row" alignItems="center" gap={1}>
-      {!hideIcon && <SyncIcon />}
-      <Typography display="block" gutterBottom>
-        {connections}
-      </Typography>
-    </Stack>
+    <div className="flex items-center gap-1">
+      {!hideIcon && <Repeat2 size={13} className="text-white/40" />}
+      <span className="text-[12px] text-white/50">{connections}</span>
+    </div>
   );
 }

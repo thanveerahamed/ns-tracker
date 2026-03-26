@@ -1,12 +1,10 @@
+import { ArrowRightLeft, Star } from 'lucide-react';
+
 import CrowdForecast from './CrowdForecast.tsx';
 import DurationDisplay from './DurationDisplay.tsx';
 import NumberOfConnectionsDisplay from './NumberOfConnectionsDisplay.tsx';
 import TripStartAndEndTime from './TripStartAndEndTime.tsx';
-import StarIcon from '@mui/icons-material/Star';
-import TrainIcon from '@mui/icons-material/Train';
-import TransferWithinAStationIcon from '@mui/icons-material/TransferWithinAStation';
-import { Chip, Grid, Stack } from '@mui/material';
-import Typography from '@mui/material/Typography';
+import { Chip } from './ui/alert.tsx';
 
 import { Trip } from '../types/trip.ts';
 import { getPaletteColorFromNesProperties } from '../utils/trips.ts';
@@ -22,73 +20,67 @@ export function TripInfoDetail({
   isFavourite: boolean;
   hideStartAndEndTime?: boolean;
 }) {
+  const connections = trip.legs.length - 1;
+
   return (
-    <Grid container>
-      <Grid item xs={9}>
-        {!hideStartAndEndTime && <TripStartAndEndTime trip={trip} />}
-        {trip.legs.map((leg, index) => (
-          <Chip
-            sx={{
-              'height': 'auto',
-              '& .MuiChip-label': {
-                display: 'block',
-                whiteSpace: 'normal',
-              },
-              'margin': '5px',
-              'borderRadius': '0',
-            }}
-            key={index}
-            icon={<TrainIcon />}
-            label={`${leg.product.displayName} (Track: ${
-              leg.origin.actualTrack ?? leg.origin.plannedTrack
-            })`}
-            variant="outlined"
-            color="primary"
-          />
-        ))}
-        {trip.labelListItems && trip.labelListItems.length > 0 && (
-          <Chip
-            label={trip.labelListItems.map((item) => item.label).join(',')}
-            variant="outlined"
-            sx={{ margin: '5px' }}
-          />
-        )}
-        {trip.primaryMessage && (
-          <Typography
-            variant="body2"
-            sx={{
-              color: getPaletteColorFromNesProperties(
-                trip.primaryMessage.nesProperties,
-              ),
-            }}
-          >
-            {trip.primaryMessage.title}
-          </Typography>
-        )}
-      </Grid>
-      <Grid item xs={3}>
-        <Grid container>
-          <Grid xs={12} item>
+    <div className="flex flex-col gap-2">
+      {/* Row 1: times (hero) + duration/connections */}
+      {!hideStartAndEndTime && (
+        <div className="flex items-center justify-between gap-2">
+          <TripStartAndEndTime trip={trip} large />
+          <div className="flex items-center gap-2.5 shrink-0">
             <DurationDisplay trip={trip} />
-          </Grid>
-          <Grid xs={6} item>
-            <NumberOfConnectionsDisplay connections={trip.legs.length - 1} />
-          </Grid>
-          <Grid xs={6} item>
-            {trip.crowdForecast !== 'UNKNOWN' && (
-              <Stack direction="row" alignItems="center" gap={1}>
-                <CrowdForecast crowdForecast={trip.crowdForecast} />
-              </Stack>
+            {connections > 0 && (
+              <NumberOfConnectionsDisplay connections={connections} />
             )}
-          </Grid>
-          <Grid xs={6} item>
-            {isChangeInIntermediateStop && <TransferWithinAStationIcon />}
-          </Grid>
-          <Grid xs={6} item>
-            {isFavourite && <StarIcon color="primary" />}
-          </Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+          </div>
+        </div>
+      )}
+
+      {/* Row 2: chips + status icons */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+          {trip.legs.map((leg, index) => (
+            <Chip
+              key={index}
+              color="primary"
+              label={`${leg.product.displayName} · ${leg.origin.actualTrack ?? leg.origin.plannedTrack}`}
+            />
+          ))}
+          {trip.labelListItems && trip.labelListItems.length > 0 && (
+            <Chip
+              color="default"
+              label={trip.labelListItems.map((item) => item.label).join(', ')}
+            />
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          {trip.crowdForecast !== 'UNKNOWN' && (
+            <CrowdForecast crowdForecast={trip.crowdForecast} />
+          )}
+          {isChangeInIntermediateStop && (
+            <ArrowRightLeft size={13} className="text-white/40" />
+          )}
+          {isFavourite && (
+            <Star size={13} className="text-primary fill-primary" />
+          )}
+        </div>
+      </div>
+
+      {/* Row 3: primary message */}
+      {trip.primaryMessage && (
+        <p
+          className="text-xs leading-snug"
+          style={{
+            color: getPaletteColorFromNesProperties(
+              trip.primaryMessage.nesProperties,
+            ),
+          }}
+        >
+          {trip.primaryMessage.title}
+        </p>
+      )}
+    </div>
   );
 }

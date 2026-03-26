@@ -1,25 +1,25 @@
 import { useMemo } from 'react';
-import * as React from 'react';
 
 import Timing from './datetime/Timing.tsx';
-import { TypographyProps } from '@mui/material';
 
 import { TripLocation } from '../types/trip.ts';
 import { makeDateTimeWithDelay } from '../utils/trips.ts';
 
-interface Props extends TypographyProps {
+interface Props {
   location: TripLocation;
   direction?: 'column' | 'row';
+  className?: string;
 }
 
-export default function TripTiming({ location, ...rest }: Props) {
+export default function TripTiming({ location, direction, className }: Props) {
   const { formattedTime, delayedTime, isDelayed } = useMemo(() => {
     return makeDateTimeWithDelay(location);
   }, [location]);
 
   return (
     <Timing
-      {...rest}
+      className={className}
+      direction={direction}
       originalTime={formattedTime}
       isDelayed={isDelayed}
       delayedTime={delayedTime}

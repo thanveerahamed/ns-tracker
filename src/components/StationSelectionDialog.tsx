@@ -1,27 +1,11 @@
+import { Star, StarOff, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SearchFavouriteStations from './SearchFavouriteStations.tsx';
-import { SlideUpTransition } from './transitions/SlideUp.tsx';
-import CloseIcon from '@mui/icons-material/Close';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import {
-  LinearProgress,
-  ListItemButton,
-  ListSubheader,
-  TextField,
-} from '@mui/material';
-import Alert from '@mui/material/Alert';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
+import { Alert } from './ui/alert.tsx';
+import { LinearProgress } from './ui/progress.tsx';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import { useStationsQuery } from '../apis/stations.ts';
 import TrainStopImage from '../assets/train-stop.png';
@@ -40,30 +24,31 @@ interface Props {
 }
 
 export default function StationSelectionDialog({ onClose, open }: Props) {
-  const [searchText, setSearchText] = useState<string>('');
-
+  const [searchText, setSearchText] = useState('');
   const { isLoading, isError, data } = useStationsQuery({
     query: searchText,
     enabled: open && searchText.length >= 2,
   });
-
   const [user] = useAuthState(auth);
   const { showNotification } = useSnackbarContext();
-
   const [favouriteStationSnapshots, isFavouriteLoading] = useFavouriteStation(
     user?.uid,
   );
 
-  const internalHandleCLose = () => {
-    onClose();
-  };
+  const favouriteStations: NSStation[] = useMemo(
+    () =>
+      favouriteStationSnapshots?.docs.map((doc) => doc.data() as NSStation) ??
+      [],
+    [favouriteStationSnapshots],
+  );
 
-  const handleItemClick = (station?: NSStation) => {
-    onClose(station);
-  };
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setSearchText(event.target.value);
+  const filteredStations = useMemo(
+    () =>
+      data
+        ? data.filter((s) => s.stationType !== 'FACULTATIEF_STATION')
+        : undefined,
+    [data],
+  );
 
   const handleFavourite = async (
     action: 'add' | 'remove',
@@ -80,120 +65,127 @@ export default function StationSelectionDialog({ onClose, open }: Props) {
     }
   };
 
-  const favouriteStations: NSStation[] = useMemo(() => {
-    return (
-      favouriteStationSnapshots?.docs.map((doc) => doc.data() as NSStation) ??
-      []
-    );
-  }, [favouriteStationSnapshots]);
-
-  const filteredStations = useMemo(() => {
-    if (data === undefined) {
-      return undefined;
-    }
-
-    if (data) {
-      return data.filter(
-        (station) => station.stationType !== 'FACULTATIEF_STATION',
-      );
-    }
-  }, [data]);
-
   return (
-    <Dialog
-      fullScreen
-      open={open}
-      onClose={internalHandleCLose}
-      TransitionComponent={SlideUpTransition}
-      keepMounted={false}
-    >
-      <AppBar sx={{ position: 'relative' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={internalHandleCLose}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Stations
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Box margin="10px">
-        <TextField
-          variant="outlined"
-          placeholder="Enter station name..."
-          onChange={handleTextChange}
-          fullWidth
-          focused
-        />
-        {isLoading && <LinearProgress color="secondary" />}
-        {isError && <Alert severity="error">Some error occurred</Alert>}
-        {!searchText && (
-          <SearchFavouriteStations
-            stations={favouriteStations}
-            onSelect={handleItemClick}
-            showLoader={isFavouriteLoading}
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-[200] backdrop-blur-sm"
+            onClick={() => onClose()}
           />
-        )}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+            className="fixed inset-0 z-[201] bg-bg flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface">
+              <button
+                onClick={() => onClose()}
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-2 text-white/60 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+              <span className="font-semibold text-sm flex-1">
+                Select station
+              </span>
+            </div>
 
-        <List>
-          {filteredStations &&
-            (filteredStations.length > 0 ? (
-              <>
-                <ListSubheader>Search results...</ListSubheader>
-                {filteredStations.map((station) => (
-                  <ListItem
-                    key={station.UICCode}
-                    secondaryAction={
-                      favouriteStations.find(
-                        (favourite) => favourite.UICCode === station.UICCode,
-                      ) === undefined ? (
-                        <IconButton
-                          edge="end"
-                          aria-label="start-border"
-                          onClick={() => handleFavourite('add', station)}
+            {/* Search input */}
+            <div className="px-4 py-3 border-b border-border">
+              <input
+                autoFocus
+                type="text"
+                placeholder="Type station name..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-surface-2 border border-border text-white placeholder:text-white/30 text-sm outline-none focus:border-primary transition-colors"
+              />
+              {isLoading && <LinearProgress />}
+              {isError && (
+                <Alert severity="error" className="mt-2">
+                  Some error occurred
+                </Alert>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
+              {!searchText && (
+                <SearchFavouriteStations
+                  stations={favouriteStations}
+                  onSelect={onClose}
+                  showLoader={isFavouriteLoading}
+                />
+              )}
+
+              {filteredStations &&
+                (filteredStations.length > 0 ? (
+                  <div>
+                    <p className="px-4 py-2 text-xs text-white/40 uppercase tracking-wider">
+                      Results
+                    </p>
+                    {filteredStations.map((station) => {
+                      const isFav = favouriteStations.some(
+                        (f) => f.UICCode === station.UICCode,
+                      );
+                      return (
+                        <div
+                          key={station.UICCode}
+                          className="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-surface-2 transition-colors"
                         >
-                          <StarBorderIcon />
-                        </IconButton>
-                      ) : (
-                        <IconButton
-                          edge="end"
-                          aria-label="start-border"
-                          onClick={() => handleFavourite('remove', station)}
-                          color="primary"
-                        >
-                          <StarIcon />
-                        </IconButton>
-                      )
-                    }
-                  >
-                    <ListItemButton onClick={() => handleItemClick(station)}>
-                      <img
-                        alt="tr_st"
-                        src={TrainStopImage}
-                        width="32px"
-                        height="32px"
-                        style={{ marginRight: '10px' }}
-                      />
-                      <ListItemText
-                        primary={station.namen.lang}
-                        secondary={station.stationType}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                          <button
+                            className="flex items-center gap-3 flex-1 text-left"
+                            onClick={() => onClose(station)}
+                          >
+                            <img
+                              alt=""
+                              src={TrainStopImage}
+                              width={28}
+                              height={28}
+                            />
+                            <div>
+                              <p className="text-sm font-medium">
+                                {station.namen.lang}
+                              </p>
+                              <p className="text-xs text-white/40">
+                                {station.stationType}
+                              </p>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleFavourite(isFav ? 'remove' : 'add', station)
+                            }
+                            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface text-white/50 hover:text-primary transition-colors"
+                          >
+                            {isFav ? (
+                              <Star
+                                size={16}
+                                className="fill-primary text-primary"
+                              />
+                            ) : (
+                              <StarOff size={16} />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="px-4 py-6 text-sm text-white/40 text-center">
+                    No stations found
+                  </p>
                 ))}
-              </>
-            ) : (
-              <Typography variant="caption">
-                No stations to display..
-              </Typography>
-            ))}
-        </List>
-      </Box>
-    </Dialog>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

@@ -1,11 +1,7 @@
-import * as React from 'react';
 import { useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import SplitViewTimeLineView from './SplitViewTimeLineView.tsx';
-import { Button, Chip, Divider, LinearProgress, Stack } from '@mui/material';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import dayjs, { Dayjs } from 'dayjs';
 
 import { useDialog } from '../../hooks/useDialog.ts';
@@ -17,6 +13,7 @@ import { Trip } from '../../types/trip.ts';
 import TripInfoCard from '../TripInfoCard.tsx';
 import TripInformationDialog from '../TripInformationDialog.tsx';
 import DateTimePickerModal from '../datetime/DateTimePickerModal.tsx';
+import { LinearProgress } from '../ui/progress.tsx';
 
 interface Props {
   splitViewId: string;
@@ -33,17 +30,12 @@ export default function SplitViewTripInfoViewCard({
   const [dateTime, setDateTime] = useState<Dayjs>(dayjs(view.dateTime));
   const dateTimeDialog = useDialog();
   const journeyInfoDialog = useDialog();
-  const {
-    isInitialLoading: isLoading,
-    trips: data,
-    loadLater,
-    loadEarlier,
-    isLoadMoreLoading,
-  } = useTrips({
-    dateTime,
-    originUicCode: view.origin.UICCode,
-    destinationUicCode: view.destination.UICCode,
-  });
+  const { isInitialLoading, trips, loadLater, loadEarlier, isLoadMoreLoading } =
+    useTrips({
+      dateTime,
+      originUicCode: view.origin.UICCode,
+      destinationUicCode: view.destination.UICCode,
+    });
   const [selectedTrip, setSelectedTrip] = useState<Trip>();
 
   const handleDateTimeChange = (newDateTime: Dayjs | 'now') => {
@@ -54,86 +46,76 @@ export default function SplitViewTripInfoViewCard({
         splitViewId,
         viewType,
         newDateTime,
-      ).then(() => console.log('time updated'));
+      ).then(() => {});
     }
 
     dateTimeDialog.close();
   };
 
-  const handleTripModalOpen = (value: Trip) => {
-    setSelectedTrip(value);
-    journeyInfoDialog.open();
-  };
-
-  const handleTripModalClose = () => {
-    setSelectedTrip(undefined);
-    journeyInfoDialog.close();
-  };
-
   return (
     <>
-      <Box sx={{ p: 1, overflow: 'scroll', height: '87vh' }}>
-        <Box sx={{ minHeight: '130px' }}>
+      <div className="overflow-y-auto h-full">
+        <div className="p-2">
           <SplitViewTimeLineView
             from={view.origin.namen.lang}
             to={view.destination.namen.lang}
           />
-        </Box>
-        <Stack justifyContent="center">
-          <Chip
-            label={dateTime.format('LLL')}
-            onClick={() => dateTimeDialog.open()}
-          />
-        </Stack>
-        <Divider>
-          <Typography variant="caption">Departures</Typography>
-        </Divider>
-        {isLoading && <LinearProgress />}
-        <Button
-          fullWidth
-          size="small"
+        </div>
+        <div className="flex justify-center pb-2">
+          <button
+            onClick={dateTimeDialog.open}
+            className="px-3 py-1 rounded-full bg-surface-2 border border-border text-xs text-white/70 hover:border-primary/50 transition-colors"
+          >
+            {dateTime.format('LLL')}
+          </button>
+        </div>
+        <div className="border-t border-border" />
+        {isInitialLoading && <LinearProgress />}
+        <button
           onClick={loadEarlier}
           disabled={isLoadMoreLoading}
+          className="w-full text-xs py-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
         >
-          {isLoadMoreLoading ? 'Loading...' : 'Earlier'}
-        </Button>
-        {data &&
-          data
-            .filter((trip) => trip.status !== 'CANCELLED')
-            .map((trip, index) => {
-              return (
-                <TripInfoCard
-                  key={index}
-                  trip={trip}
-                  isFavourite={false}
-                  onSelect={() => handleTripModalOpen(trip)}
-                  variant="small"
-                />
-              );
-            })}
-        <Button
-          fullWidth
-          size="small"
+          Earlier
+        </button>
+        {trips
+          ?.filter((t) => t.status !== 'CANCELLED')
+          .map((trip, i) => (
+            <TripInfoCard
+              key={i}
+              trip={trip}
+              isFavourite={false}
+              onSelect={() => {
+                setSelectedTrip(trip);
+                journeyInfoDialog.open();
+              }}
+              variant="small"
+            />
+          ))}
+        <button
           onClick={loadLater}
           disabled={isLoadMoreLoading}
+          className="w-full text-xs py-2 text-white/40 hover:text-white disabled:opacity-30 transition-colors"
         >
-          {isLoadMoreLoading ? 'Loading...' : 'Later'}
-        </Button>
-      </Box>
+          Later
+        </button>
+      </div>
 
       {dateTimeDialog.isOpen && (
         <DateTimePickerModal
           onChange={handleDateTimeChange}
           value={dateTime}
           open={dateTimeDialog.isOpen}
-          onClose={() => dateTimeDialog.close()}
+          onClose={dateTimeDialog.close}
         />
       )}
-
       {journeyInfoDialog.isOpen && selectedTrip && (
         <TripInformationDialog
           journeyInfoDialog={journeyInfoDialog}
-          onClose={handleTripModalClose}
+          onClose={() => {
+            setSelectedTrip(undefined);
+            journeyInfoDialog.close();
+          }}
           trip={selectedTrip}
         />
       )}

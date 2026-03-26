@@ -1,6 +1,4 @@
-import GroupIcon from '@mui/icons-material/Group';
-import Groups3Icon from '@mui/icons-material/Groups3';
-import PersonIcon from '@mui/icons-material/Person';
+import { User, Users, Users2 } from 'lucide-react';
 
 export default function CrowdForecast({
   crowdForecast,
@@ -8,16 +6,16 @@ export default function CrowdForecast({
   crowdForecast: string;
 }) {
   if (crowdForecast === 'HIGH') {
-    return <Groups3Icon color="error" />;
+    return <Users2 size={16} className="text-error" />;
   }
 
   if (crowdForecast === 'MEDIUM') {
-    return <GroupIcon color="warning" />;
+    return <Users size={16} className="text-warning" />;
   }
 
   if (crowdForecast === 'LOW') {
-    return <PersonIcon color="success" />;
+    return <User size={16} className="text-success" />;
   }
 
-  return <></>;
+  return null;
 }

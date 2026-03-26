@@ -1,14 +1,8 @@
+import { X } from 'lucide-react';
 import * as React from 'react';
 
 import TripInformation from './TripInformation.tsx';
-import { SlideUpTransition } from './transitions/SlideUp.tsx';
-import CloseIcon from '@mui/icons-material/Close';
-import { IconButton } from '@mui/material';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import { Trip } from '../types/trip.ts';
 
@@ -18,30 +12,29 @@ export default function TripInformationDialog(props: {
   trip: Trip;
 }) {
   return (
-    <Dialog
-      fullScreen
-      open={props.journeyInfoDialog.isOpen}
-      onClose={props.onClose}
-      TransitionComponent={SlideUpTransition}
-    >
-      <AppBar sx={{ position: 'relative' }}>
-        <Toolbar>
-          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            Trip info
-          </Typography>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={props.onClose}
-            aria-label="close"
-          >
-            <CloseIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <Box sx={{ p: 1 }}>
-        <TripInformation trip={props.trip} />
-      </Box>
-    </Dialog>
+    <AnimatePresence>
+      {props.journeyInfoDialog.isOpen && (
+        <motion.div
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+          className="fixed inset-0 z-[201] bg-bg flex flex-col overflow-y-auto"
+        >
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface sticky top-0 z-10">
+            <span className="text-base font-semibold flex-1">Trip info</span>
+            <button
+              onClick={props.onClose}
+              className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-2 text-white/60 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          <div className="p-2">
+            <TripInformation trip={props.trip} />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

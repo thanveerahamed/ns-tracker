@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
-import * as React from 'react';
 
 import StationSelectionDialog from './StationSelectionDialog.tsx';
 import TripInformationDialog from './TripInformationDialog.tsx';
 import TripsList from './TripsList.tsx';
-import { TextField } from '@mui/material';
-import Box from '@mui/material/Box';
 import dayjs from 'dayjs';
 
 import { useForwardTripsInformationContext } from '../context';
@@ -24,18 +21,16 @@ function ForwardTripPlannerTripList() {
     journeyInfoDialog.open();
   };
 
-  const handleTripModalClose = () => {
-    setSelectedTrip(undefined);
-    journeyInfoDialog.close();
-  };
-
   return (
     <>
       <TripsList {...context} onTripSelected={handleTripSelected} />
       {journeyInfoDialog.isOpen && selectedTrip && (
         <TripInformationDialog
           journeyInfoDialog={journeyInfoDialog}
-          onClose={handleTripModalClose}
+          onClose={() => {
+            setSelectedTrip(undefined);
+            journeyInfoDialog.close();
+          }}
           trip={selectedTrip}
         />
       )}
@@ -52,37 +47,24 @@ export default function ForwardTripPlanner({
 }) {
   const [destination, setDestination] = useState<NSStation>();
   const origin = trip.legs[trip.legs.length - 1].destination;
-  const destinationSelectionDialog = useDialog();
-
-  const handleStationSelectorClosed = (newDestination?: NSStation) => {
-    setDestination(newDestination);
-    destinationSelectionDialog.close();
-  };
+  const dialog = useDialog();
 
   useEffect(() => {
-    if (!show) {
-      setDestination(undefined);
-    }
+    if (!show) setDestination(undefined);
   }, [show]);
 
-  if (!show) {
-    return <></>;
-  }
+  if (!show) return null;
 
   return (
-    <>
-      <TextField
-        size="small"
-        label="New destination"
-        variant="outlined"
-        fullWidth
-        value={destination?.namen?.lang ?? ''}
-        onClick={() => destinationSelectionDialog.open()}
-        onFocus={(event) => event.target.blur()}
-        margin="normal"
-      />
+    <div className="mt-3">
+      <button
+        onClick={dialog.open}
+        className="w-full px-3 py-2 text-left rounded-xl bg-surface-2 border border-border text-sm text-white/60 hover:border-primary/50 transition-colors"
+      >
+        {destination?.namen?.lang || 'Select new destination…'}
+      </button>
 
-      <Box height="400px" overflow="scroll">
+      <div className="h-96 overflow-y-auto mt-2">
         {destination && (
           <ForwardTripsInformationProvider
             originUICCode={origin.uicCode}
@@ -94,14 +76,17 @@ export default function ForwardTripPlanner({
             <ForwardTripPlannerTripList />
           </ForwardTripsInformationProvider>
         )}
-      </Box>
+      </div>
 
-      {destinationSelectionDialog.isOpen && (
+      {dialog.isOpen && (
         <StationSelectionDialog
-          open={destinationSelectionDialog.isOpen}
-          onClose={handleStationSelectorClosed}
+          open={dialog.isOpen}
+          onClose={(station) => {
+            if (station) setDestination(station);
+            dialog.close();
+          }}
         />
       )}
-    </>
+    </div>
   );
 }

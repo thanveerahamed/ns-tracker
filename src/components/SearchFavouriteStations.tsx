@@ -1,15 +1,7 @@
+import { Train } from 'lucide-react';
 import React from 'react';
 
-import TrainIcon from '@mui/icons-material/Train';
-import {
-  Card,
-  CardContent,
-  LinearProgress,
-  ListSubheader,
-} from '@mui/material';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import Typography from '@mui/material/Typography';
+import { LinearProgress } from './ui/progress.tsx';
 
 import { NSStation } from '../types/station.ts';
 
@@ -25,36 +17,25 @@ export default function SearchFavouriteStations({
   showLoader,
 }: Props) {
   return (
-    <List>
-      <ListSubheader>Favourites</ListSubheader>
+    <div>
+      <p className="px-4 py-2 text-xs text-white/40 uppercase tracking-wider">
+        Favourites
+      </p>
       {showLoader && <LinearProgress />}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-        {stations.map((station) => {
-          return (
-            <Card
-              key={station.UICCode}
-              sx={{
-                marginRight: '5px',
-                marginTop: '5px',
-                flex: 1,
-                flexBasis: '25%',
-              }}
-              variant="elevation"
-              onClick={() => {
-                if (onSelect) {
-                  onSelect(station);
-                }
-              }}
-            >
-              <CardContent sx={{ textAlign: 'center' }}>
-                <TrainIcon />
-                <br />
-                <Typography variant="caption">{station.namen.lang}</Typography>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </Box>
-    </List>
+      <div className="grid grid-cols-3 gap-2 px-4 py-2">
+        {stations.map((station) => (
+          <button
+            key={station.UICCode}
+            onClick={() => onSelect?.(station)}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl bg-surface border border-border hover:border-primary/40 transition-colors text-center"
+          >
+            <Train size={16} className="text-primary" />
+            <span className="text-[10px] text-white/60 leading-tight">
+              {station.namen.lang}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

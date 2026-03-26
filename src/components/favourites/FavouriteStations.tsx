@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
-import * as React from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 import FavouriteStationCard from './FavouriteStationCard.tsx';
-import { CircularProgress } from '@mui/material';
-import Box from '@mui/material/Box';
 
 import { auth } from '../../services/firebase.ts';
 import { useFavouriteStation } from '../../services/station.ts';
 import { NSStation } from '../../types/station.ts';
+import { LinearProgress } from '../ui/progress.tsx';
 
 export default function FavouriteStations() {
   const [user] = useAuthState(auth);
@@ -16,23 +14,21 @@ export default function FavouriteStations() {
     user?.uid,
   );
 
-  const favouriteStations: NSStation[] = useMemo(() => {
-    return (
+  const favouriteStations: NSStation[] = useMemo(
+    () =>
       favouriteStationSnapshots?.docs.map((doc) => doc.data() as NSStation) ??
-      []
-    );
-  }, [favouriteStationSnapshots]);
+      [],
+    [favouriteStationSnapshots],
+  );
 
   return (
-    <>
-      {isFavouriteLoading && <CircularProgress />}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-        {favouriteStations.map((station) => {
-          return (
-            <FavouriteStationCard key={station.UICCode} station={station} />
-          );
-        })}
-      </Box>
-    </>
+    <div className="p-3">
+      {isFavouriteLoading && <LinearProgress />}
+      <div className="grid grid-cols-3 gap-2">
+        {favouriteStations.map((station) => (
+          <FavouriteStationCard key={station.UICCode} station={station} />
+        ))}
+      </div>
+    </div>
   );
 }

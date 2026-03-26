@@ -1,38 +1,32 @@
 import { useMemo } from 'react';
-import * as React from 'react';
 
 import Timing from './datetime/Timing.tsx';
-import { TypographyProps } from '@mui/material';
 import dayjs from 'dayjs';
 
-interface Props extends TypographyProps {
+interface Props {
   plannedTime: string;
   actualTime: string;
+  className?: string;
 }
 
 export default function StopTiming({
   plannedTime,
   actualTime,
-  ...rest
+  className,
 }: Props) {
   const { formattedTime, delayedTime, isDelayed } = useMemo(() => {
-    let delayTimeString = undefined;
+    let delayTimeString: string | undefined;
     if (actualTime) {
       const differenceInMinutes = dayjs(actualTime).diff(
         plannedTime,
         'minutes',
       );
-
-      if (differenceInMinutes > 0) {
-        delayTimeString = `+${differenceInMinutes}`;
-      } else if (differenceInMinutes < 0) {
+      if (differenceInMinutes > 0) delayTimeString = `+${differenceInMinutes}`;
+      else if (differenceInMinutes < 0)
         delayTimeString = `${differenceInMinutes}`;
-      }
     }
-
     return {
       formattedTime: dayjs(plannedTime).format('LT'),
-      delayTimeString,
       isDelayed: Boolean(delayTimeString),
       delayedTime: dayjs(actualTime).format('LT'),
     };
@@ -40,12 +34,11 @@ export default function StopTiming({
 
   return (
     <Timing
-      {...rest}
+      className={className}
       originalTime={formattedTime}
       isDelayed={isDelayed}
       delayedTime={delayedTime}
-      direction={'row'}
-      mb={0}
+      direction="row"
     />
   );
 }

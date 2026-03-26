@@ -1,7 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 
-import { Paper } from '@mui/material';
-
 import SearchFilter from '../components/SearchFilter.tsx';
 import TripsList from '../components/TripsList.tsx';
 
@@ -13,18 +11,15 @@ export default function Trips() {
 
   return (
     <>
-      <Paper
-        variant="elevation"
-        elevation={10}
-        sx={{
-          paddingBottom: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        }}
+      {/* Sticky search bar */}
+      <div
+        className="sticky top-0 z-40 border-b border-border"
+        style={{ background: 'rgba(13,13,13,0.96)', backdropFilter: 'blur(20px)' }}
       >
         <SearchFilter onSearch={reload} variant="refresh" />
-      </Paper>
+      </div>
+
+      {/* Trip cards */}
       <TripsList
         {...rest}
         onTripSelected={(trip) => navigate(`/trip?ctxRecon=${trip.ctxRecon}`)}
@@ -32,3 +27,5 @@ export default function Trips() {
     </>
   );
 }
+
+

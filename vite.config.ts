@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 
+import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { VitePWA, VitePWAOptions } from 'vite-plugin-pwa';
 
@@ -28,7 +29,7 @@ const manifestForPlugin: Partial<VitePWAOptions> = {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), VitePWA(manifestForPlugin)],
+  plugins: [tailwindcss(), react(), VitePWA(manifestForPlugin)],
   server: {
     open: '/index.html',
     port: 5174,

@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2b8257;
+  --color-primary-hover: #236b47;
+  --color-secondary: #f3b18d;
+  --color-bg: #0d0d0d;
+  --color-surface: #141414;
+  --color-surface-2: #1e1e1e;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-muted: #666;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
+
+  --font-family-sans: "Geist Variable", sans-serif;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  font-family: "Geist Variable", sans-serif;
+  background-color: #0d0d0d;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  /* prevent horizontal scroll */
+  overflow-x: hidden;
+  /* prevent iOS bounce on body */
+  overscroll-behavior: none;
+}
+
+/* Safe-area shorthand utilities used throughout the app */
+.pt-safe  { padding-top:    env(safe-area-inset-top); }
+.pb-safe  { padding-bottom: env(safe-area-inset-bottom); }
+.pl-safe  { padding-left:   env(safe-area-inset-left); }
+.pr-safe  { padding-right:  env(safe-area-inset-right); }
+
+input,
+button,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+

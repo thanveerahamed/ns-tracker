@@ -1,7 +1,8 @@
-import { ReactNode, createContext, useState } from 'react';
+import { ReactNode, createContext } from 'react';
 
-import { AlertColor, Snackbar } from '@mui/material';
-import Alert from '@mui/material/Alert';
+import { toast } from 'sonner';
+
+export type AlertColor = 'error' | 'info' | 'success' | 'warning';
 
 export interface SnackbarContextValue {
   showNotification: (message: string, severity: AlertColor) => void;
@@ -13,30 +14,13 @@ export interface SnackbarProps {
 export const SnackbarContext = createContext<SnackbarContextValue | null>(null);
 
 export const SnackbarProvider = ({ children }: SnackbarProps) => {
-  const [open, setOpen] = useState<boolean>(false);
-  const [severity, setSeverity] = useState<AlertColor | undefined>(undefined);
-  const [message, setMessage] = useState<string>('');
-
-  const openSnackbar = (message: string, severity: AlertColor) => {
-    setOpen(true);
-    setMessage(message);
-    setSeverity(severity);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setMessage('');
-    setSeverity(undefined);
+  const showNotification = (message: string, severity: AlertColor) => {
+    toast[severity](message);
   };
 
   return (
-    <SnackbarContext.Provider value={{ showNotification: openSnackbar }}>
+    <SnackbarContext.Provider value={{ showNotification }}>
       {children}
-      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
-          {message}
-        </Alert>
-      </Snackbar>
     </SnackbarContext.Provider>
   );
 };

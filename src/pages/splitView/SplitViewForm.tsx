@@ -1,18 +1,13 @@
-import * as React from 'react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import DeleteIcon from '@mui/icons-material/Delete';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { Button, LinearProgress, Stack } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
 
 import SingleViewCard from '../../components/splitView/SingleViewCard.tsx';
+import { Alert } from '../../components/ui/alert.tsx';
+import { LinearProgress } from '../../components/ui/progress.tsx';
 
 import { useSnackbarContext } from '../../context';
 import { useLoading } from '../../hooks/useLoading.ts';
@@ -47,48 +42,26 @@ export default function SplitViewForm() {
     user?.uid,
   );
 
-  const handleSingViewCardSelect = (
+  const handleSelect = (
     station: NSStation,
     type: LocationType,
     view: ViewLocation,
   ) => {
     if (view === ViewLocation.Left) {
-      setLeftView({
-        ...leftView,
-        [type]: station,
-      });
+      setLeftView((prev) => ({ ...prev, [type]: station }));
     } else {
-      setRightView({
-        ...rightView,
-        [type]: station,
-      });
+      setRightView((prev) => ({ ...prev, [type]: station }));
     }
 
     submitted.reset();
   };
 
-  const handleCancel = () => navigate(-1);
-
-  const handleDelete = () => {
-    (async () => {
-      if (user && splitViewId) {
-        removeSplitView(user.uid, splitViewId)
-          .then(() => {
-            navigate(-1);
-          })
-          .catch(() => showNotification('Some error occurred!', 'error'));
-      }
-    })();
-  };
-
   const isInvalidForm = useCallback(
     () =>
-      !leftView ||
-      !leftView.origin ||
-      !leftView.destination ||
-      !rightView ||
-      !rightView.origin ||
-      !rightView.destination,
+      !leftView?.origin ||
+      !leftView?.destination ||
+      !rightView?.origin ||
+      !rightView?.destination,
     [leftView, rightView],
   );
 
@@ -101,58 +74,52 @@ export default function SplitViewForm() {
     [leftView, rightView],
   );
 
-  const handleSave = () => {
+  const handleDelete = async () => {
+    if (user && splitViewId) {
+      try {
+        await removeSplitView(user.uid, splitViewId);
+        navigate(-1);
+      } catch {
+        showNotification('Some error occurred!', 'error');
+      }
+    }
+  };
+
+  const handleSave = async () => {
     submitted.submit();
     if (isInvalidForm() || isOriginDestinationSame()) {
       return;
     }
+    if (!user || !leftView || !rightView) {
+      return;
+    }
+    loading.startLoading();
+    try {
+      if (splitViewId) {
+        await updateSplitView(user.uid, splitViewId, {
+          view1: leftView as IView,
+          view2: rightView as IView,
+          createdAt: dayjs().toString(),
+        });
+      } else {
+        await addSplitView(user.uid, {
+          view1: {
+            ...leftView,
+            dateTime: dayjs().toString(),
+          } as IView,
+          view2: {
+            ...rightView,
+            dateTime: dayjs().toString(),
+          } as IView,
+          createdAt: dayjs().toString(),
+        });
+      }
 
-    if (user && leftView && rightView) {
-      (async () => {
-        loading.startLoading();
-        try {
-          if (splitViewId) {
-            await updateSplitView(user.uid, splitViewId, {
-              view1: leftView as IView,
-              view2: rightView as IView,
-              createdAt: dayjs().toString(),
-            });
-          } else {
-            await addSplitView(user.uid, {
-              view1: {
-                ...leftView,
-                dateTime: dayjs().toString(),
-              } as IView,
-              view2: {
-                ...rightView,
-                dateTime: dayjs().toString(),
-              } as IView,
-              createdAt: dayjs().toString(),
-            });
-          }
-
-          navigate(-1);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (e: any) {
-          // TODO
-        } finally {
-          loading.stopLoading();
-        }
-      })();
+      navigate(-1);
+    } finally {
+      loading.stopLoading();
     }
   };
-
-  const getErrorMessage = useCallback(() => {
-    if (isInvalidForm()) {
-      return 'Please complete the form';
-    }
-
-    if (isOriginDestinationSame()) {
-      return 'Please use different origin or destination';
-    }
-
-    return 'Some error. Please try later.';
-  }, [isInvalidForm, isOriginDestinationSame]);
 
   useEffect(() => {
     if (splitViewId && splitViewSnapshot) {
@@ -163,62 +130,61 @@ export default function SplitViewForm() {
 
   return (
     <>
-      <AppBar sx={{ position: 'relative' }}>
-        <Toolbar>
-          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-            {!splitViewId ? 'New split view' : 'Manage split view'}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-surface">
+        <h1 className="text-lg font-semibold flex-1">
+          {splitViewId ? 'Manage split view' : 'New split view'}
+        </h1>
+      </header>
+
       {splitViewIsLoading && <LinearProgress />}
       {submitted.isSubmitted &&
         (isInvalidForm() || isOriginDestinationSame()) && (
-          <Alert severity="error">{getErrorMessage()}</Alert>
+          <Alert severity="error" className="m-3">
+            {isInvalidForm()
+              ? 'Please complete the form'
+              : 'Origin and destination must be different'}
+          </Alert>
         )}
+
       <SingleViewCard
         title="Left view"
-        onSelect={(station, type) =>
-          handleSingViewCardSelect(station, type, ViewLocation.Left)
-        }
-        view={leftView ? (leftView as IView) : undefined}
+        onSelect={(s, t) => handleSelect(s, t, ViewLocation.Left)}
+        view={leftView as IView}
       />
-
       <SingleViewCard
         title="Right view"
-        onSelect={(station, type) =>
-          handleSingViewCardSelect(station, type, ViewLocation.Right)
-        }
-        view={leftView ? (rightView as IView) : undefined}
+        onSelect={(s, t) => handleSelect(s, t, ViewLocation.Right)}
+        view={rightView as IView}
       />
 
-      <Stack direction="row" justifyContent="flex-end" p={2} spacing={2}>
-        <Button
-          startIcon={<DeleteIcon />}
-          color="error"
-          variant="contained"
-          onClick={handleDelete}
-          sx={{ position: 'absolute', left: 20 }}
-          disabled={splitViewIsLoading}
-        >
-          Delete
-        </Button>
-        <Button
-          color="secondary"
-          variant="outlined"
-          onClick={handleCancel}
-          disabled={splitViewIsLoading}
-        >
-          Cancel
-        </Button>
-        <LoadingButton
-          color="primary"
-          variant="outlined"
-          onClick={handleSave}
-          loading={loading.isLoading || splitViewIsLoading}
-        >
-          Save
-        </LoadingButton>
-      </Stack>
+      <div className="flex items-center gap-2 p-4">
+        {splitViewId && (
+          <button
+            onClick={handleDelete}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-error/20 text-error text-sm font-medium"
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        )}
+        <div className="flex gap-2 ml-auto">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 rounded-xl border border-border text-white/60 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={loading.isLoading || splitViewIsLoading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {loading.isLoading && (
+              <Loader2 size={14} className="animate-spin" />
+            )}
+            Save
+          </button>
+        </div>
+      </div>
     </>
   );
 }
