@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@10.29.3",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -14,7 +15,9 @@
     "type:check": "tsc -noEmit --skipLibCheck"
   },
   "dependencies": {
+    "@deck.gl/core": "^8.9.34",
     "@deck.gl/google-maps": "^8.9.34",
+    "@deck.gl/layers": "^8.9.34",
     "@deck.gl/react": "^8.9.34",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
