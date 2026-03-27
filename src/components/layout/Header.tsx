@@ -11,7 +11,7 @@ export function Header() {
       initial={{ y: -64, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="border-border bg-background/80 sticky top-0 z-50 border-b backdrop-blur-md"
+      className="border-border bg-background/80 pt-safe sticky top-0 z-50 border-b backdrop-blur-md"
     >
       <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-4">
         <a href="/" className="flex items-center gap-2">

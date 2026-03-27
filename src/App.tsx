@@ -35,7 +35,13 @@ function PageLoader() {
 export default function App() {
   const location = useLocation()
   const hideChrome =
-    location.pathname === '/results' || location.pathname === '/trip'
+    location.pathname.startsWith('/results') || location.pathname === '/trip'
+
+  // Group /results/* under the same key so ResultsPage stays mounted
+  // when navigating to /results/trip (preserves scroll, loaded trips, etc.)
+  const routeKey = location.pathname.startsWith('/results')
+    ? '/results'
+    : location.pathname
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -43,9 +49,11 @@ export default function App() {
       <main className="flex-1">
         <AnimatePresence mode="wait">
           <Suspense fallback={<PageLoader />}>
-            <Routes location={location} key={location.pathname}>
+            <Routes location={location} key={routeKey}>
               <Route path="/" element={<SearchPage />} />
-              <Route path="/results" element={<ResultsPage />} />
+              <Route path="/results" element={<ResultsPage />}>
+                <Route path="trip" element={<TripDetailPage />} />
+              </Route>
               <Route path="/trip" element={<TripDetailPage />} />
               <Route path="/compare" element={<SplitViewPage />} />
               <Route path="/favourites" element={<FavouritesPage />} />

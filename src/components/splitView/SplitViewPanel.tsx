@@ -1,13 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import dayjs from 'dayjs'
-import { ArrowUpDown, Search, X } from 'lucide-react'
+import { ArrowUpDown, Loader2, Search, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button.tsx'
 import { Switch } from '@/components/ui/switch.tsx'
 import { Label } from '@/components/ui/label.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog.tsx'
 import { StationCombobox } from '@/components/search/StationCombobox.tsx'
 import { DateTimePicker } from '@/components/search/DateTimePicker.tsx'
 import { TripCard } from '@/components/results/TripCard.tsx'
@@ -20,6 +32,12 @@ import type { NSStation } from '@/types/station.ts'
 import type { Trip } from '@/types/trip.ts'
 import { LoadMoreAction } from '@/types/trip.ts'
 import { loadPanelState, savePanelState } from '@/services/splitViewPanel.ts'
+
+const TripDetailPage = lazy(() =>
+  import('@/pages/TripDetailPage.tsx').then((m) => ({
+    default: m.TripDetailPage,
+  })),
+)
 
 /* ─── Component ─── */
 
@@ -35,7 +53,8 @@ export function SplitViewPanel({
   onRemove,
 }: SplitViewPanelProps) {
   const saved = loadPanelState(panelId)
-  const navigate = useNavigate()
+
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
 
   const [origin, setOrigin] = useState<NSStation | undefined>(saved?.origin)
   const [destination, setDestination] = useState<NSStation | undefined>(
@@ -317,12 +336,7 @@ export function SplitViewPanel({
                 onToggleFavourite={() => {}}
                 isNextDeparture={trip.ctxRecon === nextDepartureCtx}
                 index={index}
-                onClick={() =>
-                  navigate(
-                    `/trip?ctxRecon=${encodeURIComponent(trip.ctxRecon)}`,
-                    { state: { trip } },
-                  )
-                }
+                onClick={() => setSelectedTrip(trip)}
               />
             ))}
           </AnimatePresence>
@@ -346,6 +360,38 @@ export function SplitViewPanel({
           )}
         </div>
       )}
+
+      {/* Full-screen trip detail dialog — keeps panel state intact */}
+      <Dialog
+        open={!!selectedTrip}
+        onOpenChange={(open) => {
+          if (!open) setSelectedTrip(null)
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="flex h-dvh max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-none p-0 sm:h-[90dvh] sm:max-w-lg sm:rounded-lg sm:border"
+        >
+          <DialogTitle className="sr-only">Trip details</DialogTitle>
+          <DialogDescription className="sr-only">
+            Detailed view of the selected trip
+          </DialogDescription>
+          {selectedTrip && (
+            <Suspense
+              fallback={
+                <div className="flex flex-1 items-center justify-center">
+                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+                </div>
+              }
+            >
+              <TripDetailPage
+                trip={selectedTrip}
+                onClose={() => setSelectedTrip(null)}
+              />
+            </Suspense>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

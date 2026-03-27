@@ -1,8 +1,13 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { Suspense, useCallback, useMemo, useState } from 'react'
+import {
+  useSearchParams,
+  useNavigate,
+  useLocation,
+  Outlet,
+} from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import dayjs from 'dayjs'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button.tsx'
@@ -26,6 +31,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 export function ResultsPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
 
@@ -164,154 +170,168 @@ export function ResultsPage() {
   )
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -40 }}
-      transition={{ duration: 0.25 }}
-      className="pb-safe mx-auto flex w-full max-w-lg flex-col px-4 py-4 sm:py-8"
-    >
-      {/* Back + route summary header */}
-      <div className="mb-4 flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 shrink-0"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 truncate text-sm font-semibold">
-            <span className="truncate">{originName}</span>
-            {viaName && (
-              <>
-                <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
-                <span className="text-muted-foreground truncate text-xs">
-                  {viaName}
-                </span>
-              </>
-            )}
-            <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
-            <span className="truncate">{destinationName}</span>
+    <>
+      <motion.div
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -40 }}
+        transition={{ duration: 0.25 }}
+        className="pb-safe mx-auto flex w-full max-w-lg flex-col"
+      >
+        {/* Back + route summary header */}
+        <div className="bg-background/80 pt-safe sticky top-0 z-50 flex items-center gap-3 border-b px-4 py-3 backdrop-blur-md">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => navigate('/')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 truncate text-sm font-semibold">
+              <span className="truncate">{originName}</span>
+              {viaName && (
+                <>
+                  <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
+                  <span className="text-muted-foreground truncate text-xs">
+                    {viaName}
+                  </span>
+                </>
+              )}
+              <ArrowRight className="text-muted-foreground h-3 w-3 shrink-0" />
+              <span className="truncate">{destinationName}</span>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              {dateTime.format('ddd, D MMM YYYY')} ·{' '}
+              {isArrival ? 'Arrive by' : 'Depart at'} {dateTime.format('HH:mm')}
+            </p>
           </div>
-          <p className="text-muted-foreground text-xs">
-            {dateTime.format('ddd, D MMM YYYY')} ·{' '}
-            {isArrival ? 'Arrive by' : 'Depart at'} {dateTime.format('HH:mm')}
-          </p>
         </div>
-      </div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
-          ))}
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div className="border-destructive/30 bg-destructive/5 rounded-xl border p-6 text-center">
-          <p className="text-destructive text-sm font-medium">
-            Failed to load trips
-          </p>
-          <p className="text-muted-foreground mt-1 text-xs">
-            {(error as Error).message}
-          </p>
-        </div>
-      )}
-
-      {/* Results */}
-      {data && (
-        <div className="space-y-2">
-          {/* Earlier button */}
-          {backwardContext && (
-            <LoadMoreButton
-              direction="earlier"
-              onClick={() => handleLoadMore(LoadMoreAction.Earlier)}
-              isLoading={
-                loadMoreMutation.isPending &&
-                loadMoreMutation.variables?.action === LoadMoreAction.Earlier
-              }
-            />
-          )}
-
-          {/* Trip list */}
-          <AnimatePresence mode="popLayout">
-            {allTrips.map((trip, index) => {
-              const firstLeg = trip.legs?.[0]
-              const thisDepartureDay = firstLeg
-                ? dayjs(
-                    firstLeg.origin.actualDateTime ??
-                      firstLeg.origin.plannedDateTime,
-                  ).format('YYYY-MM-DD')
-                : null
-
-              const prevTrip = index > 0 ? allTrips[index - 1] : null
-              const prevFirstLeg = prevTrip?.legs?.[0]
-              const prevDepartureDay = prevFirstLeg
-                ? dayjs(
-                    prevFirstLeg.origin.actualDateTime ??
-                      prevFirstLeg.origin.plannedDateTime,
-                  ).format('YYYY-MM-DD')
-                : null
-
-              const showDayDivider =
-                thisDepartureDay &&
-                prevDepartureDay &&
-                thisDepartureDay !== prevDepartureDay
-
-              return (
-                <div key={trip.ctxRecon}>
-                  {showDayDivider && (
-                    <div className="flex items-center gap-3 py-2">
-                      <div className="bg-border h-px flex-1" />
-                      <span className="text-muted-foreground text-[11px] font-medium whitespace-nowrap">
-                        {dayjs(thisDepartureDay).format('ddd, D MMM')}
-                      </span>
-                      <div className="bg-border h-px flex-1" />
-                    </div>
-                  )}
-                  <TripCard
-                    trip={trip}
-                    viaUicCode={viaUicCode}
-                    isFavourite={favouriteCtxRecons.has(trip.ctxRecon)}
-                    onToggleFavourite={() => handleToggleFavourite(trip)}
-                    isNextDeparture={trip.ctxRecon === nextDepartureCtx}
-                    index={index}
-                    onClick={() =>
-                      navigate(
-                        `/trip?ctxRecon=${encodeURIComponent(trip.ctxRecon)}`,
-                        { state: { trip } },
-                      )
-                    }
-                  />
-                </div>
-              )
-            })}
-          </AnimatePresence>
-
-          {allTrips.length === 0 && !isLoading && (
-            <div className="text-muted-foreground py-12 text-center text-sm">
-              No trips found for this route.
+        {/* Content below header */}
+        <div className="px-4 py-4 sm:py-8">
+          {/* Loading state */}
+          {isLoading && (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              ))}
             </div>
           )}
 
-          {/* Later button */}
-          {forwardContext && (
-            <LoadMoreButton
-              direction="later"
-              onClick={() => handleLoadMore(LoadMoreAction.Later)}
-              isLoading={
-                loadMoreMutation.isPending &&
-                loadMoreMutation.variables?.action === LoadMoreAction.Later
-              }
-            />
+          {/* Error state */}
+          {error && (
+            <div className="border-destructive/30 bg-destructive/5 rounded-xl border p-6 text-center">
+              <p className="text-destructive text-sm font-medium">
+                Failed to load trips
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                {(error as Error).message}
+              </p>
+            </div>
+          )}
+
+          {/* Results */}
+          {data && (
+            <div className="space-y-2">
+              {/* Earlier button */}
+              {backwardContext && (
+                <LoadMoreButton
+                  direction="earlier"
+                  onClick={() => handleLoadMore(LoadMoreAction.Earlier)}
+                  isLoading={
+                    loadMoreMutation.isPending &&
+                    loadMoreMutation.variables?.action ===
+                      LoadMoreAction.Earlier
+                  }
+                />
+              )}
+
+              {/* Trip list */}
+              <AnimatePresence mode="popLayout">
+                {allTrips.map((trip, index) => {
+                  const firstLeg = trip.legs?.[0]
+                  const thisDepartureDay = firstLeg
+                    ? dayjs(
+                        firstLeg.origin.actualDateTime ??
+                          firstLeg.origin.plannedDateTime,
+                      ).format('YYYY-MM-DD')
+                    : null
+
+                  const prevTrip = index > 0 ? allTrips[index - 1] : null
+                  const prevFirstLeg = prevTrip?.legs?.[0]
+                  const prevDepartureDay = prevFirstLeg
+                    ? dayjs(
+                        prevFirstLeg.origin.actualDateTime ??
+                          prevFirstLeg.origin.plannedDateTime,
+                      ).format('YYYY-MM-DD')
+                    : null
+
+                  const showDayDivider =
+                    thisDepartureDay &&
+                    prevDepartureDay &&
+                    thisDepartureDay !== prevDepartureDay
+
+                  return (
+                    <div key={trip.ctxRecon}>
+                      {showDayDivider && (
+                        <div className="flex items-center gap-3 py-2">
+                          <div className="bg-border h-px flex-1" />
+                          <span className="text-muted-foreground text-[11px] font-medium whitespace-nowrap">
+                            {dayjs(thisDepartureDay).format('ddd, D MMM')}
+                          </span>
+                          <div className="bg-border h-px flex-1" />
+                        </div>
+                      )}
+                      <TripCard
+                        trip={trip}
+                        viaUicCode={viaUicCode}
+                        isFavourite={favouriteCtxRecons.has(trip.ctxRecon)}
+                        onToggleFavourite={() => handleToggleFavourite(trip)}
+                        isNextDeparture={trip.ctxRecon === nextDepartureCtx}
+                        index={index}
+                        onClick={() =>
+                          navigate(`trip${location.search}`, {
+                            state: { trip },
+                          })
+                        }
+                      />
+                    </div>
+                  )
+                })}
+              </AnimatePresence>
+
+              {allTrips.length === 0 && !isLoading && (
+                <div className="text-muted-foreground py-12 text-center text-sm">
+                  No trips found for this route.
+                </div>
+              )}
+
+              {/* Later button */}
+              {forwardContext && (
+                <LoadMoreButton
+                  direction="later"
+                  onClick={() => handleLoadMore(LoadMoreAction.Later)}
+                  isLoading={
+                    loadMoreMutation.isPending &&
+                    loadMoreMutation.variables?.action === LoadMoreAction.Later
+                  }
+                />
+              )}
+            </div>
           )}
         </div>
-      )}
-    </motion.div>
+      </motion.div>
+      <Suspense
+        fallback={
+          <div className="bg-background fixed inset-0 z-[60] flex items-center justify-center">
+            <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+          </div>
+        }
+      >
+        <Outlet />
+      </Suspense>
+    </>
   )
 }
