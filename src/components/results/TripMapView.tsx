@@ -243,14 +243,42 @@ function StationMarker({
   name,
   type,
   color,
+  traveled,
 }: Readonly<{
   lat: number
   lng: number
   name: string
   type: 'origin' | 'destination' | 'intermediate' | 'transfer'
   color?: string
+  traveled?: boolean
 }>) {
   const [showTooltip, setShowTooltip] = useState(false)
+
+  // Untraveled intermediate stops: render as a tiny dot
+  if (type === 'intermediate' && !traveled) {
+    return (
+      <Marker longitude={lng} latitude={lat} anchor="center">
+        <button
+          type="button"
+          className="relative flex flex-col items-center outline-none"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowTooltip((v) => !v)
+          }}
+        >
+          {showTooltip && (
+            <div className="bg-popover text-popover-foreground pointer-events-none absolute -top-7 z-20 rounded-md border px-2 py-0.5 text-[10px] font-medium whitespace-nowrap shadow-lg">
+              {name}
+            </div>
+          )}
+          <div
+            className="h-2 w-2 rounded-full opacity-50 transition-transform hover:scale-150"
+            style={{ backgroundColor: color ?? '#9ca3af' }}
+          />
+        </button>
+      </Marker>
+    )
+  }
 
   let Icon = TrainFront
   let iconClass = 'text-muted-foreground'
@@ -387,6 +415,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
       name: string
       type: 'origin' | 'destination' | 'intermediate' | 'transfer'
       color?: string
+      traveled: boolean
     }> = []
 
     // Collect passenger's boarding/alighting uicCodes across all legs
@@ -411,8 +440,19 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
       const journeyStops = journeyData?.payload?.stops
 
       if (journeyStops && journeyStops.length > 0) {
+        // Find boarding/alighting indices to determine traveled vs untraveled
+        const boardUic = leg.origin.uicCode
+        const alightUic = leg.destination.uicCode
+        const boardIdx = journeyStops.findIndex(
+          (s) => s.stop.uicCode === boardUic,
+        )
+        const alightIdx = journeyStops.findIndex(
+          (s) => s.stop.uicCode === alightUic,
+        )
+
         // Use journey stops for accurate positions
-        for (const jStop of journeyStops) {
+        for (let i = 0; i < journeyStops.length; i++) {
+          const jStop = journeyStops[i]
           if (seen.has(jStop.stop.uicCode)) continue
           if (jStop.status === 'PASSING') continue
 
@@ -432,11 +472,20 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             markerType = 'transfer'
           }
 
+          // Stations between boarding and alighting are traveled
+          const isTraveled =
+            markerType !== 'intermediate' ||
+            (boardIdx !== -1 &&
+              alightIdx !== -1 &&
+              i >= boardIdx &&
+              i <= alightIdx)
+
           result.push({
             lat: jStop.stop.lat,
             lng: jStop.stop.lng,
             name: jStop.stop.name,
             type: markerType,
+            traveled: isTraveled,
             color:
               markerType === 'intermediate'
                 ? LEG_COLORS[legIndex % LEG_COLORS.length]
@@ -456,6 +505,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             lng: leg.origin.lng,
             name: leg.origin.name,
             type: fallbackType,
+            traveled: true,
           })
         }
 
@@ -474,6 +524,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
               lng: stop.lng,
               name: stop.name,
               type: 'intermediate',
+              traveled: true,
               color: LEG_COLORS[legIndex % LEG_COLORS.length],
             })
           }
@@ -491,6 +542,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             lng: leg.destination.lng,
             name: leg.destination.name,
             type: fallbackType,
+            traveled: true,
           })
         }
       }
@@ -574,6 +626,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             name={m.name}
             type={m.type}
             color={m.color}
+            traveled={m.traveled}
           />
         ))}
       </Map>

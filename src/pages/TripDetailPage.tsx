@@ -19,6 +19,7 @@ import {
   Navigation,
   Search,
   LogIn,
+  ChevronDown,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge.tsx'
@@ -315,6 +316,8 @@ function IntermediateStops({
   originUicCode: string
   destinationUicCode: string
 }>) {
+  const [expanded, setExpanded] = useState(false)
+
   // Filter to only stops between origin and destination (exclude them)
   const intermediateStops = useMemo(() => {
     const originIdx = stops.findIndex((s) => s.uicCode === originUicCode)
@@ -330,68 +333,91 @@ function IntermediateStops({
       {/* Icon column spacer */}
       <div className="w-5 shrink-0" />
 
-      <div className="flex-1 space-y-1">
-        {intermediateStops.map((stop) => {
-          const arrDelay = delayMinutes(
-            stop.plannedArrivalDateTime,
-            stop.actualArrivalDateTime,
-          )
-          const trackChanged =
-            stop.actualArrivalTrack &&
-            stop.plannedArrivalTrack &&
-            stop.actualArrivalTrack !== stop.plannedArrivalTrack
+      <div className="flex-1">
+        {/* Collapsible toggle */}
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 py-1 text-xs transition-colors"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          <ChevronDown
+            className={cn(
+              'h-3.5 w-3.5 transition-transform duration-200',
+              expanded && 'rotate-180',
+            )}
+          />
+          <span>
+            {intermediateStops.length} stop
+            {intermediateStops.length !== 1 && 's'}
+          </span>
+        </button>
 
-          return (
-            <div
-              key={stop.uicCode}
-              className={cn(
-                'flex items-center gap-2 text-xs',
-                stop.cancelled && 'line-through opacity-50',
-              )}
-            >
-              <MapPin className="text-muted-foreground/60 h-3 w-3 shrink-0" />
-              <span className="text-muted-foreground flex-1 truncate">
-                {stop.name}
-              </span>
+        {/* Expanded stop list */}
+        {expanded && (
+          <div className="space-y-1 pt-0.5">
+            {intermediateStops.map((stop) => {
+              const arrDelay = delayMinutes(
+                stop.plannedArrivalDateTime,
+                stop.actualArrivalDateTime,
+              )
+              const trackChanged =
+                stop.actualArrivalTrack &&
+                stop.plannedArrivalTrack &&
+                stop.actualArrivalTrack !== stop.plannedArrivalTrack
 
-              {/* Arrival time */}
-              {stop.plannedArrivalDateTime && (
-                <span className="text-muted-foreground shrink-0 tabular-nums">
-                  {arrDelay !== null && (
-                    <span className="text-destructive mr-1">
-                      {formatTime(stop.actualArrivalDateTime)}
-                    </span>
-                  )}
-                  <span
-                    className={cn(
-                      arrDelay !== null &&
-                        'text-muted-foreground/50 line-through',
-                    )}
-                  >
-                    {formatTime(stop.plannedArrivalDateTime)}
-                  </span>
-                </span>
-              )}
-
-              {/* Track */}
-              {(stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
-                <span
+              return (
+                <div
+                  key={stop.uicCode}
                   className={cn(
-                    'text-muted-foreground shrink-0 text-xs tabular-nums',
-                    trackChanged && 'text-destructive font-medium',
+                    'flex items-center gap-2 text-xs',
+                    stop.cancelled && 'line-through opacity-50',
                   )}
                 >
-                  P.{stop.actualArrivalTrack || stop.plannedArrivalTrack}
-                </span>
-              )}
+                  <MapPin className="text-muted-foreground/60 h-3 w-3 shrink-0" />
+                  <span className="text-muted-foreground flex-1 truncate">
+                    {stop.name}
+                  </span>
 
-              {/* Cancelled marker */}
-              {stop.cancelled && (
-                <CircleX className="text-destructive h-3 w-3 shrink-0" />
-              )}
-            </div>
-          )
-        })}
+                  {/* Arrival time */}
+                  {stop.plannedArrivalDateTime && (
+                    <span className="text-muted-foreground shrink-0 tabular-nums">
+                      {arrDelay !== null && (
+                        <span className="text-destructive mr-1">
+                          {formatTime(stop.actualArrivalDateTime)}
+                        </span>
+                      )}
+                      <span
+                        className={cn(
+                          arrDelay !== null &&
+                            'text-muted-foreground/50 line-through',
+                        )}
+                      >
+                        {formatTime(stop.plannedArrivalDateTime)}
+                      </span>
+                    </span>
+                  )}
+
+                  {/* Track */}
+                  {(stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
+                    <span
+                      className={cn(
+                        'text-muted-foreground shrink-0 text-xs tabular-nums',
+                        trackChanged && 'text-destructive font-medium',
+                      )}
+                    >
+                      P.{stop.actualArrivalTrack || stop.plannedArrivalTrack}
+                    </span>
+                  )}
+
+                  {/* Cancelled marker */}
+                  {stop.cancelled && (
+                    <CircleX className="text-destructive h-3 w-3 shrink-0" />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -639,14 +665,26 @@ function ConnectingSearchPanel({
 
 /* ─── Main page component ─── */
 
-export function TripDetailPage() {
+interface TripDetailPageProps {
+  /** When provided, uses this trip directly instead of reading from route state */
+  trip?: Trip | null
+  /** When provided, calls this instead of navigate(-1) to go back */
+  onClose?: () => void
+}
+
+export function TripDetailPage({
+  trip: propTrip,
+  onClose,
+}: TripDetailPageProps = {}) {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
 
-  // Trip passed via router state, or refetch via ctxRecon
-  const stateTrip = (location.state as { trip?: Trip } | null)?.trip ?? null
-  const ctxRecon = searchParams.get('ctxRecon') ?? undefined
+  // Trip passed via props (dialog mode), router state, or refetch via ctxRecon
+  const stateTrip =
+    propTrip ?? (location.state as { trip?: Trip } | null)?.trip ?? null
+  const ctxRecon =
+    propTrip?.ctxRecon ?? searchParams.get('ctxRecon') ?? undefined
 
   // Fetch detailed trip data
   const { data: fetchedTrip, isLoading: isTripLoading } = useTrip({
@@ -659,9 +697,9 @@ export function TripDetailPage() {
     useState<ConnectingSearchState | null>(null)
   const { user, signInWithGoogle } = useAuth()
 
-  const [activeTab, setActiveTab] = useState<'timeline' | 'stops' | 'map'>(
-    'timeline',
-  )
+  const [activeTab, setActiveTab] = useState<
+    'timeline' | 'stops' | 'map' | 'connect'
+  >('timeline')
 
   // Initialise trip stack from the source trip
   const sourceTrip = fetchedTrip ?? stateTrip
@@ -716,10 +754,12 @@ export function TripDetailPage() {
     } else if (tripStack.length > 1) {
       setTripStack((s) => s.slice(0, -1))
       setActiveTab('timeline')
+    } else if (onClose) {
+      onClose()
     } else {
       navigate(-1)
     }
-  }, [connectingSearch, tripStack.length, navigate])
+  }, [connectingSearch, tripStack.length, navigate, onClose])
 
   const handleSelectConnectingTrip = useCallback((t: Trip) => {
     setTripStack((s) => [...s, t])
@@ -754,12 +794,21 @@ export function TripDetailPage() {
     )
   }
 
+  const isDialog = !!onClose
+
   return (
-    <div className="flex min-h-dvh flex-col">
-      {/* ── Sticky header ── */}
+    <div
+      className={cn(
+        'flex flex-col overflow-hidden',
+        isDialog
+          ? 'bg-background h-full'
+          : 'bg-background fixed inset-0 z-[60]',
+      )}
+    >
+      {/* ── Header ── */}
       <div
         className={cn(
-          'bg-background/80 pt-safe sticky top-0 z-50 flex items-start justify-between border-b px-4 py-3 backdrop-blur-md sm:px-6',
+          'bg-background pt-safe z-50 flex shrink-0 items-start justify-between border-b px-4 py-3 sm:px-6',
           displayTrip.status === 'CANCELLED' &&
             'bg-destructive/5 border-b-destructive/30',
           displayTrip.status === 'DISRUPTION' &&
@@ -904,6 +953,21 @@ export function TripDetailPage() {
               <MapIcon className="h-4 w-4" />
               Map
             </button>
+            {tripStack.length <= 1 && (
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors',
+                  activeTab === 'connect'
+                    ? 'border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground border-transparent',
+                )}
+                onClick={() => setActiveTab('connect')}
+              >
+                <Navigation className="h-4 w-4" />
+                Connect
+              </button>
+            )}
           </div>
 
           {/* ── Timeline view ── */}
@@ -1058,39 +1122,59 @@ export function TripDetailPage() {
               </div>
             ))}
 
-          {/* ── Plan journey actions ── */}
-          {user && activeTab === 'timeline' && tripStack.length <= 1 && (
-            <div className="pb-safe flex shrink-0 gap-2 border-t px-4 py-2.5 sm:px-6">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-1.5 text-xs"
-                onClick={() =>
-                  setConnectingSearch({
-                    mode: 'to-origin',
-                    fixedStation: firstLeg!.origin,
-                  })
-                }
-              >
-                <Navigation className="h-3.5 w-3.5" />
-                To {firstLeg?.origin.name?.split(' ')[0]}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-1.5 text-xs"
-                onClick={() =>
-                  setConnectingSearch({
-                    mode: 'from-destination',
-                    fixedStation: lastLeg!.destination,
-                  })
-                }
-              >
-                From {lastLeg?.destination.name?.split(' ')[0]}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
+          {/* ── Connect tab ── */}
+          {activeTab === 'connect' &&
+            (user ? (
+              <div className="flex flex-1 flex-col items-center gap-4 px-4 py-8 sm:px-6">
+                <p className="text-muted-foreground text-sm">
+                  Find a connecting journey to or from this trip
+                </p>
+                <div className="flex w-full max-w-sm flex-col gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-12 gap-2"
+                    onClick={() =>
+                      setConnectingSearch({
+                        mode: 'to-origin',
+                        fixedStation: firstLeg!.origin,
+                      })
+                    }
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Journey to {firstLeg?.origin.name}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-12 gap-2"
+                    onClick={() =>
+                      setConnectingSearch({
+                        mode: 'from-destination',
+                        fixedStation: lastLeg!.destination,
+                      })
+                    }
+                  >
+                    Journey from {lastLeg?.destination.name}
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+                <Navigation className="text-muted-foreground/40 h-10 w-10" />
+                <p className="text-muted-foreground text-sm">
+                  Sign in to find connecting journeys
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={signInWithGoogle}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in with Google
+                </Button>
+              </div>
+            ))}
         </div>
       )}
     </div>
