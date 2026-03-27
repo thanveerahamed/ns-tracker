@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import dayjs from 'dayjs'
 import { ArrowUpDown, Search, X } from 'lucide-react'
@@ -10,7 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { StationCombobox } from '@/components/search/StationCombobox.tsx'
 import { DateTimePicker } from '@/components/search/DateTimePicker.tsx'
 import { TripCard } from '@/components/results/TripCard.tsx'
-import { TripDetailDrawer } from '@/components/results/TripDetailDrawer.tsx'
 import { LoadMoreButton } from '@/components/results/LoadMoreButton.tsx'
 import {
   useTripsInformation,
@@ -35,6 +35,7 @@ export function SplitViewPanel({
   onRemove,
 }: SplitViewPanelProps) {
   const saved = loadPanelState(panelId)
+  const navigate = useNavigate()
 
   const [origin, setOrigin] = useState<NSStation | undefined>(saved?.origin)
   const [destination, setDestination] = useState<NSStation | undefined>(
@@ -47,7 +48,6 @@ export function SplitViewPanel({
   })
   const [isArrival, setIsArrival] = useState(saved?.isArrival ?? false)
   const [submitted, setSubmitted] = useState(false)
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
 
   // Snapshot of the dateTime used for the current search.
   // This prevents `dayjs()` from producing a new value on every render,
@@ -317,7 +317,12 @@ export function SplitViewPanel({
                 onToggleFavourite={() => {}}
                 isNextDeparture={trip.ctxRecon === nextDepartureCtx}
                 index={index}
-                onClick={() => setSelectedTrip(trip)}
+                onClick={() =>
+                  navigate(
+                    `/trip?ctxRecon=${encodeURIComponent(trip.ctxRecon)}`,
+                    { state: { trip } },
+                  )
+                }
               />
             ))}
           </AnimatePresence>
@@ -341,14 +346,6 @@ export function SplitViewPanel({
           )}
         </div>
       )}
-
-      <TripDetailDrawer
-        trip={selectedTrip}
-        open={!!selectedTrip}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTrip(null)
-        }}
-      />
     </div>
   )
 }

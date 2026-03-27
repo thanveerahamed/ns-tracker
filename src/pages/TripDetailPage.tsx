@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import {
   TrainFront,
@@ -11,7 +12,6 @@ import {
   CircleX,
   ArrowRight,
   ArrowLeft,
-  X,
   MapPin,
   Route,
   Map as MapIcon,
@@ -21,12 +21,6 @@ import {
   LogIn,
 } from 'lucide-react'
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { Button } from '@/components/ui/button.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
@@ -88,7 +82,7 @@ function TimeWithDelay({
 }>) {
   const delay = delayMinutes(planned, actual)
   return (
-    <span className={cn('text-sm font-semibold tabular-nums', className)}>
+    <span className={cn('font-semibold tabular-nums', className)}>
       {delay !== null && (
         <span className="text-destructive mr-1">{formatTime(actual)}</span>
       )}
@@ -113,7 +107,7 @@ function TrackBadge({
     <Badge
       variant="secondary"
       className={cn(
-        'font-mono text-[10px] tabular-nums',
+        'font-mono text-xs tabular-nums',
         changed && 'border-destructive/50 text-destructive',
       )}
     >
@@ -164,8 +158,8 @@ function StationNode({
   return (
     <div className="relative flex items-start gap-3">
       {/* Station icon */}
-      <div className="relative z-10 flex w-4 shrink-0 justify-center pt-0.5">
-        <StationIcon className={cn('h-4 w-4', iconClass)} />
+      <div className="relative z-10 flex w-5 shrink-0 justify-center pt-0.5">
+        <StationIcon className={cn('h-5 w-5', iconClass)} />
       </div>
 
       {/* Content */}
@@ -193,7 +187,7 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
   return (
     <div className="relative flex items-start gap-3 py-1.5">
       {/* Keeps alignment with the icon column */}
-      <div className="w-4 shrink-0" />
+      <div className="w-5 shrink-0" />
 
       {/* Leg info */}
       <div className="flex-1 space-y-1.5">
@@ -207,27 +201,27 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
                 'border-destructive/40 text-destructive line-through',
             )}
           >
-            <TrainFront className="h-3 w-3" />
+            <TrainFront className="h-3.5 w-3.5" />
             {leg.product.displayName}
           </Badge>
 
           {leg.cancelled && (
-            <Badge variant="destructive" className="gap-1 text-[10px]">
-              <CircleX className="h-3 w-3" />
+            <Badge variant="destructive" className="gap-1 text-xs">
+              <CircleX className="h-3.5 w-3.5" />
               Cancelled
             </Badge>
           )}
 
           {!leg.cancelled && leg.partCancelled && (
-            <Badge className="gap-1 bg-amber-500 text-[10px] text-white hover:bg-amber-600">
-              <AlertTriangle className="h-3 w-3" />
+            <Badge className="gap-1 bg-amber-500 text-xs text-white hover:bg-amber-600">
+              <AlertTriangle className="h-3.5 w-3.5" />
               Disrupted
             </Badge>
           )}
 
           {leg.direction && !leg.cancelled && (
-            <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-              <ArrowRight className="h-3 w-3" />
+            <span className="text-muted-foreground flex items-center gap-1 text-xs">
+              <ArrowRight className="h-3.5 w-3.5" />
               {leg.direction}
             </span>
           )}
@@ -239,8 +233,8 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
 
         {/* Duration */}
         {leg.plannedDurationInMinutes > 0 && (
-          <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
-            <Clock className="h-3 w-3" />
+          <div className="text-muted-foreground flex items-center gap-1 text-xs">
+            <Clock className="h-3.5 w-3.5" />
             {formatDuration(leg.plannedDurationInMinutes)}
           </div>
         )}
@@ -253,9 +247,9 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
               .map((note) => (
                 <div
                   key={note.key}
-                  className="text-muted-foreground flex items-start gap-1.5 text-[11px]"
+                  className="text-muted-foreground flex items-start gap-1.5 text-xs"
                 >
-                  <Info className="mt-0.5 h-3 w-3 shrink-0 text-blue-500" />
+                  <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
                   <span>{note.value}</span>
                 </div>
               ))}
@@ -269,11 +263,11 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
               <div
                 key={msg.message}
                 className={cn(
-                  'flex items-start gap-1.5 text-[11px]',
+                  'flex items-start gap-1.5 text-xs',
                   getPaletteColorFromNesProperties(msg.messageNesProperties),
                 )}
               >
-                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>{msg.message}</span>
               </div>
             ))}
@@ -287,11 +281,11 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
               <div
                 key={msg.id}
                 className={cn(
-                  'flex items-start gap-1.5 text-[11px]',
+                  'flex items-start gap-1.5 text-xs',
                   getPaletteColorFromNesProperties(msg.nesProperties),
                 )}
               >
-                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>{msg.head || msg.text}</span>
               </div>
             ))}
@@ -300,8 +294,8 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
 
         {/* Alternative transport info */}
         {leg.alternativeTransport && (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-            <AlertTriangle className="h-3 w-3" />
+          <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-3.5 w-3.5" />
             Alternative transport
           </div>
         )}
@@ -334,7 +328,7 @@ function IntermediateStops({
   return (
     <div className="relative flex items-start gap-3 py-1">
       {/* Icon column spacer */}
-      <div className="w-4 shrink-0" />
+      <div className="w-5 shrink-0" />
 
       <div className="flex-1 space-y-1">
         {intermediateStops.map((stop) => {
@@ -351,11 +345,11 @@ function IntermediateStops({
             <div
               key={stop.uicCode}
               className={cn(
-                'flex items-center gap-2 text-[11px]',
+                'flex items-center gap-2 text-xs',
                 stop.cancelled && 'line-through opacity-50',
               )}
             >
-              <MapPin className="text-muted-foreground/60 h-2.5 w-2.5 shrink-0" />
+              <MapPin className="text-muted-foreground/60 h-3 w-3 shrink-0" />
               <span className="text-muted-foreground flex-1 truncate">
                 {stop.name}
               </span>
@@ -383,7 +377,7 @@ function IntermediateStops({
               {(stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
                 <span
                   className={cn(
-                    'text-muted-foreground shrink-0 text-[10px] tabular-nums',
+                    'text-muted-foreground shrink-0 text-xs tabular-nums',
                     trackChanged && 'text-destructive font-medium',
                   )}
                 >
@@ -393,7 +387,7 @@ function IntermediateStops({
 
               {/* Cancelled marker */}
               {stop.cancelled && (
-                <CircleX className="text-destructive h-2.5 w-2.5 shrink-0" />
+                <CircleX className="text-destructive h-3 w-3 shrink-0" />
               )}
             </div>
           )
@@ -412,21 +406,21 @@ function TransferBlock({
   return (
     <div className="relative flex items-start gap-3 py-1.5">
       {/* Icon aligned with icon column */}
-      <div className="relative z-10 flex w-4 shrink-0 justify-center">
-        <Footprints className="h-4 w-4 text-amber-500" />
+      <div className="relative z-10 flex w-5 shrink-0 justify-center">
+        <Footprints className="h-5 w-5 text-amber-500" />
       </div>
 
       {/* Transfer info */}
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
             Transfer at {stationName}
           </span>
           <Badge
             variant="outline"
-            className="gap-1 border-amber-500/30 text-[10px] text-amber-600 dark:text-amber-400"
+            className="gap-1 border-amber-500/30 text-xs text-amber-600 dark:text-amber-400"
           >
-            <Clock className="h-2.5 w-2.5" />
+            <Clock className="h-3 w-3" />
             {minutes} min
           </Badge>
         </div>
@@ -435,7 +429,7 @@ function TransferBlock({
   )
 }
 
-/* ─── Connecting search (inline in drawer) ─── */
+/* ─── Connecting search (inline) ─── */
 
 type ConnectingMode = 'to-origin' | 'from-destination'
 
@@ -468,7 +462,6 @@ function ConnectingSearchPanel({
     const fixedUic = state.fixedStation.uicCode
 
     if (isToOrigin) {
-      // Searching: picked → fixedStation, arrive by departure time
       return {
         originUicCode: picked.UICCode,
         destinationUicCode: fixedUic,
@@ -479,7 +472,6 @@ function ConnectingSearchPanel({
         searchForArrival: true,
       }
     }
-    // Searching: fixedStation → picked, depart after arrival time
     return {
       originUicCode: fixedUic,
       destinationUicCode: picked.UICCode,
@@ -499,7 +491,7 @@ function ConnectingSearchPanel({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 shrink-0"
+            className="h-8 w-8 shrink-0"
             onClick={onBack}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -523,7 +515,7 @@ function ConnectingSearchPanel({
               <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
                 <ArrowRight className="h-3 w-3" />
                 <span>{state.fixedStation.name}</span>
-                <Badge variant="secondary" className="ml-auto text-[9px]">
+                <Badge variant="secondary" className="ml-auto text-xs">
                   Arrive by{' '}
                   {formatTime(
                     state.fixedStation.actualDateTime ??
@@ -536,7 +528,7 @@ function ConnectingSearchPanel({
             <>
               <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
                 <span>{state.fixedStation.name}</span>
-                <Badge variant="secondary" className="ml-auto text-[9px]">
+                <Badge variant="secondary" className="ml-auto text-xs">
                   Depart after{' '}
                   {formatTime(
                     state.fixedStation.actualDateTime ??
@@ -600,7 +592,7 @@ function ConnectingSearchPanel({
                         {formatTime(tLastLeg?.destination.plannedDateTime)}
                       </span>
                     </div>
-                    <span className="text-muted-foreground text-[11px]">
+                    <span className="text-muted-foreground text-xs">
                       {formatDuration(
                         t.actualDurationInMinutes || t.plannedDurationInMinutes,
                       )}
@@ -611,23 +603,20 @@ function ConnectingSearchPanel({
                       <Badge
                         key={leg.idx}
                         variant="secondary"
-                        className="gap-1 text-[10px] font-normal"
+                        className="gap-1 text-xs font-normal"
                       >
-                        <TrainFront className="h-2.5 w-2.5" />
+                        <TrainFront className="h-3 w-3" />
                         {leg.product.displayName}
                       </Badge>
                     ))}
                     {t.transfers > 0 && (
-                      <span className="text-muted-foreground self-center text-[10px]">
+                      <span className="text-muted-foreground self-center text-xs">
                         · {t.transfers} transfer{t.transfers !== 1 && 's'}
                       </span>
                     )}
                     {isCancelled && (
-                      <Badge
-                        variant="destructive"
-                        className="gap-0.5 text-[9px]"
-                      >
-                        <CircleX className="h-2.5 w-2.5" />
+                      <Badge variant="destructive" className="gap-0.5 text-xs">
+                        <CircleX className="h-3 w-3" />
                         Cancelled
                       </Badge>
                     )}
@@ -648,19 +637,22 @@ function ConnectingSearchPanel({
   )
 }
 
-/* ─── Main component ─── */
+/* ─── Main page component ─── */
 
-interface TripDetailDrawerProps {
-  trip: Trip | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}
+export function TripDetailPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
 
-export function TripDetailDrawer({
-  trip,
-  open,
-  onOpenChange,
-}: Readonly<TripDetailDrawerProps>) {
+  // Trip passed via router state, or refetch via ctxRecon
+  const stateTrip = (location.state as { trip?: Trip } | null)?.trip ?? null
+  const ctxRecon = searchParams.get('ctxRecon') ?? undefined
+
+  // Fetch detailed trip data
+  const { data: fetchedTrip, isLoading: isTripLoading } = useTrip({
+    ctxRecon: ctxRecon,
+  })
+
   // Stack of trips for forward/backward navigation
   const [tripStack, setTripStack] = useState<Trip[]>([])
   const [connectingSearch, setConnectingSearch] =
@@ -671,31 +663,33 @@ export function TripDetailDrawer({
     'timeline',
   )
 
-  // Reset everything when the source trip changes (adjust state during render)
-  const [prevTrip, setPrevTrip] = useState<Trip | null>(null)
-  if (open && trip && trip !== prevTrip) {
-    setPrevTrip(trip)
-    setTripStack([trip])
+  // Initialise trip stack from the source trip
+  const sourceTrip = fetchedTrip ?? stateTrip
+  const [prevSource, setPrevSource] = useState<Trip | null>(null)
+  if (sourceTrip && sourceTrip !== prevSource) {
+    setPrevSource(sourceTrip)
+    setTripStack([sourceTrip])
     setConnectingSearch(null)
     setActiveTab('timeline')
   }
-  if (!open && prevTrip !== null) {
-    setPrevTrip(null)
-  }
 
-  // The current trip is the top of the stack (or the prop trip)
+  // The current trip is the top of the stack
   const currentTrip =
-    tripStack.length > 0 ? tripStack[tripStack.length - 1] : trip
-  const canGoBack =
-    tripStack.length > 1 || (tripStack.length > 0 && connectingSearch !== null)
+    tripStack.length > 0 ? tripStack[tripStack.length - 1] : sourceTrip
 
-  // Fetch detailed trip data
+  // Fetch detailed data for current trip in stack
   const { data: detailedTrip } = useTrip({
-    ctxRecon: open && currentTrip ? currentTrip.ctxRecon : undefined,
+    ctxRecon:
+      currentTrip && currentTrip !== sourceTrip
+        ? currentTrip.ctxRecon
+        : undefined,
   })
 
   // Use detailed data when available, fall back to the list-level trip
-  const displayTrip = detailedTrip ?? currentTrip
+  const displayTrip =
+    currentTrip === sourceTrip
+      ? (fetchedTrip ?? stateTrip)
+      : (detailedTrip ?? currentTrip)
 
   const firstLeg = displayTrip?.legs?.[0]
   const lastLeg =
@@ -722,8 +716,10 @@ export function TripDetailDrawer({
     } else if (tripStack.length > 1) {
       setTripStack((s) => s.slice(0, -1))
       setActiveTab('timeline')
+    } else {
+      navigate(-1)
     }
-  }, [connectingSearch, tripStack.length])
+  }, [connectingSearch, tripStack.length, navigate])
 
   const handleSelectConnectingTrip = useCallback((t: Trip) => {
     setTripStack((s) => [...s, t])
@@ -731,375 +727,372 @@ export function TripDetailDrawer({
     setActiveTab('timeline')
   }, [])
 
-  if (!trip || !displayTrip) return null
+  // Loading state when no trip data is available yet
+  if (!displayTrip) {
+    if (isTripLoading) {
+      return (
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-3">
+          <Skeleton className="h-8 w-48 rounded-lg" />
+          <Skeleton className="h-4 w-32 rounded" />
+          <div className="mt-4 w-full max-w-lg space-y-3 px-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+      )
+    }
+    // No trip and not loading - go back
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-3">
+        <p className="text-muted-foreground text-sm">Trip not found</p>
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          Go back
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="flex h-dvh max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-none p-0 sm:h-[90dvh] sm:max-w-lg sm:rounded-lg sm:border"
+    <div className="flex min-h-dvh flex-col">
+      {/* ── Sticky header ── */}
+      <div
+        className={cn(
+          'bg-background/80 pt-safe sticky top-0 z-50 flex items-start justify-between border-b px-4 py-3 backdrop-blur-md sm:px-6',
+          displayTrip.status === 'CANCELLED' &&
+            'bg-destructive/5 border-b-destructive/30',
+          displayTrip.status === 'DISRUPTION' &&
+            'border-b-amber-500/30 bg-amber-500/5',
+        )}
       >
-        {/* ── Sticky header ── */}
-        <div
-          className={cn(
-            'flex items-start justify-between border-b px-4 py-3 sm:px-6',
-            displayTrip.status === 'CANCELLED' &&
-              'bg-destructive/5 border-b-destructive/30',
-            displayTrip.status === 'DISRUPTION' &&
-              'border-b-amber-500/30 bg-amber-500/5',
-          )}
-        >
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            {/* Back button when in stack */}
-            {(canGoBack || connectingSearch) && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0"
-                onClick={handleBack}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            )}
-
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <div className="flex items-center gap-2">
-                <DialogTitle className="truncate text-base">
-                  {headerText}
-                </DialogTitle>
-                {displayTrip.status === 'CANCELLED' && (
-                  <Badge
-                    variant="destructive"
-                    className="shrink-0 gap-1 text-[10px]"
-                  >
-                    <CircleX className="h-3 w-3" />
-                    Cancelled
-                  </Badge>
-                )}
-                {displayTrip.status === 'DISRUPTION' && (
-                  <Badge className="shrink-0 gap-1 bg-amber-500 text-[10px] text-white hover:bg-amber-600">
-                    <AlertTriangle className="h-3 w-3" />
-                    Disruption
-                  </Badge>
-                )}
-              </div>
-              {!connectingSearch && (
-                <DialogDescription className="flex items-center gap-2 text-xs">
-                  <Clock className="h-3 w-3" />
-                  {durationText}
-                  <span className="text-muted-foreground">·</span>
-                  {displayTrip.transfers} transfer
-                  {displayTrip.transfers !== 1 && 's'}
-                  {displayTrip.crowdForecast !== 'UNKNOWN' && (
-                    <>
-                      <span className="text-muted-foreground">·</span>
-                      <CrowdForecast
-                        crowdForecast={displayTrip.crowdForecast}
-                      />
-                    </>
-                  )}
-                </DialogDescription>
-              )}
-              {connectingSearch && (
-                <DialogDescription className="text-muted-foreground text-xs">
-                  Finding connecting journey…
-                </DialogDescription>
-              )}
-
-              {/* Label items (supplements, deals, etc.) */}
-              {!connectingSearch &&
-                displayTrip.labelListItems &&
-                displayTrip.labelListItems.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {displayTrip.labelListItems.map((item) => (
-                      <Badge
-                        key={item.label}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        {item.label}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-            </div>
-          </div>
-
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {/* Back button */}
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0 rounded-full"
-            onClick={() => onOpenChange(false)}
+            className="h-9 w-9 shrink-0"
+            onClick={handleBack}
           >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-        </div>
 
-        {/* ── Connecting search mode ── */}
-        {connectingSearch && (
-          <ConnectingSearchPanel
-            state={connectingSearch}
-            onSelectTrip={handleSelectConnectingTrip}
-            onBack={handleBack}
-          />
-        )}
-
-        {/* ── Normal trip detail view (hidden when in search mode) ── */}
-        {!connectingSearch && (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {/* ── Trip-level message ── */}
-            {displayTrip.primaryMessage && (
-              <div className="border-b px-4 py-2 sm:px-6">
-                <div
-                  className={cn(
-                    'rounded-lg border px-3 py-2 text-xs',
-                    getPaletteColorFromNesProperties(
-                      displayTrip.primaryMessage.nesProperties,
-                    ),
-                    'bg-muted/50',
-                  )}
-                >
-                  {displayTrip.primaryMessage.title}
-                </div>
-              </div>
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-base font-semibold">{headerText}</h1>
+              {displayTrip.status === 'CANCELLED' && (
+                <Badge variant="destructive" className="shrink-0 gap-1 text-xs">
+                  <CircleX className="h-3.5 w-3.5" />
+                  Cancelled
+                </Badge>
+              )}
+              {displayTrip.status === 'DISRUPTION' && (
+                <Badge className="shrink-0 gap-1 bg-amber-500 text-xs text-white hover:bg-amber-600">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  Disruption
+                </Badge>
+              )}
+            </div>
+            {!connectingSearch && (
+              <p className="text-muted-foreground flex items-center gap-2 text-xs">
+                <Clock className="h-3.5 w-3.5" />
+                {durationText}
+                <span className="text-muted-foreground">·</span>
+                {displayTrip.transfers} transfer
+                {displayTrip.transfers !== 1 && 's'}
+                {displayTrip.crowdForecast !== 'UNKNOWN' && (
+                  <>
+                    <span className="text-muted-foreground">·</span>
+                    <CrowdForecast crowdForecast={displayTrip.crowdForecast} />
+                  </>
+                )}
+              </p>
+            )}
+            {connectingSearch && (
+              <p className="text-muted-foreground text-xs">
+                Finding connecting journey…
+              </p>
             )}
 
-            {/* ── Tab bar ── */}
-            <div className="flex border-b px-4 sm:px-6">
-              <button
-                type="button"
+            {/* Label items (supplements, deals, etc.) */}
+            {!connectingSearch &&
+              displayTrip.labelListItems &&
+              displayTrip.labelListItems.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {displayTrip.labelListItems.map((item) => (
+                    <Badge
+                      key={item.label}
+                      variant="outline"
+                      className="text-xs"
+                    >
+                      {item.label}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Connecting search mode ── */}
+      {connectingSearch && (
+        <ConnectingSearchPanel
+          state={connectingSearch}
+          onSelectTrip={handleSelectConnectingTrip}
+          onBack={handleBack}
+        />
+      )}
+
+      {/* ── Normal trip detail view ── */}
+      {!connectingSearch && (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {/* ── Trip-level message ── */}
+          {displayTrip.primaryMessage && (
+            <div className="border-b px-4 py-2 sm:px-6">
+              <div
                 className={cn(
-                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
-                  activeTab === 'timeline'
-                    ? 'border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground border-transparent',
+                  'rounded-lg border px-3 py-2 text-xs',
+                  getPaletteColorFromNesProperties(
+                    displayTrip.primaryMessage.nesProperties,
+                  ),
+                  'bg-muted/50',
                 )}
-                onClick={() => setActiveTab('timeline')}
               >
-                <Route className="h-3.5 w-3.5" />
-                Timeline
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
-                  activeTab === 'stops'
-                    ? 'border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground border-transparent',
-                )}
-                onClick={() => setActiveTab('stops')}
-              >
-                <List className="h-3.5 w-3.5" />
-                Stops
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
-                  activeTab === 'map'
-                    ? 'border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground border-transparent',
-                )}
-                onClick={() => setActiveTab('map')}
-              >
-                <MapIcon className="h-3.5 w-3.5" />
-                Map
-              </button>
+                {displayTrip.primaryMessage.title}
+              </div>
             </div>
+          )}
 
-            {/* ── Timeline view ── */}
-            {activeTab === 'timeline' && (
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                <div className="px-4 py-5 sm:px-6">
-                  {displayTrip.legs.map((leg, legIndex) => {
-                    const isFirstLeg = legIndex === 0
-                    const isLastLeg = legIndex === displayTrip.legs.length - 1
-                    const prevLeg =
-                      legIndex > 0 ? displayTrip.legs[legIndex - 1] : null
-                    const waitMins = prevLeg
-                      ? waitMinutesBetween(prevLeg, leg)
-                      : 0
+          {/* ── Tab bar ── */}
+          <div className="flex border-b px-4 sm:px-6">
+            <button
+              type="button"
+              className={cn(
+                'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors',
+                activeTab === 'timeline'
+                  ? 'border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground border-transparent',
+              )}
+              onClick={() => setActiveTab('timeline')}
+            >
+              <Route className="h-4 w-4" />
+              Timeline
+            </button>
+            <button
+              type="button"
+              className={cn(
+                'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors',
+                activeTab === 'stops'
+                  ? 'border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground border-transparent',
+              )}
+              onClick={() => setActiveTab('stops')}
+            >
+              <List className="h-4 w-4" />
+              Stops
+            </button>
+            <button
+              type="button"
+              className={cn(
+                'flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors',
+                activeTab === 'map'
+                  ? 'border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground border-transparent',
+              )}
+              onClick={() => setActiveTab('map')}
+            >
+              <MapIcon className="h-4 w-4" />
+              Map
+            </button>
+          </div>
 
-                    return (
-                      <div key={leg.idx}>
-                        {/* Transfer between legs */}
-                        {prevLeg && waitMins > 0 && (
-                          <TransferBlock
-                            minutes={waitMins}
-                            stationName={leg.origin.name}
+          {/* ── Timeline view ── */}
+          {activeTab === 'timeline' && (
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="px-4 py-5 sm:px-6">
+                {displayTrip.legs.map((leg, legIndex) => {
+                  const isFirstLeg = legIndex === 0
+                  const isLastLeg = legIndex === displayTrip.legs.length - 1
+                  const prevLeg =
+                    legIndex > 0 ? displayTrip.legs[legIndex - 1] : null
+                  const waitMins = prevLeg
+                    ? waitMinutesBetween(prevLeg, leg)
+                    : 0
+
+                  return (
+                    <div key={leg.idx}>
+                      {/* Transfer between legs */}
+                      {prevLeg && waitMins > 0 && (
+                        <TransferBlock
+                          minutes={waitMins}
+                          stationName={leg.origin.name}
+                        />
+                      )}
+
+                      {/* Leg wrapper with disruption/cancellation styling */}
+                      <div
+                        className={cn(
+                          'relative rounded-md',
+                          leg.cancelled &&
+                            'bg-destructive/5 ring-destructive/20 my-1 py-1 ring-1',
+                          !leg.cancelled &&
+                            leg.partCancelled &&
+                            'my-1 bg-amber-500/5 py-1 ring-1 ring-amber-500/20',
+                        )}
+                      >
+                        {/* Diagonal stripes for cancelled leg */}
+                        {leg.cancelled && (
+                          <div
+                            className="pointer-events-none absolute inset-0 rounded-md opacity-[0.03]"
+                            style={{
+                              backgroundImage:
+                                'repeating-linear-gradient(135deg, transparent, transparent 8px, currentColor 8px, currentColor 9px)',
+                            }}
                           />
                         )}
 
-                        {/* Leg wrapper with disruption/cancellation styling */}
-                        <div
-                          className={cn(
-                            'relative rounded-md',
-                            leg.cancelled &&
-                              'bg-destructive/5 ring-destructive/20 my-1 py-1 ring-1',
-                            !leg.cancelled &&
-                              leg.partCancelled &&
-                              'my-1 bg-amber-500/5 py-1 ring-1 ring-amber-500/20',
-                          )}
-                        >
-                          {/* Diagonal stripes for cancelled leg */}
-                          {leg.cancelled && (
-                            <div
-                              className="pointer-events-none absolute inset-0 rounded-md opacity-[0.03]"
-                              style={{
-                                backgroundImage:
-                                  'repeating-linear-gradient(135deg, transparent, transparent 8px, currentColor 8px, currentColor 9px)',
-                              }}
-                            />
-                          )}
-
-                          {/* Origin → content (with vertical line) */}
-                          <div className="relative">
-                            {/* Vertical line: spans from origin icon center to bottom of this wrapper */}
-                            <div
-                              className={cn(
-                                'absolute top-[10px] bottom-0 left-[7.5px] w-px',
-                                leg.cancelled
-                                  ? 'bg-destructive/30'
-                                  : 'bg-border',
-                              )}
-                            />
-
-                            {/* Departure station */}
-                            <StationNode
-                              name={leg.origin.name}
-                              plannedTime={leg.origin.plannedDateTime}
-                              actualTime={leg.origin.actualDateTime}
-                              plannedTrack={leg.origin.plannedTrack}
-                              actualTrack={leg.origin.actualTrack}
-                              isOrigin={isFirstLeg}
-                              cancelled={leg.cancelled}
-                            />
-
-                            {/* Leg info */}
-                            <LegSegment leg={leg} />
-
-                            {/* Intermediate stops (from detailed trip data) */}
-                            {leg.stops && leg.stops.length > 0 && (
-                              <IntermediateStops
-                                stops={leg.stops}
-                                originUicCode={leg.origin.uicCode}
-                                destinationUicCode={leg.destination.uicCode}
-                              />
+                        {/* Origin → content (with vertical line) */}
+                        <div className="relative">
+                          {/* Vertical line */}
+                          <div
+                            className={cn(
+                              'absolute top-2.5 bottom-0 left-[9.5px] w-px',
+                              leg.cancelled ? 'bg-destructive/30' : 'bg-border',
                             )}
-                          </div>
+                          />
 
-                          {/* Destination (line connects to it from above) */}
-                          <div className="relative">
-                            {/* Short line from top to icon center */}
-                            <div
-                              className={cn(
-                                'absolute top-0 left-[7.5px] h-[10px] w-px',
-                                leg.cancelled
-                                  ? 'bg-destructive/30'
-                                  : 'bg-border',
-                              )}
-                            />
+                          {/* Departure station */}
+                          <StationNode
+                            name={leg.origin.name}
+                            plannedTime={leg.origin.plannedDateTime}
+                            actualTime={leg.origin.actualDateTime}
+                            plannedTrack={leg.origin.plannedTrack}
+                            actualTrack={leg.origin.actualTrack}
+                            isOrigin={isFirstLeg}
+                            cancelled={leg.cancelled}
+                          />
 
-                            <StationNode
-                              name={leg.destination.name}
-                              plannedTime={leg.destination.plannedDateTime}
-                              actualTime={leg.destination.actualDateTime}
-                              plannedTrack={leg.destination.plannedTrack}
-                              actualTrack={leg.destination.actualTrack}
-                              isFinal={isLastLeg}
-                              cancelled={leg.cancelled}
+                          {/* Leg info */}
+                          <LegSegment leg={leg} />
+
+                          {/* Intermediate stops */}
+                          {leg.stops && leg.stops.length > 0 && (
+                            <IntermediateStops
+                              stops={leg.stops}
+                              originUicCode={leg.origin.uicCode}
+                              destinationUicCode={leg.destination.uicCode}
                             />
-                          </div>
+                          )}
+                        </div>
+
+                        {/* Destination */}
+                        <div className="relative">
+                          {/* Short line from top to icon center */}
+                          <div
+                            className={cn(
+                              'absolute top-0 left-[9.5px] h-2.5 w-px',
+                              leg.cancelled ? 'bg-destructive/30' : 'bg-border',
+                            )}
+                          />
+
+                          <StationNode
+                            name={leg.destination.name}
+                            plannedTime={leg.destination.plannedDateTime}
+                            actualTime={leg.destination.actualDateTime}
+                            plannedTrack={leg.destination.plannedTrack}
+                            actualTrack={leg.destination.actualTrack}
+                            isFinal={isLastLeg}
+                            cancelled={leg.cancelled}
+                          />
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                    </div>
+                  )
+                })}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* ── Stops list view ── */}
-            {activeTab === 'stops' && (
-              <Suspense
-                fallback={
-                  <div className="flex flex-1 items-center justify-center">
-                    <Skeleton className="h-full w-full" />
-                  </div>
+          {/* ── Stops list view ── */}
+          {activeTab === 'stops' && (
+            <Suspense
+              fallback={
+                <div className="flex flex-1 items-center justify-center">
+                  <Skeleton className="h-full w-full" />
+                </div>
+              }
+            >
+              <JourneyStopsView trip={displayTrip} />
+            </Suspense>
+          )}
+
+          {/* ── Map view ── */}
+          {activeTab === 'map' &&
+            (user ? (
+              <div className="flex-1">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center">
+                      <Skeleton className="h-full w-full" />
+                    </div>
+                  }
+                >
+                  <TripMapView trip={displayTrip} />
+                </Suspense>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+                <MapIcon className="text-muted-foreground/40 h-10 w-10" />
+                <p className="text-muted-foreground text-sm">
+                  Sign in to view the journey map
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={signInWithGoogle}
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in with Google
+                </Button>
+              </div>
+            ))}
+
+          {/* ── Plan journey actions ── */}
+          {user && activeTab === 'timeline' && tripStack.length <= 1 && (
+            <div className="pb-safe flex shrink-0 gap-2 border-t px-4 py-2.5 sm:px-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() =>
+                  setConnectingSearch({
+                    mode: 'to-origin',
+                    fixedStation: firstLeg!.origin,
+                  })
                 }
               >
-                <JourneyStopsView trip={displayTrip} />
-              </Suspense>
-            )}
-
-            {/* ── Map view ── */}
-            {activeTab === 'map' &&
-              (user ? (
-                <div className="flex-1">
-                  <Suspense
-                    fallback={
-                      <div className="flex h-full items-center justify-center">
-                        <Skeleton className="h-full w-full" />
-                      </div>
-                    }
-                  >
-                    <TripMapView trip={displayTrip} />
-                  </Suspense>
-                </div>
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-                  <MapIcon className="text-muted-foreground/40 h-10 w-10" />
-                  <p className="text-muted-foreground text-sm">
-                    Sign in to view the journey map
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={signInWithGoogle}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Sign in with Google
-                  </Button>
-                </div>
-              ))}
-
-            {/* ── Plan journey actions (only on timeline tab, only for original trip, only when logged in) ── */}
-            {user && activeTab === 'timeline' && tripStack.length <= 1 && (
-              <div className="flex shrink-0 gap-2 border-t px-4 py-2.5 sm:px-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-1.5 text-xs"
-                  onClick={() =>
-                    setConnectingSearch({
-                      mode: 'to-origin',
-                      fixedStation: firstLeg!.origin,
-                    })
-                  }
-                >
-                  <Navigation className="h-3.5 w-3.5" />
-                  To {firstLeg?.origin.name?.split(' ')[0]}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-1.5 text-xs"
-                  onClick={() =>
-                    setConnectingSearch({
-                      mode: 'from-destination',
-                      fixedStation: lastLeg!.destination,
-                    })
-                  }
-                >
-                  From {lastLeg?.destination.name?.split(' ')[0]}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+                <Navigation className="h-3.5 w-3.5" />
+                To {firstLeg?.origin.name?.split(' ')[0]}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-1.5 text-xs"
+                onClick={() =>
+                  setConnectingSearch({
+                    mode: 'from-destination',
+                    fixedStation: lastLeg!.destination,
+                  })
+                }
+              >
+                From {lastLeg?.destination.name?.split(' ')[0]}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

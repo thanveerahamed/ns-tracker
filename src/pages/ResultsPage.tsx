@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { TripCard } from '@/components/results/TripCard.tsx'
-import { TripDetailDrawer } from '@/components/results/TripDetailDrawer.tsx'
 import { LoadMoreButton } from '@/components/results/LoadMoreButton.tsx'
 import {
   useTripsInformation,
@@ -61,10 +60,7 @@ export function ResultsPage() {
   const [earliestContext, setEarliestContext] = useState<string | undefined>()
   const [latestContext, setLatestContext] = useState<string | undefined>()
 
-  // Trip detail drawer
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
-
-  // Use the main data's contexts initially, then override with loaded contexts
+  // Track scroll contexts from loaded batches
   const backwardContext = earliestContext ?? data?.scrollRequestBackwardContext
   const forwardContext = latestContext ?? data?.scrollRequestForwardContext
 
@@ -285,7 +281,12 @@ export function ResultsPage() {
                     onToggleFavourite={() => handleToggleFavourite(trip)}
                     isNextDeparture={trip.ctxRecon === nextDepartureCtx}
                     index={index}
-                    onClick={() => setSelectedTrip(trip)}
+                    onClick={() =>
+                      navigate(
+                        `/trip?ctxRecon=${encodeURIComponent(trip.ctxRecon)}`,
+                        { state: { trip } },
+                      )
+                    }
                   />
                 </div>
               )
@@ -311,14 +312,6 @@ export function ResultsPage() {
           )}
         </div>
       )}
-
-      <TripDetailDrawer
-        trip={selectedTrip}
-        open={!!selectedTrip}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTrip(null)
-        }}
-      />
     </motion.div>
   )
 }
