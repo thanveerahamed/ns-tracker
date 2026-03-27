@@ -1,0 +1,1105 @@
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import dayjs from 'dayjs'
+import {
+  TrainFront,
+  Train,
+  Milestone,
+  Clock,
+  Footprints,
+  AlertTriangle,
+  Info,
+  CircleX,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  MapPin,
+  Route,
+  Map as MapIcon,
+  List,
+  Navigation,
+  Search,
+  LogIn,
+} from 'lucide-react'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog.tsx'
+import { Badge } from '@/components/ui/badge.tsx'
+import { Button } from '@/components/ui/button.tsx'
+import { Skeleton } from '@/components/ui/skeleton.tsx'
+import { CrowdForecast } from '@/components/results/CrowdForecast.tsx'
+import { StationCombobox } from '@/components/search/StationCombobox.tsx'
+
+const TripMapView = lazy(() =>
+  import('@/components/results/TripMapView.tsx').then((m) => ({
+    default: m.TripMapView,
+  })),
+)
+const JourneyStopsView = lazy(() =>
+  import('@/components/results/JourneyStopsView.tsx').then((m) => ({
+    default: m.JourneyStopsView,
+  })),
+)
+import { useTrip, useTripsInformation } from '@/apis/trips.ts'
+import { useAuth } from '@/contexts/AuthContext.tsx'
+import { getPaletteColorFromNesProperties } from '@/utils/trips.ts'
+import { extendedDayjs } from '@/utils/date.ts'
+import { cn } from '@/lib/utils.ts'
+import type { NSStation } from '@/types/station.ts'
+import type { Trip, Leg, Stop, TripLocation } from '@/types/trip.ts'
+
+/* ─── Helpers ─── */
+
+function formatTime(iso?: string) {
+  return iso ? dayjs(iso).format('HH:mm') : '—'
+}
+
+function delayMinutes(planned?: string, actual?: string): number | null {
+  if (!planned || !actual) return null
+  const diff = dayjs(actual).diff(dayjs(planned), 'minute')
+  return diff === 0 ? null : diff
+}
+
+function formatDuration(minutes: number) {
+  return extendedDayjs.duration(minutes, 'minutes').format('H[h] m[m]')
+}
+
+function waitMinutesBetween(prevLeg: Leg, nextLeg: Leg): number {
+  const arrivalTime =
+    prevLeg.destination.actualDateTime ?? prevLeg.destination.plannedDateTime
+  const departureTime =
+    nextLeg.origin.actualDateTime ?? nextLeg.origin.plannedDateTime
+  return dayjs(departureTime).diff(dayjs(arrivalTime), 'minute')
+}
+
+/* ─── Sub-components ─── */
+
+function TimeWithDelay({
+  planned,
+  actual,
+  className,
+}: Readonly<{
+  planned?: string
+  actual?: string
+  className?: string
+}>) {
+  const delay = delayMinutes(planned, actual)
+  return (
+    <span className={cn('text-sm font-semibold tabular-nums', className)}>
+      {delay !== null && (
+        <span className="text-destructive mr-1">{formatTime(actual)}</span>
+      )}
+      <span
+        className={cn(
+          delay !== null && 'text-muted-foreground text-xs line-through',
+        )}
+      >
+        {formatTime(planned)}
+      </span>
+    </span>
+  )
+}
+
+function TrackBadge({
+  planned,
+  actual,
+}: Readonly<{ planned?: string; actual?: string }>) {
+  if (!planned && !actual) return null
+  const changed = actual && planned && actual !== planned
+  return (
+    <Badge
+      variant="secondary"
+      className={cn(
+        'font-mono text-[10px] tabular-nums',
+        changed && 'border-destructive/50 text-destructive',
+      )}
+    >
+      P.{actual ?? planned}
+    </Badge>
+  )
+}
+
+/* ─── Station node (icon on the timeline) ─── */
+
+function StationNode({
+  name,
+  plannedTime,
+  actualTime,
+  plannedTrack,
+  actualTrack,
+  isOrigin,
+  isFinal,
+  cancelled,
+}: Readonly<{
+  name: string
+  plannedTime?: string
+  actualTime?: string
+  plannedTrack?: string
+  actualTrack?: string
+  isOrigin?: boolean
+  isFinal?: boolean
+  cancelled?: boolean
+}>) {
+  let iconClass = 'text-muted-foreground'
+
+  if (cancelled) {
+    iconClass = 'text-destructive'
+  } else if (isOrigin) {
+    iconClass = 'text-emerald-500'
+  } else if (isFinal) {
+    iconClass = 'text-amber-500'
+  }
+
+  const StationIcon = cancelled
+    ? CircleX
+    : isOrigin
+      ? Train
+      : isFinal
+        ? Milestone
+        : TrainFront
+
+  return (
+    <div className="relative flex items-start gap-3">
+      {/* Station icon */}
+      <div className="relative z-10 flex w-4 shrink-0 justify-center pt-0.5">
+        <StationIcon className={cn('h-4 w-4', iconClass)} />
+      </div>
+
+      {/* Content */}
+      <div className="-mt-0.5 min-w-0 flex-1 pb-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <TimeWithDelay planned={plannedTime} actual={actualTime} />
+          <TrackBadge planned={plannedTrack} actual={actualTrack} />
+        </div>
+        <p
+          className={cn(
+            'truncate text-sm font-medium',
+            cancelled && 'text-muted-foreground line-through',
+          )}
+        >
+          {name}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Leg segment (train info between two station nodes) ─── */
+
+function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
+  return (
+    <div className="relative flex items-start gap-3 py-1.5">
+      {/* Keeps alignment with the icon column */}
+      <div className="w-4 shrink-0" />
+
+      {/* Leg info */}
+      <div className="flex-1 space-y-1.5">
+        {/* Train badge */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className={cn(
+              'gap-1.5 text-xs font-normal',
+              leg.cancelled &&
+                'border-destructive/40 text-destructive line-through',
+            )}
+          >
+            <TrainFront className="h-3 w-3" />
+            {leg.product.displayName}
+          </Badge>
+
+          {leg.cancelled && (
+            <Badge variant="destructive" className="gap-1 text-[10px]">
+              <CircleX className="h-3 w-3" />
+              Cancelled
+            </Badge>
+          )}
+
+          {!leg.cancelled && leg.partCancelled && (
+            <Badge className="gap-1 bg-amber-500 text-[10px] text-white hover:bg-amber-600">
+              <AlertTriangle className="h-3 w-3" />
+              Disrupted
+            </Badge>
+          )}
+
+          {leg.direction && !leg.cancelled && (
+            <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
+              <ArrowRight className="h-3 w-3" />
+              {leg.direction}
+            </span>
+          )}
+
+          {leg.crowdForecast && leg.crowdForecast !== 'UNKNOWN' && (
+            <CrowdForecast crowdForecast={leg.crowdForecast} />
+          )}
+        </div>
+
+        {/* Duration */}
+        {leg.plannedDurationInMinutes > 0 && (
+          <div className="text-muted-foreground flex items-center gap-1 text-[11px]">
+            <Clock className="h-3 w-3" />
+            {formatDuration(leg.plannedDurationInMinutes)}
+          </div>
+        )}
+
+        {/* Notes */}
+        {leg.notes && leg.notes.length > 0 && (
+          <div className="space-y-0.5">
+            {leg.notes
+              .filter((n) => n.isPresentationRequired)
+              .map((note) => (
+                <div
+                  key={note.key}
+                  className="text-muted-foreground flex items-start gap-1.5 text-[11px]"
+                >
+                  <Info className="mt-0.5 h-3 w-3 shrink-0 text-blue-500" />
+                  <span>{note.value}</span>
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Transfer messages */}
+        {leg.transferMessages && leg.transferMessages.length > 0 && (
+          <div className="space-y-0.5">
+            {leg.transferMessages.map((msg) => (
+              <div
+                key={msg.message}
+                className={cn(
+                  'flex items-start gap-1.5 text-[11px]',
+                  getPaletteColorFromNesProperties(msg.messageNesProperties),
+                )}
+              >
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>{msg.message}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Leg-level messages */}
+        {leg.messages && leg.messages.length > 0 && (
+          <div className="space-y-0.5">
+            {leg.messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={cn(
+                  'flex items-start gap-1.5 text-[11px]',
+                  getPaletteColorFromNesProperties(msg.nesProperties),
+                )}
+              >
+                <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+                <span>{msg.head || msg.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Alternative transport info */}
+        {leg.alternativeTransport && (
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-3 w-3" />
+            Alternative transport
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Intermediate stops within a leg ─── */
+
+function IntermediateStops({
+  stops,
+  originUicCode,
+  destinationUicCode,
+}: Readonly<{
+  stops: Stop[]
+  originUicCode: string
+  destinationUicCode: string
+}>) {
+  // Filter to only stops between origin and destination (exclude them)
+  const intermediateStops = useMemo(() => {
+    const originIdx = stops.findIndex((s) => s.uicCode === originUicCode)
+    const destIdx = stops.findIndex((s) => s.uicCode === destinationUicCode)
+    if (originIdx === -1 || destIdx === -1) return []
+    return stops.slice(originIdx + 1, destIdx).filter((s) => !s.passing)
+  }, [stops, originUicCode, destinationUicCode])
+
+  if (intermediateStops.length === 0) return null
+
+  return (
+    <div className="relative flex items-start gap-3 py-1">
+      {/* Icon column spacer */}
+      <div className="w-4 shrink-0" />
+
+      <div className="flex-1 space-y-1">
+        {intermediateStops.map((stop) => {
+          const arrDelay = delayMinutes(
+            stop.plannedArrivalDateTime,
+            stop.actualArrivalDateTime,
+          )
+          const trackChanged =
+            stop.actualArrivalTrack &&
+            stop.plannedArrivalTrack &&
+            stop.actualArrivalTrack !== stop.plannedArrivalTrack
+
+          return (
+            <div
+              key={stop.uicCode}
+              className={cn(
+                'flex items-center gap-2 text-[11px]',
+                stop.cancelled && 'line-through opacity-50',
+              )}
+            >
+              <MapPin className="text-muted-foreground/60 h-2.5 w-2.5 shrink-0" />
+              <span className="text-muted-foreground flex-1 truncate">
+                {stop.name}
+              </span>
+
+              {/* Arrival time */}
+              {stop.plannedArrivalDateTime && (
+                <span className="text-muted-foreground shrink-0 tabular-nums">
+                  {arrDelay !== null && (
+                    <span className="text-destructive mr-1">
+                      {formatTime(stop.actualArrivalDateTime)}
+                    </span>
+                  )}
+                  <span
+                    className={cn(
+                      arrDelay !== null &&
+                        'text-muted-foreground/50 line-through',
+                    )}
+                  >
+                    {formatTime(stop.plannedArrivalDateTime)}
+                  </span>
+                </span>
+              )}
+
+              {/* Track */}
+              {(stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
+                <span
+                  className={cn(
+                    'text-muted-foreground shrink-0 text-[10px] tabular-nums',
+                    trackChanged && 'text-destructive font-medium',
+                  )}
+                >
+                  P.{stop.actualArrivalTrack || stop.plannedArrivalTrack}
+                </span>
+              )}
+
+              {/* Cancelled marker */}
+              {stop.cancelled && (
+                <CircleX className="text-destructive h-2.5 w-2.5 shrink-0" />
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Wait / Transfer block ─── */
+
+function TransferBlock({
+  minutes,
+  stationName,
+}: Readonly<{ minutes: number; stationName: string }>) {
+  return (
+    <div className="relative flex items-start gap-3 py-1.5">
+      {/* Icon aligned with icon column */}
+      <div className="relative z-10 flex w-4 shrink-0 justify-center">
+        <Footprints className="h-4 w-4 text-amber-500" />
+      </div>
+
+      {/* Transfer info */}
+      <div className="flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+            Transfer at {stationName}
+          </span>
+          <Badge
+            variant="outline"
+            className="gap-1 border-amber-500/30 text-[10px] text-amber-600 dark:text-amber-400"
+          >
+            <Clock className="h-2.5 w-2.5" />
+            {minutes} min
+          </Badge>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Connecting search (inline in drawer) ─── */
+
+type ConnectingMode = 'to-origin' | 'from-destination'
+
+interface ConnectingSearchState {
+  mode: ConnectingMode
+  /** The known station (trip origin or destination) */
+  fixedStation: TripLocation
+  /** The station the user picks */
+  pickedStation?: NSStation
+}
+
+function ConnectingSearchPanel({
+  state,
+  onSelectTrip,
+  onBack,
+}: Readonly<{
+  state: ConnectingSearchState
+  onSelectTrip: (trip: Trip) => void
+  onBack: () => void
+}>) {
+  const [picked, setPicked] = useState<NSStation | undefined>(
+    state.pickedStation,
+  )
+
+  const isToOrigin = state.mode === 'to-origin'
+
+  // Auto-search when station is picked
+  const searchParams = useMemo(() => {
+    if (!picked) return {}
+    const fixedUic = state.fixedStation.uicCode
+
+    if (isToOrigin) {
+      // Searching: picked → fixedStation, arrive by departure time
+      return {
+        originUicCode: picked.UICCode,
+        destinationUicCode: fixedUic,
+        dateTime: dayjs(
+          state.fixedStation.actualDateTime ??
+            state.fixedStation.plannedDateTime,
+        ),
+        searchForArrival: true,
+      }
+    }
+    // Searching: fixedStation → picked, depart after arrival time
+    return {
+      originUicCode: fixedUic,
+      destinationUicCode: picked.UICCode,
+      dateTime: dayjs(
+        state.fixedStation.actualDateTime ?? state.fixedStation.plannedDateTime,
+      ),
+    }
+  }, [picked, state.fixedStation, isToOrigin])
+
+  const { data, isLoading } = useTripsInformation(searchParams)
+
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Search header */}
+      <div className="space-y-2 border-b px-4 py-3 sm:px-6">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            onClick={onBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium">
+            {isToOrigin ? 'Journey to' : 'Journey from'}{' '}
+            <span className="text-primary">{state.fixedStation.name}</span>
+          </span>
+        </div>
+
+        {/* Fixed station shown as badge, editable station as combobox */}
+        <div className="space-y-1.5">
+          {isToOrigin ? (
+            <>
+              <StationCombobox
+                value={picked}
+                onChange={setPicked}
+                placeholder="From where?"
+                label="From"
+              />
+              <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
+                <ArrowRight className="h-3 w-3" />
+                <span>{state.fixedStation.name}</span>
+                <Badge variant="secondary" className="ml-auto text-[9px]">
+                  Arrive by{' '}
+                  {formatTime(
+                    state.fixedStation.actualDateTime ??
+                      state.fixedStation.plannedDateTime,
+                  )}
+                </Badge>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-muted-foreground flex items-center gap-2 px-1 text-xs">
+                <span>{state.fixedStation.name}</span>
+                <Badge variant="secondary" className="ml-auto text-[9px]">
+                  Depart after{' '}
+                  {formatTime(
+                    state.fixedStation.actualDateTime ??
+                      state.fixedStation.plannedDateTime,
+                  )}
+                </Badge>
+              </div>
+              <StationCombobox
+                value={picked}
+                onChange={setPicked}
+                placeholder="To where?"
+                label="To"
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Results */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {!picked && (
+          <div className="text-muted-foreground flex flex-col items-center gap-2 py-12">
+            <Search className="h-8 w-8" />
+            <p className="text-sm">Select a station to search</p>
+          </div>
+        )}
+
+        {picked && isLoading && (
+          <div className="space-y-3 p-4">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-lg" />
+            ))}
+          </div>
+        )}
+
+        {picked && data && data.trips && (
+          <div className="space-y-2 p-3">
+            {data.trips.map((t) => {
+              const tFirstLeg = t.legs[0]
+              const tLastLeg = t.legs[t.legs.length - 1]
+              const isCancelled = t.status === 'CANCELLED'
+
+              return (
+                <button
+                  key={t.uid}
+                  type="button"
+                  className={cn(
+                    'bg-card w-full rounded-lg border p-3 text-left transition-shadow hover:shadow-md',
+                    isCancelled &&
+                      'border-destructive/40 bg-destructive/5 opacity-70',
+                  )}
+                  onClick={() => onSelectTrip(t)}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold tabular-nums">
+                      <span>
+                        {formatTime(tFirstLeg?.origin.plannedDateTime)}
+                      </span>
+                      <ArrowRight className="text-muted-foreground h-3 w-3" />
+                      <span>
+                        {formatTime(tLastLeg?.destination.plannedDateTime)}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground text-[11px]">
+                      {formatDuration(
+                        t.actualDurationInMinutes || t.plannedDurationInMinutes,
+                      )}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {t.legs.map((leg) => (
+                      <Badge
+                        key={leg.idx}
+                        variant="secondary"
+                        className="gap-1 text-[10px] font-normal"
+                      >
+                        <TrainFront className="h-2.5 w-2.5" />
+                        {leg.product.displayName}
+                      </Badge>
+                    ))}
+                    {t.transfers > 0 && (
+                      <span className="text-muted-foreground self-center text-[10px]">
+                        · {t.transfers} transfer{t.transfers !== 1 && 's'}
+                      </span>
+                    )}
+                    {isCancelled && (
+                      <Badge
+                        variant="destructive"
+                        className="gap-0.5 text-[9px]"
+                      >
+                        <CircleX className="h-2.5 w-2.5" />
+                        Cancelled
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {picked && data && (!data.trips || data.trips.length === 0) && (
+          <div className="text-muted-foreground flex flex-col items-center gap-2 py-12">
+            <p className="text-sm">No trips found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Main component ─── */
+
+interface TripDetailDrawerProps {
+  trip: Trip | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function TripDetailDrawer({
+  trip,
+  open,
+  onOpenChange,
+}: Readonly<TripDetailDrawerProps>) {
+  // Stack of trips for forward/backward navigation
+  const [tripStack, setTripStack] = useState<Trip[]>([])
+  const [connectingSearch, setConnectingSearch] =
+    useState<ConnectingSearchState | null>(null)
+  const { user, signInWithGoogle } = useAuth()
+
+  const [activeTab, setActiveTab] = useState<'timeline' | 'stops' | 'map'>(
+    'timeline',
+  )
+
+  // Reset everything when the source trip changes (adjust state during render)
+  const [prevTrip, setPrevTrip] = useState<Trip | null>(null)
+  if (open && trip && trip !== prevTrip) {
+    setPrevTrip(trip)
+    setTripStack([trip])
+    setConnectingSearch(null)
+    setActiveTab('timeline')
+  }
+  if (!open && prevTrip !== null) {
+    setPrevTrip(null)
+  }
+
+  // The current trip is the top of the stack (or the prop trip)
+  const currentTrip =
+    tripStack.length > 0 ? tripStack[tripStack.length - 1] : trip
+  const canGoBack =
+    tripStack.length > 1 || (tripStack.length > 0 && connectingSearch !== null)
+
+  // Fetch detailed trip data
+  const { data: detailedTrip } = useTrip({
+    ctxRecon: open && currentTrip ? currentTrip.ctxRecon : undefined,
+  })
+
+  // Use detailed data when available, fall back to the list-level trip
+  const displayTrip = detailedTrip ?? currentTrip
+
+  const firstLeg = displayTrip?.legs?.[0]
+  const lastLeg =
+    displayTrip?.legs?.[
+      displayTrip?.legs?.length ? displayTrip.legs.length - 1 : 0
+    ]
+
+  const headerText = useMemo(() => {
+    if (!firstLeg || !lastLeg) return ''
+    return `${firstLeg.origin.name} → ${lastLeg.destination.name}`
+  }, [firstLeg, lastLeg])
+
+  const durationText = useMemo(() => {
+    if (!displayTrip) return ''
+    return formatDuration(
+      displayTrip.actualDurationInMinutes ||
+        displayTrip.plannedDurationInMinutes,
+    )
+  }, [displayTrip])
+
+  const handleBack = useCallback(() => {
+    if (connectingSearch) {
+      setConnectingSearch(null)
+    } else if (tripStack.length > 1) {
+      setTripStack((s) => s.slice(0, -1))
+      setActiveTab('timeline')
+    }
+  }, [connectingSearch, tripStack.length])
+
+  const handleSelectConnectingTrip = useCallback((t: Trip) => {
+    setTripStack((s) => [...s, t])
+    setConnectingSearch(null)
+    setActiveTab('timeline')
+  }, [])
+
+  if (!trip || !displayTrip) return null
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex h-dvh max-h-none w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-none p-0 sm:h-[90dvh] sm:max-w-lg sm:rounded-lg sm:border"
+      >
+        {/* ── Sticky header ── */}
+        <div
+          className={cn(
+            'flex items-start justify-between border-b px-4 py-3 sm:px-6',
+            displayTrip.status === 'CANCELLED' &&
+              'bg-destructive/5 border-b-destructive/30',
+            displayTrip.status === 'DISRUPTION' &&
+              'border-b-amber-500/30 bg-amber-500/5',
+          )}
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {/* Back button when in stack */}
+            {(canGoBack || connectingSearch) && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="flex items-center gap-2">
+                <DialogTitle className="truncate text-base">
+                  {headerText}
+                </DialogTitle>
+                {displayTrip.status === 'CANCELLED' && (
+                  <Badge
+                    variant="destructive"
+                    className="shrink-0 gap-1 text-[10px]"
+                  >
+                    <CircleX className="h-3 w-3" />
+                    Cancelled
+                  </Badge>
+                )}
+                {displayTrip.status === 'DISRUPTION' && (
+                  <Badge className="shrink-0 gap-1 bg-amber-500 text-[10px] text-white hover:bg-amber-600">
+                    <AlertTriangle className="h-3 w-3" />
+                    Disruption
+                  </Badge>
+                )}
+              </div>
+              {!connectingSearch && (
+                <DialogDescription className="flex items-center gap-2 text-xs">
+                  <Clock className="h-3 w-3" />
+                  {durationText}
+                  <span className="text-muted-foreground">·</span>
+                  {displayTrip.transfers} transfer
+                  {displayTrip.transfers !== 1 && 's'}
+                  {displayTrip.crowdForecast !== 'UNKNOWN' && (
+                    <>
+                      <span className="text-muted-foreground">·</span>
+                      <CrowdForecast
+                        crowdForecast={displayTrip.crowdForecast}
+                      />
+                    </>
+                  )}
+                </DialogDescription>
+              )}
+              {connectingSearch && (
+                <DialogDescription className="text-muted-foreground text-xs">
+                  Finding connecting journey…
+                </DialogDescription>
+              )}
+
+              {/* Label items (supplements, deals, etc.) */}
+              {!connectingSearch &&
+                displayTrip.labelListItems &&
+                displayTrip.labelListItems.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {displayTrip.labelListItems.map((item) => (
+                      <Badge
+                        key={item.label}
+                        variant="outline"
+                        className="text-[10px]"
+                      >
+                        {item.label}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+            </div>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 rounded-full"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
+
+        {/* ── Connecting search mode ── */}
+        {connectingSearch && (
+          <ConnectingSearchPanel
+            state={connectingSearch}
+            onSelectTrip={handleSelectConnectingTrip}
+            onBack={handleBack}
+          />
+        )}
+
+        {/* ── Normal trip detail view (hidden when in search mode) ── */}
+        {!connectingSearch && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {/* ── Trip-level message ── */}
+            {displayTrip.primaryMessage && (
+              <div className="border-b px-4 py-2 sm:px-6">
+                <div
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-xs',
+                    getPaletteColorFromNesProperties(
+                      displayTrip.primaryMessage.nesProperties,
+                    ),
+                    'bg-muted/50',
+                  )}
+                >
+                  {displayTrip.primaryMessage.title}
+                </div>
+              </div>
+            )}
+
+            {/* ── Tab bar ── */}
+            <div className="flex border-b px-4 sm:px-6">
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
+                  activeTab === 'timeline'
+                    ? 'border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground border-transparent',
+                )}
+                onClick={() => setActiveTab('timeline')}
+              >
+                <Route className="h-3.5 w-3.5" />
+                Timeline
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
+                  activeTab === 'stops'
+                    ? 'border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground border-transparent',
+                )}
+                onClick={() => setActiveTab('stops')}
+              >
+                <List className="h-3.5 w-3.5" />
+                Stops
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  'flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors',
+                  activeTab === 'map'
+                    ? 'border-primary text-primary'
+                    : 'text-muted-foreground hover:text-foreground border-transparent',
+                )}
+                onClick={() => setActiveTab('map')}
+              >
+                <MapIcon className="h-3.5 w-3.5" />
+                Map
+              </button>
+            </div>
+
+            {/* ── Timeline view ── */}
+            {activeTab === 'timeline' && (
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <div className="px-4 py-5 sm:px-6">
+                  {displayTrip.legs.map((leg, legIndex) => {
+                    const isFirstLeg = legIndex === 0
+                    const isLastLeg = legIndex === displayTrip.legs.length - 1
+                    const prevLeg =
+                      legIndex > 0 ? displayTrip.legs[legIndex - 1] : null
+                    const waitMins = prevLeg
+                      ? waitMinutesBetween(prevLeg, leg)
+                      : 0
+
+                    return (
+                      <div key={leg.idx}>
+                        {/* Transfer between legs */}
+                        {prevLeg && waitMins > 0 && (
+                          <TransferBlock
+                            minutes={waitMins}
+                            stationName={leg.origin.name}
+                          />
+                        )}
+
+                        {/* Leg wrapper with disruption/cancellation styling */}
+                        <div
+                          className={cn(
+                            'relative rounded-md',
+                            leg.cancelled &&
+                              'bg-destructive/5 ring-destructive/20 my-1 py-1 ring-1',
+                            !leg.cancelled &&
+                              leg.partCancelled &&
+                              'my-1 bg-amber-500/5 py-1 ring-1 ring-amber-500/20',
+                          )}
+                        >
+                          {/* Diagonal stripes for cancelled leg */}
+                          {leg.cancelled && (
+                            <div
+                              className="pointer-events-none absolute inset-0 rounded-md opacity-[0.03]"
+                              style={{
+                                backgroundImage:
+                                  'repeating-linear-gradient(135deg, transparent, transparent 8px, currentColor 8px, currentColor 9px)',
+                              }}
+                            />
+                          )}
+
+                          {/* Origin → content (with vertical line) */}
+                          <div className="relative">
+                            {/* Vertical line: spans from origin icon center to bottom of this wrapper */}
+                            <div
+                              className={cn(
+                                'absolute top-[10px] bottom-0 left-[7.5px] w-px',
+                                leg.cancelled
+                                  ? 'bg-destructive/30'
+                                  : 'bg-border',
+                              )}
+                            />
+
+                            {/* Departure station */}
+                            <StationNode
+                              name={leg.origin.name}
+                              plannedTime={leg.origin.plannedDateTime}
+                              actualTime={leg.origin.actualDateTime}
+                              plannedTrack={leg.origin.plannedTrack}
+                              actualTrack={leg.origin.actualTrack}
+                              isOrigin={isFirstLeg}
+                              cancelled={leg.cancelled}
+                            />
+
+                            {/* Leg info */}
+                            <LegSegment leg={leg} />
+
+                            {/* Intermediate stops (from detailed trip data) */}
+                            {leg.stops && leg.stops.length > 0 && (
+                              <IntermediateStops
+                                stops={leg.stops}
+                                originUicCode={leg.origin.uicCode}
+                                destinationUicCode={leg.destination.uicCode}
+                              />
+                            )}
+                          </div>
+
+                          {/* Destination (line connects to it from above) */}
+                          <div className="relative">
+                            {/* Short line from top to icon center */}
+                            <div
+                              className={cn(
+                                'absolute top-0 left-[7.5px] h-[10px] w-px',
+                                leg.cancelled
+                                  ? 'bg-destructive/30'
+                                  : 'bg-border',
+                              )}
+                            />
+
+                            <StationNode
+                              name={leg.destination.name}
+                              plannedTime={leg.destination.plannedDateTime}
+                              actualTime={leg.destination.actualDateTime}
+                              plannedTrack={leg.destination.plannedTrack}
+                              actualTrack={leg.destination.actualTrack}
+                              isFinal={isLastLeg}
+                              cancelled={leg.cancelled}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Stops list view ── */}
+            {activeTab === 'stops' && (
+              <Suspense
+                fallback={
+                  <div className="flex flex-1 items-center justify-center">
+                    <Skeleton className="h-full w-full" />
+                  </div>
+                }
+              >
+                <JourneyStopsView trip={displayTrip} />
+              </Suspense>
+            )}
+
+            {/* ── Map view ── */}
+            {activeTab === 'map' &&
+              (user ? (
+                <div className="flex-1">
+                  <Suspense
+                    fallback={
+                      <div className="flex h-full items-center justify-center">
+                        <Skeleton className="h-full w-full" />
+                      </div>
+                    }
+                  >
+                    <TripMapView trip={displayTrip} />
+                  </Suspense>
+                </div>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+                  <MapIcon className="text-muted-foreground/40 h-10 w-10" />
+                  <p className="text-muted-foreground text-sm">
+                    Sign in to view the journey map
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={signInWithGoogle}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign in with Google
+                  </Button>
+                </div>
+              ))}
+
+            {/* ── Plan journey actions (only on timeline tab, only for original trip, only when logged in) ── */}
+            {user && activeTab === 'timeline' && tripStack.length <= 1 && (
+              <div className="flex shrink-0 gap-2 border-t px-4 py-2.5 sm:px-6">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-1.5 text-xs"
+                  onClick={() =>
+                    setConnectingSearch({
+                      mode: 'to-origin',
+                      fixedStation: firstLeg!.origin,
+                    })
+                  }
+                >
+                  <Navigation className="h-3.5 w-3.5" />
+                  To {firstLeg?.origin.name?.split(' ')[0]}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-1.5 text-xs"
+                  onClick={() =>
+                    setConnectingSearch({
+                      mode: 'from-destination',
+                      fixedStation: lastLeg!.destination,
+                    })
+                  }
+                >
+                  From {lastLeg?.destination.name?.split(' ')[0]}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}

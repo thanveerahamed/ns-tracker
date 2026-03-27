@@ -1,38 +1,50 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 
-import { getArrivalOrDepartures, getStations } from '../services/station.ts';
 import {
+  getArrivalOrDepartures,
+  getFavouriteStations,
+  getStations,
+} from '../services/station.ts'
+import type {
   ArrivalsJourneyPayload,
   DeparturesJourneyPayload,
-} from '../types/station.ts';
+} from '../types/station.ts'
 
 export const useStationsQuery = ({
   query,
   enabled,
 }: {
-  query: string;
-  enabled: boolean;
+  query: string
+  enabled: boolean
 }) => {
   return useQuery({
     enabled: query !== '' && enabled,
     queryKey: ['stations', query],
     queryFn: async () => {
-      const { payload: stations } = await getStations(query);
-      return stations;
+      const { payload: stations } = await getStations(query)
+      return stations
     },
-  });
-};
+  })
+}
+
+export const useFavouriteStationsQuery = (userId?: string) => {
+  return useQuery({
+    enabled: !!userId,
+    queryKey: ['favouriteStations', userId],
+    queryFn: () => getFavouriteStations(userId!),
+  })
+}
 
 export const useStationDeparturesQuery = ({
   enabled,
   query,
 }: {
   query: {
-    uicCode: string;
-    dateTime: string;
-    maxJourneys?: number;
-  };
-  enabled: boolean;
+    uicCode: string
+    dateTime: string
+    maxJourneys?: number
+  }
+  enabled: boolean
 }) => {
   return useQuery({
     enabled,
@@ -42,22 +54,22 @@ export const useStationDeparturesQuery = ({
         await getArrivalOrDepartures<DeparturesJourneyPayload>({
           ...query,
           type: 'departures',
-        });
-      return departures;
+        })
+      return departures
     },
-  });
-};
+  })
+}
 
 export const useStationArrivalsQuery = ({
   enabled,
   query,
 }: {
   query: {
-    uicCode: string;
-    dateTime: string;
-    maxJourneys?: number;
-  };
-  enabled: boolean;
+    uicCode: string
+    dateTime: string
+    maxJourneys?: number
+  }
+  enabled: boolean
 }) => {
   return useQuery({
     enabled,
@@ -67,8 +79,8 @@ export const useStationArrivalsQuery = ({
         await getArrivalOrDepartures<ArrivalsJourneyPayload>({
           ...query,
           type: 'arrivals',
-        });
-      return departures;
+        })
+      return departures
     },
-  });
-};
+  })
+}
