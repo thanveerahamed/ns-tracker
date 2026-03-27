@@ -1,53 +1,59 @@
-import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
-
-import { db } from './firebase.ts';
-import { Dayjs } from 'dayjs';
+import { db } from './firebase.ts'
+import type { Dayjs } from 'dayjs'
 import {
   addDoc,
   collection,
   deleteDoc,
   doc,
+  getDocs,
+  getDoc,
   setDoc,
   updateDoc,
-} from 'firebase/firestore';
+} from 'firebase/firestore'
 
-import { ISplitView } from '../types/splitView.ts';
+import type { ISplitView, ISplitViewWithId } from '../types/splitView.ts'
 
 export const addSplitView = (userId: string, splitView: ISplitView) =>
-  addDoc(collection(db, 'users', userId, 'splitViews'), splitView);
+  addDoc(collection(db, 'users', userId, 'splitViews'), splitView)
 
 export const updateSplitView = (
   userId: string,
   id: string,
   splitView: ISplitView,
-) => setDoc(doc(db, 'users', userId, 'splitViews', id), splitView);
+) => setDoc(doc(db, 'users', userId, 'splitViews', id), splitView)
 
-export const useSplitView = (userId?: string) =>
-  useCollection(collection(db, 'users', userId ?? '', 'splitViews'), {
-    snapshotListenOptions: { includeMetadataChanges: true },
-  });
+export const getSplitViews = async (
+  userId: string,
+): Promise<ISplitViewWithId[]> => {
+  const snapshot = await getDocs(collection(db, 'users', userId, 'splitViews'))
+  return snapshot.docs.map(
+    (d) => ({ id: d.id, ...d.data() }) as ISplitViewWithId,
+  )
+}
+
+export const getSplitViewDocument = async (
+  userId: string,
+  docId: string,
+): Promise<ISplitViewWithId | undefined> => {
+  const d = await getDoc(doc(db, 'users', userId, 'splitViews', docId))
+  if (!d.exists()) return undefined
+  return { id: d.id, ...d.data() } as ISplitViewWithId
+}
 
 export const removeSplitView = (userId: string, id: string) =>
-  deleteDoc(doc(db, 'users', userId, 'splitViews', id));
-
-export const useSplitViewDocument = (docId?: string, userId?: string) =>
-  useDocumentData(
-    docId && userId
-      ? doc(db, 'users', userId ?? '', 'splitViews', docId)
-      : undefined,
-  );
+  deleteDoc(doc(db, 'users', userId, 'splitViews', id))
 
 export const updateSplitViewDate = (
   userId: string,
   id: string,
-  view: 'view1' | 'view2',
+  viewIndex: number,
   dateTime: Dayjs,
 ) => {
-  const updateElement = `${view}.dateTime`;
+  const updateElement = `views.${viewIndex}.dateTime`
   return updateDoc(doc(db, 'users', userId, 'splitViews', id), {
     [updateElement]: dateTime.toString(),
-  });
-};
+  })
+}
 
 export const toggleSplitViewOpened = (
   userId: string,
@@ -56,4 +62,4 @@ export const toggleSplitViewOpened = (
 ) =>
   updateDoc(doc(db, 'users', userId, 'splitViews', id), {
     opened,
-  });
+  })

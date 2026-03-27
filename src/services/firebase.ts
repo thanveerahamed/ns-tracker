@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { type User, getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app'
+import { type User, getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
 
-const env = import.meta.env;
+const env = import.meta.env
 
 const config = {
   apiKey: env.VITE_FIREBASE_API_KEY,
@@ -11,10 +11,11 @@ const config = {
   storageBucket: `${env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
   messagingSenderId: env.VITE_FIREBASE_MESSAGE_SENDER_ID,
   appId: env.VITE_FIREBASE_APP_ID,
-};
+}
 
-const app = initializeApp(config);
-const db = getFirestore(app);
-const auth = getAuth(app);
+const app = initializeApp(config)
+const db = getFirestore(app)
+const auth = getAuth(app)
 
-export { app, db, auth, User as FirebaseUser };
+export { app, db, auth }
+export type { User as FirebaseUser }

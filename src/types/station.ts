@@ -1,108 +1,111 @@
 export interface NSStation {
-  UICCode: string;
-  stationType: string;
-  EVACode: string;
-  code: string;
-  cdCode: number;
-  sporen: NSSporen[];
-  synoniemen: string[];
-  heeftFaciliteiten: boolean;
-  heeftVertrektijden: boolean;
-  heeftReisassistentie: boolean;
-  namen: NSNamen;
-  land: string;
-  lat: number;
-  lng: number;
-  radius: number;
-  naderenRadius: number;
-  ingangsDatum: string;
-  nearbyMeLocationId: NSNearbyMeLocationId;
+  UICCode: string
+  stationType: string
+  EVACode: string
+  code: string
+  cdCode: number
+  sporen: NSSporen[]
+  synoniemen: string[]
+  heeftFaciliteiten: boolean
+  heeftVertrektijden: boolean
+  heeftReisassistentie: boolean
+  namen: NSNamen
+  land: string
+  lat: number
+  lng: number
+  radius: number
+  naderenRadius: number
+  ingangsDatum: string
+  nearbyMeLocationId: NSNearbyMeLocationId
 }
 
-export enum LocationType {
-  Origin = 'origin',
-  Destination = 'destination',
-  Via = 'via',
-}
+export const LocationType = {
+  Origin: 'origin',
+  Destination: 'destination',
+  Via: 'via',
+} as const
+
+export type LocationType = (typeof LocationType)[keyof typeof LocationType]
 
 export interface NSNearbyMeLocationId {
-  value: string;
-  type: string;
+  value: string
+  type: string
 }
 
 export interface NSNamen {
-  lang: string;
-  middel: string;
-  kort: string;
+  lang: string
+  middel: string
+  kort: string
+  festive?: string
 }
 
 export interface NSSporen {
-  spoorNummer: string;
+  spoorNummer: string
 }
 
 export interface Journey {
-  payload: DeparturesJourneyPayload | ArrivalsJourneyPayload;
-  links: Links;
-  meta: Meta;
+  payload: DeparturesJourneyPayload | ArrivalsJourneyPayload
+  links: Links
+  meta: Meta
 }
 
 export interface DeparturesJourneyPayload {
-  source: string;
-  departures?: JourneyInformation[];
+  source: string
+  departures?: JourneyInformation[]
 }
 
 export interface ArrivalsJourneyPayload {
-  source: string;
-  arrivals?: JourneyInformation[];
+  source: string
+  arrivals?: JourneyInformation[]
 }
 
 export interface JourneyInformation {
-  direction?: string;
-  origin?: string;
-  name: string;
-  plannedDateTime: string;
-  plannedTimeZoneOffset: number;
-  actualDateTime: string;
-  actualTimeZoneOffset: number;
-  plannedTrack: string;
-  actualTrack: string;
-  product: Product;
-  trainCategory: string;
-  cancelled: boolean;
-  routeStations: RouteStation[];
-  messages: Message[];
-  departureStatus?: string;
-  arrivalStatus?: string;
+  direction?: string
+  origin?: string
+  name: string
+  plannedDateTime: string
+  plannedTimeZoneOffset: number
+  actualDateTime: string
+  actualTimeZoneOffset: number
+  plannedTrack: string
+  actualTrack: string
+  product: Product
+  trainCategory: string
+  cancelled: boolean
+  routeStations: RouteStation[]
+  messages: Message[]
+  departureStatus?: string
+  arrivalStatus?: string
 }
 
 export interface Product {
-  number: string;
-  categoryCode: string;
-  shortCategoryName: string;
-  longCategoryName: string;
-  operatorCode: string;
-  operatorName: string;
-  type: string;
+  number: string
+  categoryCode: string
+  shortCategoryName: string
+  longCategoryName: string
+  operatorCode: string
+  operatorName: string
+  type: string
 }
 
 export interface RouteStation {
-  uicCode: string;
-  mediumName: string;
+  uicCode: string
+  mediumName: string
 }
 
 export interface Message {
-  message: string;
-  style: string;
+  message: string
+  style: string
 }
 
 export interface Links {
-  disruptions: Disruptions;
+  disruptions: Disruptions
 }
 
 export interface Disruptions {
-  uri: string;
+  uri: string
 }
 
 export interface Meta {
-  numberOfDisruptions: number;
+  numberOfDisruptions: number
 }

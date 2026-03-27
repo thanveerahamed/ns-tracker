@@ -1,50 +1,32 @@
-import axios from 'axios';
+import ky from 'ky'
 
-const env = import.meta.env;
+const BASE_URL = import.meta.env.VITE_NS_OCP_API_ENDPOINT as string
+const API_KEY = import.meta.env.VITE_NS_OCP_APIM_KEY as string
 
-const getDefaultHeaders = async () => {
-  return {
-    'Content-Type': 'application/json',
-    'Ocp-Apim-Subscription-Key': env.VITE_NS_OCP_APIM_KEY,
-  };
-};
+const nsApi = ky.create({
+  prefixUrl: BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`,
+  headers: {
+    'Ocp-Apim-Subscription-Key': API_KEY,
+    Accept: 'application/json',
+  },
+  retry: 1,
+  timeout: 15_000,
+})
 
-const getHostUrl = () => {
-  return env.VITE_NS_OCP_API_ENDPOINT;
-};
+export async function apiGet<T>(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>,
+): Promise<T> {
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path
 
-export const apiGet = async <T>(
-  url: string,
-  params: Record<string, string | number | boolean | undefined> = {},
-) => {
-  const response = await axios.get<T>(`${getHostUrl()}${url}`, {
-    headers: await getDefaultHeaders(),
-    params: { ...params, lang: 'en' },
-  });
+  const searchParams: Record<string, string> = { lang: 'en' }
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        searchParams[key] = String(value)
+      }
+    }
+  }
 
-  return response.data;
-};
-
-export const apiPost = async <T>(url: string, data: never) => {
-  const response = await axios.post<T>(url, data, {
-    headers: await getDefaultHeaders(),
-  });
-
-  return response.data;
-};
-
-export const apiPut = async <T>(url: string, data: never) => {
-  const response = await axios.put<T>(url, data, {
-    headers: await getDefaultHeaders(),
-  });
-
-  return response.data;
-};
-
-export const apiDelete = async <T>(url: string) => {
-  const response = await axios.delete<T>(url, {
-    headers: await getDefaultHeaders(),
-  });
-
-  return response.data;
-};
+  return nsApi.get(cleanPath, { searchParams }).json<T>()
+}

@@ -1,9 +1,8 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/nl';
-import duration from 'dayjs/plugin/duration';
-import isBetween from 'dayjs/plugin/isBetween';
+import dayjs from 'dayjs'
+import duration from 'dayjs/plugin/duration.js'
+import relativeTime from 'dayjs/plugin/relativeTime.js'
 
-dayjs.extend(duration);
-dayjs.extend(isBetween);
+dayjs.extend(duration)
+dayjs.extend(relativeTime)
 
-export { dayjs as extendedDayjs };
+export const extendedDayjs = dayjs
