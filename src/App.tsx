@@ -18,6 +18,12 @@ const SplitViewPage = lazy(() =>
   })),
 )
 
+const TripDetailPage = lazy(() =>
+  import('@/pages/TripDetailPage.tsx').then((m) => ({
+    default: m.TripDetailPage,
+  })),
+)
+
 function PageLoader() {
   return (
     <div className="flex flex-1 items-center justify-center py-20">
@@ -28,16 +34,19 @@ function PageLoader() {
 
 export default function App() {
   const location = useLocation()
+  const hideChrome =
+    location.pathname === '/results' || location.pathname === '/trip'
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Header />
+      {!hideChrome && <Header />}
       <main className="flex-1">
         <AnimatePresence mode="wait">
           <Suspense fallback={<PageLoader />}>
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<SearchPage />} />
               <Route path="/results" element={<ResultsPage />} />
+              <Route path="/trip" element={<TripDetailPage />} />
               <Route path="/compare" element={<SplitViewPage />} />
               <Route path="/favourites" element={<FavouritesPage />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -45,7 +54,7 @@ export default function App() {
           </Suspense>
         </AnimatePresence>
       </main>
-      <BottomNav />
+      {!hideChrome && <BottomNav />}
     </div>
   )
 }

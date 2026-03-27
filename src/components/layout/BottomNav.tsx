@@ -15,8 +15,9 @@ export function BottomNav() {
   const navigate = useNavigate()
   const { user } = useAuth()
 
-  // Don't show on the results page — user is focused on trip details
-  if (location.pathname === '/results') return null
+  // Don't show on the results or trip detail page — user is focused on trip details
+  if (location.pathname === '/results' || location.pathname === '/trip')
+    return null
 
   const activePath = location.pathname
 

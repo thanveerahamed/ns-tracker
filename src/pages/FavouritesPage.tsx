@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Star, LogIn, TrainFront } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 
@@ -9,15 +9,13 @@ import { Button } from '@/components/ui/button.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { useAuth } from '@/contexts/AuthContext.tsx'
 import { getFavouriteTrips, removeFavouriteTrip } from '@/services/trip.ts'
-import { TripDetailDrawer } from '@/components/results/TripDetailDrawer.tsx'
 import { extendedDayjs } from '@/utils/date.ts'
 import type { Trip } from '@/types/trip.ts'
 
 export function FavouritesPage() {
   const { user, signInWithGoogle } = useAuth()
   const queryClient = useQueryClient()
-
-  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
+  const navigate = useNavigate()
 
   const { data: favourites, isLoading } = useQuery({
     enabled: !!user,
@@ -37,7 +35,9 @@ export function FavouritesPage() {
   }
 
   const handleTripClick = (trip: Trip) => {
-    setSelectedTrip(trip)
+    navigate(`/trip?ctxRecon=${encodeURIComponent(trip.ctxRecon)}`, {
+      state: { trip },
+    })
   }
 
   return (
@@ -107,15 +107,6 @@ export function FavouritesPage() {
           </div>
         </AnimatePresence>
       )}
-
-      {/* Trip detail drawer */}
-      <TripDetailDrawer
-        trip={selectedTrip}
-        open={selectedTrip !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTrip(null)
-        }}
-      />
     </motion.div>
   )
 }
