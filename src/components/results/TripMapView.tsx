@@ -7,7 +7,7 @@ import Map, {
 } from 'react-map-gl/maplibre'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Train, Milestone, TrainFront, Footprints } from 'lucide-react'
+import { Train, Milestone, TrainFront, Footprints, Bus } from 'lucide-react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 
 import { Skeleton } from '@/components/ui/skeleton.tsx'
@@ -19,6 +19,12 @@ import {
   findNearestStationCode,
   type SpoorkaartData,
 } from '@/services/spoorkaart.ts'
+import {
+  getTransportType,
+  getTransportInfo,
+  getLegTransportInfo,
+  hasTrainJourneyDetail,
+} from '@/utils/transportIcon.ts'
 import type { Trip, Leg } from '@/types/trip.ts'
 import type { JourneyResponse, JourneyStop } from '@/types/journey.ts'
 
@@ -55,6 +61,16 @@ function getLegFallbackCoords(leg: Leg): [number, number][] {
   if (leg.overviewPolyLine && leg.overviewPolyLine.length > 1) {
     return leg.overviewPolyLine.map((p) => [p.lng, p.lat] as [number, number])
   }
+
+  // Use intermediate stops (e.g. bus replacement services) to build a polyline
+  // through every stop rather than just a straight origin→destination line
+  if (leg.stops && leg.stops.length > 0) {
+    const stopCoords = leg.stops
+      .filter((s) => !s.passing && s.lat && s.lng)
+      .map((s) => [s.lng, s.lat] as [number, number])
+    if (stopCoords.length >= 2) return stopCoords
+  }
+
   return [
     [leg.origin.lng, leg.origin.lat],
     [leg.destination.lng, leg.destination.lat],
@@ -130,11 +146,10 @@ function buildCoordsViaStops(
 /**
  * Build route segments for a leg.
  *
- * Uses the NS Spoorkaart railway track geometry for ALL segments
- * (traveled and untraveled), providing curve-following polylines.
- *
- * Untraveled segments are built stop-by-stop through the journey
- * stops so that the dashed line follows the actual train route.
+ * Uses the NS Spoorkaart railway track geometry for TRAIN legs only.
+ * Non-train legs (buses, trams, ferries) use their own coordinates or
+ * stop-to-stop straight lines since they don't follow rail tracks.
+ * Walk legs use a simple straight line between origin and destination.
  *
  * Falls back to leg coordinates / journey stop coordinates when
  * Spoorkaart data is unavailable (e.g. non-NL stations).
@@ -144,12 +159,31 @@ function buildLegSegments(
   journeyStops: JourneyStop[] | undefined,
   spoorkaart: SpoorkaartData | undefined,
 ): RouteSegment[] {
+  const transportType = getTransportType(leg)
+
+  // Walk legs: just a straight line, no Spoorkaart
+  if (transportType === 'WALK') {
+    return [
+      {
+        coords: [
+          [leg.origin.lng, leg.origin.lat],
+          [leg.destination.lng, leg.destination.lat],
+        ],
+        traveled: true,
+      },
+    ]
+  }
+
+  // Non-train public transit (bus, tram, ferry, metro): use leg coords or stop coords, NOT Spoorkaart
+  const isTrainLeg = transportType === 'TRAIN'
+  const spoorkaartForLeg = isTrainLeg ? spoorkaart : undefined
+
   const boardCode = leg.origin.stationCode?.toLowerCase() ?? null
   const alightCode = leg.destination.stationCode?.toLowerCase() ?? null
 
   // Simple fallback traveled coords (single BFS or leg coordinates)
   const fallbackTraveledCoords = getTrackOrFallback(
-    spoorkaart,
+    spoorkaartForLeg,
     boardCode,
     alightCode,
     getLegFallbackCoords(leg),
@@ -173,7 +207,7 @@ function buildLegSegments(
   // Before boarding: walk stop-by-stop from train origin → boarding station
   if (boardIdx > 0) {
     const beforeStops = journeyStops.slice(0, boardIdx + 1)
-    const beforeCoords = buildCoordsViaStops(beforeStops, spoorkaart)
+    const beforeCoords = buildCoordsViaStops(beforeStops, spoorkaartForLeg)
     if (beforeCoords.length >= 2) {
       segments.push({ coords: beforeCoords, traveled: false })
     }
@@ -181,7 +215,7 @@ function buildLegSegments(
 
   // Traveled segment: walk stop-by-stop from boarding → alighting station
   const traveledStops = journeyStops.slice(boardIdx, alightIdx + 1)
-  const traveledCoords = buildCoordsViaStops(traveledStops, spoorkaart)
+  const traveledCoords = buildCoordsViaStops(traveledStops, spoorkaartForLeg)
   segments.push({
     coords:
       traveledCoords.length >= 2 ? traveledCoords : fallbackTraveledCoords,
@@ -191,7 +225,7 @@ function buildLegSegments(
   // After alighting: walk stop-by-stop from alighting station → train destination
   if (alightIdx < journeyStops.length - 1) {
     const afterStops = journeyStops.slice(alightIdx)
-    const afterCoords = buildCoordsViaStops(afterStops, spoorkaart)
+    const afterCoords = buildCoordsViaStops(afterStops, spoorkaartForLeg)
     if (afterCoords.length >= 2) {
       segments.push({ coords: afterCoords, traveled: false })
     }
@@ -244,6 +278,7 @@ function StationMarker({
   type,
   color,
   traveled,
+  transportType,
 }: Readonly<{
   lat: number
   lng: number
@@ -251,6 +286,7 @@ function StationMarker({
   type: 'origin' | 'destination' | 'intermediate' | 'transfer'
   color?: string
   traveled?: boolean
+  transportType?: ReturnType<typeof getTransportType>
 }>) {
   const [showTooltip, setShowTooltip] = useState(false)
 
@@ -284,6 +320,20 @@ function StationMarker({
   let iconClass = 'text-muted-foreground'
   let size = 'h-5 w-5'
   let bgClass: string
+
+  // Pick appropriate icon for the transport type when not origin/destination/transfer
+  if (transportType === 'BUS') {
+    Icon = Bus
+  } else if (transportType === 'WALK') {
+    Icon = Footprints
+  } else if (
+    transportType &&
+    transportType !== 'TRAIN' &&
+    transportType !== 'UNKNOWN'
+  ) {
+    const info = getTransportInfo(transportType)
+    Icon = info.icon
+  }
 
   if (type === 'origin') {
     Icon = Train
@@ -363,7 +413,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
     queries: trip.legs.map((leg) => ({
       queryKey: ['trips', 'trip', 'journey', leg.journeyDetailRef],
       queryFn: () => getJourneyInformation({ id: leg.journeyDetailRef }),
-      enabled: Boolean(leg.journeyDetailRef),
+      enabled: Boolean(leg.journeyDetailRef) && hasTrainJourneyDetail(leg),
       staleTime: 5 * 60 * 1000,
     })),
   })
@@ -416,6 +466,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
       type: 'origin' | 'destination' | 'intermediate' | 'transfer'
       color?: string
       traveled: boolean
+      transportType?: ReturnType<typeof getTransportType>
     }> = []
 
     // Collect passenger's boarding/alighting uicCodes across all legs
@@ -438,6 +489,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
         | JourneyResponse
         | undefined
       const journeyStops = journeyData?.payload?.stops
+      const legTransport = getTransportType(leg)
 
       if (journeyStops && journeyStops.length > 0) {
         // Find boarding/alighting indices to determine traveled vs untraveled
@@ -486,6 +538,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             name: jStop.stop.name,
             type: markerType,
             traveled: isTraveled,
+            transportType: legTransport,
             color:
               markerType === 'intermediate'
                 ? LEG_COLORS[legIndex % LEG_COLORS.length]
@@ -506,6 +559,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             name: leg.origin.name,
             type: fallbackType,
             traveled: true,
+            transportType: legTransport,
           })
         }
 
@@ -525,6 +579,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
               name: stop.name,
               type: 'intermediate',
               traveled: true,
+              transportType: legTransport,
               color: LEG_COLORS[legIndex % LEG_COLORS.length],
             })
           }
@@ -543,6 +598,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             name: leg.destination.name,
             type: fallbackType,
             traveled: true,
+            transportType: legTransport,
           })
         }
       }
@@ -588,9 +644,17 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
         <NavigationControl position="top-right" showCompass={false} />
 
         {/* Route polylines per leg — solid for traveled, dashed for rest of train route */}
-        {legSegments.map((segments, legIdx) =>
-          segments.map((seg, segIdx) => {
-            const id = `route-${trip.legs[legIdx].idx}-${segIdx}`
+        {/* Walk and alternative transport legs use dashed lines */}
+        {legSegments.map((segments, legIdx) => {
+          const leg = trip.legs[legIdx]
+          const legTransport = getTransportType(leg)
+          const isWalk = legTransport === 'WALK'
+          const isAltTransport = leg.alternativeTransport
+
+          return segments.map((seg, segIdx) => {
+            const id = `route-${leg.idx}-${segIdx}`
+            // Walk legs: thin dashed gray; alt transport: dashed with leg color
+            const useDashed = isWalk || isAltTransport || !seg.traveled
             return (
               <Source
                 key={id}
@@ -602,10 +666,12 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
                   id={`${id}-line`}
                   type="line"
                   paint={{
-                    'line-color': LEG_COLORS[legIdx % LEG_COLORS.length],
-                    'line-width': seg.traveled ? 4 : 3,
-                    'line-opacity': seg.traveled ? 0.85 : 0.35,
-                    ...(seg.traveled ? {} : { 'line-dasharray': [2, 2] }),
+                    'line-color': isWalk
+                      ? '#9ca3af'
+                      : LEG_COLORS[legIdx % LEG_COLORS.length],
+                    'line-width': isWalk ? 2 : seg.traveled ? 4 : 3,
+                    'line-opacity': isWalk ? 0.5 : seg.traveled ? 0.85 : 0.35,
+                    ...(useDashed ? { 'line-dasharray': [2, 2] } : {}),
                   }}
                   layout={{
                     'line-join': 'round',
@@ -614,8 +680,8 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
                 />
               </Source>
             )
-          }),
-        )}
+          })
+        })}
 
         {/* Station markers */}
         {markers.map((m) => (
@@ -627,6 +693,7 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
             type={m.type}
             color={m.color}
             traveled={m.traveled}
+            transportType={m.transportType}
           />
         ))}
       </Map>
@@ -634,17 +701,38 @@ export function TripMapView({ trip }: Readonly<TripMapViewProps>) {
       {/* Leg color legend */}
       {trip.legs.length > 1 && (
         <div className="bg-background/90 absolute bottom-3 left-3 z-10 space-y-1 rounded-lg border p-2 backdrop-blur-sm">
-          {trip.legs.map((leg, idx) => (
-            <div key={leg.idx} className="flex items-center gap-2 text-[11px]">
+          {trip.legs.map((leg, idx) => {
+            const transportType = getTransportType(leg)
+            const info = getLegTransportInfo(leg)
+            const LegIcon = info.icon
+            const isWalk = transportType === 'WALK'
+            return (
               <div
-                className="h-2 w-4 rounded-full"
-                style={{ backgroundColor: LEG_COLORS[idx % LEG_COLORS.length] }}
-              />
-              <span className="text-muted-foreground">
-                {leg.product.displayName}
-              </span>
-            </div>
-          ))}
+                key={leg.idx}
+                className="flex items-center gap-2 text-[11px]"
+              >
+                {isWalk ? (
+                  <div className="flex h-2 w-4 items-center">
+                    <div
+                      className="h-0.5 w-4 rounded-full"
+                      style={{ backgroundColor: '#9ca3af', opacity: 0.5 }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="h-2 w-4 rounded-full"
+                    style={{
+                      backgroundColor: LEG_COLORS[idx % LEG_COLORS.length],
+                    }}
+                  />
+                )}
+                <LegIcon className="text-muted-foreground h-3 w-3" />
+                <span className="text-muted-foreground">
+                  {leg.product?.displayName ?? info.label}
+                </span>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

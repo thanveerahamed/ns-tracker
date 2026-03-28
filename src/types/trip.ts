@@ -174,6 +174,7 @@ export interface Link {
 }
 
 export interface Product {
+  productType?: string
   number: string
   categoryCode: string
   shortCategoryName: string
@@ -186,6 +187,17 @@ export interface Product {
   nameNesProperties: NameNesProperties
   iconNesProperties: IconNesProperties
   nesProperties: NesProperties
+  notes: ProductNote[][]
+}
+
+export interface ProductNote {
+  value: string
+  shortValue?: string
+  accessibilityValue?: string
+  key: string
+  noteType: string
+  isPresentationRequired?: boolean
+  nesProperties?: NesProperties
 }
 
 export interface NameNesProperties {

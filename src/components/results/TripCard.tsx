@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { TrainFront, CircleX } from 'lucide-react'
+import { CircleX } from 'lucide-react'
 import { Badge } from '@/components/ui/badge.tsx'
 import type { Trip } from '@/types/trip.ts'
 import { TripStartAndEndTime } from '@/components/results/TripStartAndEndTime.tsx'
@@ -7,6 +7,11 @@ import { DurationDisplay } from '@/components/results/DurationDisplay.tsx'
 import { CrowdForecast } from '@/components/results/CrowdForecast.tsx'
 import { NumberOfConnectionsDisplay } from '@/components/results/NumberOfConnectionsDisplay.tsx'
 import { getPaletteColorFromNesProperties } from '@/utils/trips.ts'
+import {
+  getLegTransportInfo,
+  hasTrackInfo,
+  isWalkLeg,
+} from '@/utils/transportIcon.ts'
 import { cn } from '@/lib/utils.ts'
 import { useAuth } from '@/contexts/AuthContext.tsx'
 import { FavouriteButton } from '@/components/results/FavouriteButton.tsx'
@@ -82,24 +87,37 @@ export function TripCard({
 
           <TripStartAndEndTime trip={trip} />
 
-          {/* Train legs */}
+          {/* Transport legs */}
           <div className="flex flex-wrap gap-1.5">
-            {trip.legs.map((leg) => (
-              <Badge
-                key={leg.idx}
-                variant="secondary"
-                className={cn(
-                  'gap-1 text-[11px] font-normal whitespace-nowrap',
-                  leg.cancelled && 'line-through opacity-60',
-                )}
-              >
-                <TrainFront className="h-3 w-3" />
-                {leg.product.displayName}
-                <span className="text-muted-foreground">
-                  P.{leg.origin.actualTrack ?? leg.origin.plannedTrack}
-                </span>
-              </Badge>
-            ))}
+            {trip.legs
+              .filter((leg) => !isWalkLeg(leg))
+              .map((leg) => {
+                const info = getLegTransportInfo(leg)
+                const LegIcon = info.icon
+                const showTrack = hasTrackInfo(leg)
+                return (
+                  <Badge
+                    key={leg.idx}
+                    variant="secondary"
+                    className={cn(
+                      'gap-1 text-[11px] font-normal whitespace-nowrap',
+                      leg.cancelled && 'line-through opacity-60',
+                      leg.alternativeTransport &&
+                        !leg.cancelled &&
+                        'border-amber-500/40 text-amber-600 dark:text-amber-400',
+                    )}
+                  >
+                    <LegIcon className="h-3 w-3" />
+                    {leg.product?.displayName ?? info.label}
+                    {showTrack &&
+                      (leg.origin.actualTrack ?? leg.origin.plannedTrack) && (
+                        <span className="text-muted-foreground">
+                          P.{leg.origin.actualTrack ?? leg.origin.plannedTrack}
+                        </span>
+                      )}
+                  </Badge>
+                )
+              })}
           </div>
 
           {/* Label items */}

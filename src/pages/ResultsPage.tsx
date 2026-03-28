@@ -7,11 +7,17 @@ import {
 } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import dayjs from 'dayjs'
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Loader2, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from '@/components/ui/drawer.tsx'
+import { SearchForm } from '@/components/search/SearchForm.tsx'
 import { TripCard } from '@/components/results/TripCard.tsx'
 import { LoadMoreButton } from '@/components/results/LoadMoreButton.tsx'
 import {
@@ -34,6 +40,8 @@ export function ResultsPage() {
   const location = useLocation()
   const { user } = useAuth()
   const queryClient = useQueryClient()
+
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const originUicCode = searchParams.get('origin') ?? ''
   const destinationUicCode = searchParams.get('destination') ?? ''
@@ -207,6 +215,26 @@ export function ResultsPage() {
               {isArrival ? 'Arrive by' : 'Depart at'} {dateTime.format('HH:mm')}
             </p>
           </div>
+          <Drawer open={searchOpen} onOpenChange={setSearchOpen}>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent className="pb-safe">
+              <div className="w-full px-4 pt-2 pb-6">
+                <SearchForm
+                  onSearchComplete={() => {
+                    setSearchOpen(false)
+                    setEarlierTrips([])
+                    setLaterTrips([])
+                    setEarliestContext(undefined)
+                    setLatestContext(undefined)
+                  }}
+                />
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
 
         {/* Content below header */}

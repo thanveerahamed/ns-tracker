@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import dayjs from 'dayjs'
-import { CalendarIcon, Clock } from 'lucide-react'
+import { CalendarIcon, Check, Clock } from 'lucide-react'
 import {
   Popover,
   PopoverContent,
@@ -29,7 +29,7 @@ function TimeSelector({
   onTimeChange: (type: 'hours' | 'minutes', val: string) => void
 }) {
   return (
-    <div className="border-t p-3">
+    <div className="p-3">
       <div className="flex items-center gap-2">
         <Clock className="text-muted-foreground h-4 w-4" />
         <select
@@ -106,14 +106,16 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
         onSelect={handleDateSelect}
         className="mx-auto"
       />
-      <div className="flex items-center justify-between border-t">
-        <TimeSelector dateValue={dateValue} onTimeChange={handleTimeChange} />
-        {!isNow && (
+      <TimeSelector dateValue={dateValue} onTimeChange={handleTimeChange} />
+      <div className="flex items-center justify-between gap-2 border-t p-3">
+        {isNow ? (
+          <span />
+        ) : (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="mr-3 shrink-0 text-xs font-medium"
+            className="text-xs font-medium"
             onClick={() => {
               onChange('now')
               setOpen(false)
@@ -122,6 +124,15 @@ export function DateTimePicker({ value, onChange }: DateTimePickerProps) {
             Now
           </Button>
         )}
+        <Button
+          type="button"
+          size="sm"
+          className="gap-1.5 text-xs font-medium"
+          onClick={() => setOpen(false)}
+        >
+          <Check className="h-3.5 w-3.5" />
+          Done
+        </Button>
       </div>
     </div>
   )
