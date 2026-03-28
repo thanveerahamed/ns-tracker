@@ -21,6 +21,10 @@ import {
   saveStationToCache,
   getHasIntermediateStopCache,
   saveHasIntermediateStopCache,
+  getSearchDateTimeFromCache,
+  saveSearchDateTimeToCache,
+  getArrivalToggleFromCache,
+  saveArrivalToggleToCache,
 } from '@/services/cache.ts'
 import { LocationType } from '@/types/station.ts'
 
@@ -38,7 +42,16 @@ const searchSchema = z.object({
 
 type SearchFormValues = z.infer<typeof searchSchema>
 
-export function SearchForm() {
+// Module-level flag: true on fresh page load, false after first mount.
+// Modules re-initialise on full page refresh but stay alive during SPA navigation,
+// so this lets us distinguish "refresh / new session" from "navigated back".
+let isInitialPageLoad = true
+
+interface SearchFormProps {
+  onSearchComplete?: () => void
+}
+
+export function SearchForm({ onSearchComplete }: SearchFormProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [showVia, setShowVia] = useState(() => getHasIntermediateStopCache())
@@ -56,16 +69,31 @@ export function SearchForm() {
       origin: getStationFromCache(LocationType.Origin),
       destination: getStationFromCache(LocationType.Destination),
       via: getStationFromCache(LocationType.Via),
-      dateTime: 'now',
-      isArrival: false,
+      dateTime: (() => {
+        // Fresh page load / refresh → always start with "now"
+        if (isInitialPageLoad) return 'now'
+        // SPA navigation back → restore the previously selected datetime
+        const cached = getSearchDateTimeFromCache()
+        if (cached === 'now') return 'now'
+        return cached.toDate()
+      })(),
+      isArrival: getArrivalToggleFromCache(),
     },
     mode: 'onChange',
   })
+
+  // After the first mount, clear the flag so subsequent SPA navigations
+  // (e.g. results → back) restore the cached datetime instead of resetting.
+  useEffect(() => {
+    isInitialPageLoad = false
+  }, [])
 
   // Persist origin / destination / via to localStorage on every change
   const watchedOrigin = watch('origin')
   const watchedDestination = watch('destination')
   const watchedVia = watch('via')
+  const watchedDateTime = watch('dateTime')
+  const watchedIsArrival = watch('isArrival')
 
   useEffect(() => {
     saveStationToCache(LocationType.Origin, watchedOrigin)
@@ -78,6 +106,16 @@ export function SearchForm() {
   useEffect(() => {
     saveStationToCache(LocationType.Via, watchedVia)
   }, [watchedVia])
+
+  useEffect(() => {
+    saveSearchDateTimeToCache(
+      watchedDateTime === 'now' ? 'now' : dayjs(watchedDateTime),
+    )
+  }, [watchedDateTime])
+
+  useEffect(() => {
+    saveArrivalToggleToCache(watchedIsArrival)
+  }, [watchedIsArrival])
 
   const swapStations = useCallback(() => {
     const origin = getValues('origin')
@@ -116,6 +154,7 @@ export function SearchForm() {
     }
 
     navigate(`/results?${params.toString()}`)
+    onSearchComplete?.()
   }
 
   return (

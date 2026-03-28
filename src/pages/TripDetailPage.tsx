@@ -20,6 +20,7 @@ import {
   Search,
   LogIn,
   ChevronDown,
+  Bus,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge.tsx'
@@ -27,6 +28,13 @@ import { Button } from '@/components/ui/button.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
 import { CrowdForecast } from '@/components/results/CrowdForecast.tsx'
 import { StationCombobox } from '@/components/search/StationCombobox.tsx'
+import {
+  getTransportType,
+  getTransportInfo,
+  getLegTransportInfo,
+  isWalkLeg,
+  hasTrackInfo,
+} from '@/utils/transportIcon.ts'
 
 const TripMapView = lazy(() =>
   import('@/components/results/TripMapView.tsx').then((m) => ({
@@ -128,6 +136,8 @@ function StationNode({
   isOrigin,
   isFinal,
   cancelled,
+  transportType,
+  showTrack = true,
 }: Readonly<{
   name: string
   plannedTime?: string
@@ -137,6 +147,8 @@ function StationNode({
   isOrigin?: boolean
   isFinal?: boolean
   cancelled?: boolean
+  transportType?: ReturnType<typeof getTransportType>
+  showTrack?: boolean
 }>) {
   let iconClass = 'text-muted-foreground'
 
@@ -148,13 +160,22 @@ function StationNode({
     iconClass = 'text-amber-500'
   }
 
-  const StationIcon = cancelled
-    ? CircleX
-    : isOrigin
-      ? Train
-      : isFinal
-        ? Milestone
-        : TrainFront
+  // Pick icon based on transport type
+  let StationIcon = TrainFront
+  if (cancelled) {
+    StationIcon = CircleX
+  } else if (isOrigin) {
+    StationIcon = Train
+  } else if (isFinal) {
+    StationIcon = Milestone
+  } else if (transportType === 'BUS') {
+    StationIcon = Bus
+  } else if (transportType === 'WALK') {
+    StationIcon = Footprints
+  } else if (transportType) {
+    const info = getTransportInfo(transportType)
+    StationIcon = info.icon
+  }
 
   return (
     <div className="relative flex items-start gap-3">
@@ -167,7 +188,9 @@ function StationNode({
       <div className="-mt-0.5 min-w-0 flex-1 pb-1">
         <div className="flex flex-wrap items-center gap-2">
           <TimeWithDelay planned={plannedTime} actual={actualTime} />
-          <TrackBadge planned={plannedTrack} actual={actualTrack} />
+          {showTrack && (
+            <TrackBadge planned={plannedTrack} actual={actualTrack} />
+          )}
         </div>
         <p
           className={cn(
@@ -185,6 +208,9 @@ function StationNode({
 /* ─── Leg segment (train info between two station nodes) ─── */
 
 function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
+  const transportInfo = getLegTransportInfo(leg)
+  const TransportIcon = transportInfo.icon
+
   return (
     <div className="relative flex items-start gap-3 py-1.5">
       {/* Keeps alignment with the icon column */}
@@ -192,7 +218,7 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
 
       {/* Leg info */}
       <div className="flex-1 space-y-1.5">
-        {/* Train badge */}
+        {/* Transport badge */}
         <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="outline"
@@ -200,10 +226,13 @@ function LegSegment({ leg }: Readonly<{ leg: Leg }>) {
               'gap-1.5 text-xs font-normal',
               leg.cancelled &&
                 'border-destructive/40 text-destructive line-through',
+              leg.alternativeTransport &&
+                !leg.cancelled &&
+                'border-amber-500/40 text-amber-600 dark:text-amber-400',
             )}
           >
-            <TrainFront className="h-3.5 w-3.5" />
-            {leg.product.displayName}
+            <TransportIcon className="h-3.5 w-3.5" />
+            {leg.product?.displayName ?? transportInfo.label}
           </Badge>
 
           {leg.cancelled && (
@@ -311,10 +340,12 @@ function IntermediateStops({
   stops,
   originUicCode,
   destinationUicCode,
+  showTrack = true,
 }: Readonly<{
   stops: Stop[]
   originUicCode: string
   destinationUicCode: string
+  showTrack?: boolean
 }>) {
   const [expanded, setExpanded] = useState(false)
 
@@ -398,16 +429,17 @@ function IntermediateStops({
                   )}
 
                   {/* Track */}
-                  {(stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
-                    <span
-                      className={cn(
-                        'text-muted-foreground shrink-0 text-xs tabular-nums',
-                        trackChanged && 'text-destructive font-medium',
-                      )}
-                    >
-                      P.{stop.actualArrivalTrack || stop.plannedArrivalTrack}
-                    </span>
-                  )}
+                  {showTrack &&
+                    (stop.actualArrivalTrack || stop.plannedArrivalTrack) && (
+                      <span
+                        className={cn(
+                          'text-muted-foreground shrink-0 text-xs tabular-nums',
+                          trackChanged && 'text-destructive font-medium',
+                        )}
+                      >
+                        P.{stop.actualArrivalTrack || stop.plannedArrivalTrack}
+                      </span>
+                    )}
 
                   {/* Cancelled marker */}
                   {stop.cancelled && (
@@ -418,6 +450,66 @@ function IntermediateStops({
             })}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Walk leg segment (compact inline) ─── */
+
+function WalkLegBlock({
+  leg,
+  isFirstLeg,
+  isLastLeg,
+}: Readonly<{ leg: Leg; isFirstLeg: boolean; isLastLeg: boolean }>) {
+  const distanceNote = leg.product?.notes
+    ?.flat()
+    ?.find((n) => n?.key === 'PRODUCT_DISTANCE')
+  const distanceText =
+    distanceNote?.value ?? `${leg.plannedDurationInMinutes} min walk`
+
+  return (
+    <div className="relative rounded-md">
+      <div className="relative">
+        {/* Vertical dashed line */}
+        <div className="border-muted-foreground/30 absolute top-2.5 bottom-0 left-[9.5px] w-px border-l border-dashed" />
+
+        {/* Origin */}
+        <StationNode
+          name={leg.origin.name}
+          plannedTime={leg.origin.plannedDateTime}
+          actualTime={leg.origin.actualDateTime}
+          isOrigin={isFirstLeg}
+          transportType="WALK"
+          showTrack={false}
+        />
+
+        {/* Walk info */}
+        <div className="relative flex items-start gap-3 py-1.5">
+          <div className="w-5 shrink-0" />
+          <div className="flex items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-muted-foreground/30 text-muted-foreground gap-1.5 text-xs font-normal"
+            >
+              <Footprints className="h-3.5 w-3.5" />
+              {distanceText}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      {/* Destination */}
+      <div className="relative">
+        <div className="border-muted-foreground/30 absolute top-0 left-[9.5px] h-2.5 w-px border-l border-dashed" />
+        <StationNode
+          name={leg.destination.name}
+          plannedTime={leg.destination.plannedDateTime}
+          actualTime={leg.destination.actualDateTime}
+          isFinal={isLastLeg}
+          transportType="WALK"
+          showTrack={false}
+        />
       </div>
     </div>
   )
@@ -625,16 +717,20 @@ function ConnectingSearchPanel({
                     </span>
                   </div>
                   <div className="mt-1.5 flex flex-wrap gap-1">
-                    {t.legs.map((leg) => (
-                      <Badge
-                        key={leg.idx}
-                        variant="secondary"
-                        className="gap-1 text-xs font-normal"
-                      >
-                        <TrainFront className="h-3 w-3" />
-                        {leg.product.displayName}
-                      </Badge>
-                    ))}
+                    {t.legs.map((leg) => {
+                      const info = getLegTransportInfo(leg)
+                      const LegIcon = info.icon
+                      return (
+                        <Badge
+                          key={leg.idx}
+                          variant="secondary"
+                          className="gap-1 text-xs font-normal"
+                        >
+                          <LegIcon className="h-3 w-3" />
+                          {leg.product?.displayName ?? info.label}
+                        </Badge>
+                      )
+                    })}
                     {t.transfers > 0 && (
                       <span className="text-muted-foreground self-center text-xs">
                         · {t.transfers} transfer{t.transfers !== 1 && 's'}
@@ -813,6 +909,8 @@ export function TripDetailPage({
             'bg-destructive/5 border-b-destructive/30',
           displayTrip.status === 'DISRUPTION' &&
             'border-b-amber-500/30 bg-amber-500/5',
+          displayTrip.status === 'ALTERNATIVE_TRANSPORT' &&
+            'border-b-amber-500/30 bg-amber-500/5',
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -839,6 +937,12 @@ export function TripDetailPage({
                 <Badge className="shrink-0 gap-1 bg-amber-500 text-xs text-white hover:bg-amber-600">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Disruption
+                </Badge>
+              )}
+              {displayTrip.status === 'ALTERNATIVE_TRANSPORT' && (
+                <Badge className="shrink-0 gap-1 bg-amber-500 text-xs text-white hover:bg-amber-600">
+                  <Bus className="h-3.5 w-3.5" />
+                  Alt. transport
                 </Badge>
               )}
             </div>
@@ -983,6 +1087,28 @@ export function TripDetailPage({
                     ? waitMinutesBetween(prevLeg, leg)
                     : 0
 
+                  const legTransportType = getTransportType(leg)
+                  const showTrack = hasTrackInfo(leg)
+
+                  // Walk legs are rendered as compact blocks
+                  if (isWalkLeg(leg)) {
+                    return (
+                      <div key={leg.idx}>
+                        {prevLeg && waitMins > 0 && (
+                          <TransferBlock
+                            minutes={waitMins}
+                            stationName={leg.origin.name}
+                          />
+                        )}
+                        <WalkLegBlock
+                          leg={leg}
+                          isFirstLeg={isFirstLeg}
+                          isLastLeg={isLastLeg}
+                        />
+                      </div>
+                    )
+                  }
+
                   return (
                     <div key={leg.idx}>
                       {/* Transfer between legs */}
@@ -1017,11 +1143,15 @@ export function TripDetailPage({
 
                         {/* Origin → content (with vertical line) */}
                         <div className="relative">
-                          {/* Vertical line */}
+                          {/* Vertical line — dashed for alternative transport */}
                           <div
                             className={cn(
                               'absolute top-2.5 bottom-0 left-[9.5px] w-px',
-                              leg.cancelled ? 'bg-destructive/30' : 'bg-border',
+                              leg.cancelled
+                                ? 'bg-destructive/30'
+                                : leg.alternativeTransport
+                                  ? 'border-l border-dashed border-amber-500/50 bg-transparent'
+                                  : 'bg-border',
                             )}
                           />
 
@@ -1034,6 +1164,8 @@ export function TripDetailPage({
                             actualTrack={leg.origin.actualTrack}
                             isOrigin={isFirstLeg}
                             cancelled={leg.cancelled}
+                            transportType={legTransportType}
+                            showTrack={showTrack}
                           />
 
                           {/* Leg info */}
@@ -1045,6 +1177,7 @@ export function TripDetailPage({
                               stops={leg.stops}
                               originUicCode={leg.origin.uicCode}
                               destinationUicCode={leg.destination.uicCode}
+                              showTrack={showTrack}
                             />
                           )}
                         </div>
@@ -1055,7 +1188,11 @@ export function TripDetailPage({
                           <div
                             className={cn(
                               'absolute top-0 left-[9.5px] h-2.5 w-px',
-                              leg.cancelled ? 'bg-destructive/30' : 'bg-border',
+                              leg.cancelled
+                                ? 'bg-destructive/30'
+                                : leg.alternativeTransport
+                                  ? 'border-l border-dashed border-amber-500/50 bg-transparent'
+                                  : 'bg-border',
                             )}
                           />
 
@@ -1067,6 +1204,8 @@ export function TripDetailPage({
                             actualTrack={leg.destination.actualTrack}
                             isFinal={isLastLeg}
                             cancelled={leg.cancelled}
+                            transportType={legTransportType}
+                            showTrack={showTrack}
                           />
                         </div>
                       </div>
