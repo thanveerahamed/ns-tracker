@@ -355,39 +355,26 @@ function StationMarker({
 
   return (
     <Marker longitude={lng} latitude={lat} anchor="center">
-      <button
-        type="button"
-        className="relative flex flex-col items-center outline-none"
-        onClick={(e) => {
-          e.stopPropagation()
-          setShowTooltip((v) => !v)
-        }}
-      >
-        {/* Tooltip above */}
-        {showTooltip && (
-          <div className="bg-popover text-popover-foreground pointer-events-none absolute -top-9 z-20 rounded-md border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap shadow-lg">
-            {name}
-          </div>
-        )}
-
+      <div className="relative flex flex-col items-center">
         {/* Icon container */}
         <div
-          className={cn(
-            'cursor-pointer rounded-full p-1 transition-transform hover:scale-110',
-            bgClass,
-          )}
+          className={cn('rounded-full p-1', bgClass)}
           style={color ? { borderColor: color } : undefined}
         >
           <Icon className={cn(size, iconClass)} />
         </div>
 
-        {/* Always-visible label for origin & destination */}
-        {(type === 'origin' || type === 'destination') && (
+        {/* Always-visible label for traveled stops */}
+        {type === 'origin' || type === 'destination' ? (
           <span className="text-foreground bg-background/80 pointer-events-none mt-0.5 rounded px-1 text-[9px] font-semibold whitespace-nowrap">
             {name}
           </span>
+        ) : (
+          <span className="text-muted-foreground bg-background/70 pointer-events-none mt-0.5 rounded px-0.5 text-[8px] whitespace-nowrap">
+            {name}
+          </span>
         )}
-      </button>
+      </div>
     </Marker>
   )
 }
