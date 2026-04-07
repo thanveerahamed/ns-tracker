@@ -9,6 +9,13 @@ import { Button } from '@/components/ui/button.tsx'
 import { useAuth } from '@/contexts/AuthContext.tsx'
 import type { RecentSearch } from '@/types/recent.ts'
 import { displayName } from '@/utils/station.ts'
+import {
+  saveStationToCache,
+  saveSearchDateTimeToCache,
+  saveArrivalToggleToCache,
+  saveHasIntermediateStopCache,
+} from '@/services/cache.ts'
+import { LocationType } from '@/types/station.ts'
 
 const features = [
   {
@@ -34,6 +41,14 @@ export function SearchPage() {
 
   const handleRecentSelect = useCallback(
     (recent: RecentSearch) => {
+      // Sync cache so the form shows the correct values when re-mounted (e.g. edit in results page)
+      saveStationToCache(LocationType.Origin, recent.origin)
+      saveStationToCache(LocationType.Destination, recent.destination)
+      saveStationToCache(LocationType.Via, recent.via)
+      saveSearchDateTimeToCache('now')
+      saveArrivalToggleToCache(false)
+      saveHasIntermediateStopCache(!!recent.via)
+
       const params = new URLSearchParams({
         origin: recent.origin.UICCode,
         originName: displayName(recent.origin.namen),
