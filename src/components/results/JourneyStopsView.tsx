@@ -26,7 +26,8 @@ import {
   hasTrackInfo,
 } from '@/utils/transportIcon.ts'
 import type { Trip, Leg } from '@/types/trip.ts'
-import type { JourneyResponse, JourneyStop } from '@/types/journey.ts'
+import type { JourneyResponse, JourneyStop, Stock } from '@/types/journey.ts'
+import { TrainComposition } from '@/components/results/TrainComposition.tsx'
 
 /* ─── Constants ─── */
 
@@ -305,11 +306,13 @@ function LegStopsList({
   journeyStops,
   legIndex,
   isLoading,
+  boardingStock,
 }: Readonly<{
   leg: Leg
   journeyStops: JourneyStop[] | undefined
   legIndex: number
   isLoading: boolean
+  boardingStock?: Stock
 }>) {
   const colors = LEG_COLORS[legIndex % LEG_COLORS.length]
   const transportInfo = getLegTransportInfo(leg)
@@ -479,6 +482,13 @@ function LegStopsList({
           </span>
         )}
       </div>
+
+      {/* Train composition / facilities */}
+      {boardingStock && (
+        <div className="border-b px-3 py-2">
+          <TrainComposition stock={boardingStock} />
+        </div>
+      )}
 
       {content}
     </div>
@@ -836,6 +846,14 @@ export function JourneyStopsView({ trip }: Readonly<JourneyStopsViewProps>) {
                 journeyStops={journeyData?.payload?.stops}
                 legIndex={legIndex}
                 isLoading={isLoading}
+                boardingStock={(() => {
+                  const stops = journeyData?.payload?.stops
+                  if (!stops) return undefined
+                  const boardingStop = stops.find(
+                    (s) => s.stop.uicCode === leg.origin.uicCode,
+                  )
+                  return boardingStop?.actualStock ?? boardingStop?.plannedStock
+                })()}
               />
             </div>
           )

@@ -1,16 +1,50 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, LogIn, TrainFront } from 'lucide-react'
+import {
+  Star,
+  LogIn,
+  TrainFront,
+  RefreshCw,
+  Clock,
+  CalendarClock,
+  History,
+} from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
+import { useMemo } from 'react'
 
 import { Button } from '@/components/ui/button.tsx'
 import { Badge } from '@/components/ui/badge.tsx'
 import { useAuth } from '@/contexts/AuthContext.tsx'
-import { getFavouriteTrips, removeFavouriteTrip } from '@/services/trip.ts'
+import {
+  getFavouriteTrips,
+  removeFavouriteTrip,
+  refreshFavouriteTrips,
+} from '@/services/trip.ts'
 import { extendedDayjs } from '@/utils/date.ts'
 import type { Trip } from '@/types/trip.ts'
+
+type FavouriteTrip = Trip & { docId: string }
+
+function categorizeTripTime(trip: Trip): 'current' | 'future' | 'past' {
+  const now = dayjs()
+  const firstLeg = trip.legs?.[0]
+  const lastLeg = trip.legs?.[trip.legs.length - 1]
+
+  if (!firstLeg || !lastLeg) return 'past'
+
+  const departure = dayjs(
+    firstLeg.origin.actualDateTime ?? firstLeg.origin.plannedDateTime,
+  )
+  const arrival = dayjs(
+    lastLeg.destination.actualDateTime ?? lastLeg.destination.plannedDateTime,
+  )
+
+  if (now.isBefore(departure)) return 'future'
+  if (now.isAfter(arrival)) return 'past'
+  return 'current'
+}
 
 export function FavouritesPage() {
   const { user, signInWithGoogle } = useAuth()
@@ -21,6 +55,20 @@ export function FavouritesPage() {
     enabled: !!user,
     queryKey: ['favouriteTrips', user?.uid],
     queryFn: () => getFavouriteTrips(user!.uid),
+  })
+
+  // Background refresh: fires once when favourites are loaded, fetches fresh
+  // data from the NS API, updates Firestore, and patches the query cache.
+  const { isFetching: isRefreshing } = useQuery({
+    enabled: !!user && !!favourites && favourites.length > 0,
+    queryKey: ['favouriteTrips', user?.uid, 'refresh'],
+    queryFn: async () => {
+      const updated = await refreshFavouriteTrips(user!.uid, favourites!)
+      queryClient.setQueryData(['favouriteTrips', user!.uid], updated)
+      return updated
+    },
+    staleTime: Infinity, // only run once per mount
+    gcTime: 0, // don't cache refresh results separately
   })
 
   const handleRemove = async (docId: string) => {
@@ -40,6 +88,45 @@ export function FavouritesPage() {
     })
   }
 
+  const { current, future, past } = useMemo(() => {
+    const groups: {
+      current: FavouriteTrip[]
+      future: FavouriteTrip[]
+      past: FavouriteTrip[]
+    } = { current: [], future: [], past: [] }
+
+    if (!favourites) return groups
+
+    for (const trip of favourites) {
+      groups[categorizeTripTime(trip)].push(trip)
+    }
+
+    // Future: soonest first
+    groups.future.sort((a, b) => {
+      const aTime = a.legs?.[0]?.origin.plannedDateTime ?? ''
+      const bTime = b.legs?.[0]?.origin.plannedDateTime ?? ''
+      return aTime.localeCompare(bTime)
+    })
+
+    // Current: earliest departure first
+    groups.current.sort((a, b) => {
+      const aTime = a.legs?.[0]?.origin.plannedDateTime ?? ''
+      const bTime = b.legs?.[0]?.origin.plannedDateTime ?? ''
+      return aTime.localeCompare(bTime)
+    })
+
+    // Past: most recent first
+    groups.past.sort((a, b) => {
+      const aTime = a.legs?.[0]?.origin.plannedDateTime ?? ''
+      const bTime = b.legs?.[0]?.origin.plannedDateTime ?? ''
+      return bTime.localeCompare(aTime)
+    })
+
+    return groups
+  }, [favourites])
+
+  const hasFavourites = favourites && favourites.length > 0
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -51,6 +138,9 @@ export function FavouritesPage() {
       <div className="mb-4 flex items-center gap-2">
         <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
         <h1 className="text-lg font-semibold">Favourite trips</h1>
+        {isRefreshing && (
+          <RefreshCw className="text-muted-foreground h-4 w-4 animate-spin" />
+        )}
       </div>
 
       {/* Not logged in */}
@@ -82,7 +172,7 @@ export function FavouritesPage() {
       )}
 
       {/* Empty */}
-      {user && !isLoading && (!favourites || favourites.length === 0) && (
+      {user && !isLoading && !hasFavourites && (
         <div className="bg-card flex flex-col items-center gap-3 rounded-xl border p-8 text-center">
           <Star className="text-muted-foreground h-10 w-10" />
           <p className="text-muted-foreground text-sm">
@@ -92,22 +182,83 @@ export function FavouritesPage() {
         </div>
       )}
 
-      {/* Favourite list */}
-      {user && favourites && favourites.length > 0 && (
-        <AnimatePresence mode="popLayout">
-          <div className="space-y-2">
-            {favourites.map((trip) => (
-              <FavouriteTripCard
-                key={trip.docId}
-                trip={trip}
-                onRemove={() => handleRemove(trip.docId)}
-                onClick={() => handleTripClick(trip)}
-              />
-            ))}
-          </div>
-        </AnimatePresence>
+      {/* Grouped favourite lists */}
+      {user && hasFavourites && (
+        <div className="space-y-5">
+          {current.length > 0 && (
+            <TripSection
+              icon={<Clock className="h-4 w-4 text-green-500" />}
+              label="In progress"
+              trips={current}
+              onRemove={handleRemove}
+              onTripClick={handleTripClick}
+            />
+          )}
+
+          {future.length > 0 && (
+            <TripSection
+              icon={<CalendarClock className="h-4 w-4 text-blue-500" />}
+              label="Upcoming"
+              trips={future}
+              onRemove={handleRemove}
+              onTripClick={handleTripClick}
+            />
+          )}
+
+          {past.length > 0 && (
+            <TripSection
+              icon={<History className="text-muted-foreground h-4 w-4" />}
+              label="Past"
+              trips={past}
+              onRemove={handleRemove}
+              onTripClick={handleTripClick}
+              dimmed
+            />
+          )}
+        </div>
       )}
     </motion.div>
+  )
+}
+
+function TripSection({
+  icon,
+  label,
+  trips,
+  onRemove,
+  onTripClick,
+  dimmed,
+}: {
+  icon: React.ReactNode
+  label: string
+  trips: FavouriteTrip[]
+  onRemove: (docId: string) => void
+  onTripClick: (trip: Trip) => void
+  dimmed?: boolean
+}) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center gap-1.5">
+        {icon}
+        <h2 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          {label}
+        </h2>
+        <span className="text-muted-foreground text-xs">({trips.length})</span>
+      </div>
+      <AnimatePresence mode="popLayout">
+        <div className="space-y-2">
+          {trips.map((trip) => (
+            <FavouriteTripCard
+              key={trip.docId}
+              trip={trip}
+              onRemove={() => onRemove(trip.docId)}
+              onClick={() => onTripClick(trip)}
+              dimmed={dimmed}
+            />
+          ))}
+        </div>
+      </AnimatePresence>
+    </section>
   )
 }
 
@@ -115,10 +266,12 @@ function FavouriteTripCard({
   trip,
   onRemove,
   onClick,
+  dimmed,
 }: {
   trip: Trip & { docId: string }
   onRemove: () => void
   onClick: () => void
+  dimmed?: boolean
 }) {
   const firstLeg = trip.legs?.[0]
   const lastLeg = trip.legs?.[trip.legs.length - 1]
@@ -136,7 +289,7 @@ function FavouriteTripCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.2 }}
-      className="bg-card rounded-xl border p-3 transition-shadow hover:shadow-md"
+      className={`bg-card rounded-xl border p-3 transition-shadow hover:shadow-md ${dimmed ? 'opacity-60' : ''}`}
     >
       <div className="flex items-start gap-3">
         {/* Tap to search this route now */}

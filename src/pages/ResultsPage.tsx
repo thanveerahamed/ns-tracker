@@ -7,16 +7,17 @@ import {
 } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import dayjs from 'dayjs'
-import { ArrowLeft, ArrowRight, Loader2, SlidersHorizontal } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button.tsx'
 import { Skeleton } from '@/components/ui/skeleton.tsx'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from '@/components/ui/drawer.tsx'
 import { SearchForm } from '@/components/search/SearchForm.tsx'
 import { TripCard } from '@/components/results/TripCard.tsx'
 import { LoadMoreButton } from '@/components/results/LoadMoreButton.tsx'
@@ -95,21 +96,10 @@ export function ResultsPage() {
     return [...earlierTrips, ...base, ...laterTrips]
   }, [data?.trips, earlierTrips, laterTrips])
 
-  // Find the next preferred trip: first non-cancelled trip departing at or after now
-  const nextDepartureCtx = useMemo(() => {
-    const now = dayjs()
-    for (const trip of allTrips) {
-      if (trip.status === 'CANCELLED') continue
-      const firstLeg = trip.legs?.[0]
-      if (!firstLeg) continue
-      const departure = dayjs(
-        firstLeg.origin.actualDateTime ?? firstLeg.origin.plannedDateTime,
-      )
-      if (departure.isAfter(now) || departure.isSame(now, 'minute')) {
-        return trip.ctxRecon
-      }
-    }
-    return undefined
+  // The NS API marks exactly one trip as `optimal: true` — the recommended ride
+  const optimalCtxRecon = useMemo(() => {
+    const optimal = allTrips.find((trip) => trip.optimal)
+    return optimal?.ctxRecon
   }, [allTrips])
 
   const handleLoadMore = useCallback(
@@ -215,14 +205,31 @@ export function ResultsPage() {
               {isArrival ? 'Arrive by' : 'Depart at'} {dateTime.format('HH:mm')}
             </p>
           </div>
-          <Drawer open={searchOpen} onOpenChange={setSearchOpen}>
-            <DrawerTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0">
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </DrawerTrigger>
-            <DrawerContent className="pb-safe">
-              <div className="w-full px-4 pt-2 pb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={() => setSearchOpen((o) => !o)}
+          >
+            {searchOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <SlidersHorizontal className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Inline collapsible search panel */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="overflow-hidden border-b"
+            >
+              <div className="bg-background px-4 pt-2 pb-4">
                 <SearchForm
                   onSearchComplete={() => {
                     setSearchOpen(false)
@@ -233,9 +240,9 @@ export function ResultsPage() {
                   }}
                 />
               </div>
-            </DrawerContent>
-          </Drawer>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Content below header */}
         <div className="px-4 py-4 sm:py-8">
@@ -317,7 +324,7 @@ export function ResultsPage() {
                         viaUicCode={viaUicCode}
                         isFavourite={favouriteCtxRecons.has(trip.ctxRecon)}
                         onToggleFavourite={() => handleToggleFavourite(trip)}
-                        isNextDeparture={trip.ctxRecon === nextDepartureCtx}
+                        isNextDeparture={trip.ctxRecon === optimalCtxRecon}
                         index={index}
                         onClick={() =>
                           navigate(`trip${location.search}`, {
