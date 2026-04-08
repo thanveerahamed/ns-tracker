@@ -780,7 +780,10 @@ export function TripDetailPage({
   const stateTrip =
     propTrip ?? (location.state as { trip?: Trip } | null)?.trip ?? null
   const ctxRecon =
-    propTrip?.ctxRecon ?? searchParams.get('ctxRecon') ?? undefined
+    propTrip?.ctxRecon ??
+    searchParams.get('ctxRecon') ??
+    stateTrip?.ctxRecon ??
+    undefined
 
   // Fetch detailed trip data
   const { data: fetchedTrip, isLoading: isTripLoading } = useTrip({

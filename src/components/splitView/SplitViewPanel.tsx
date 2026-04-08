@@ -179,21 +179,10 @@ export function SplitViewPanel({
     }
   }
 
-  // Find the next preferred trip
-  const nextDepartureCtx = useMemo(() => {
-    const now = dayjs()
-    for (const trip of allTrips) {
-      if (trip.status === 'CANCELLED') continue
-      const firstLeg = trip.legs?.[0]
-      if (!firstLeg) continue
-      const departure = dayjs(
-        firstLeg.origin.actualDateTime ?? firstLeg.origin.plannedDateTime,
-      )
-      if (departure.isAfter(now) || departure.isSame(now, 'minute')) {
-        return trip.ctxRecon
-      }
-    }
-    return undefined
+  // The NS API marks exactly one trip as `optimal: true` — the recommended ride
+  const optimalCtxRecon = useMemo(() => {
+    const optimal = allTrips.find((trip) => trip.optimal)
+    return optimal?.ctxRecon
   }, [allTrips])
 
   return (
@@ -334,7 +323,7 @@ export function SplitViewPanel({
                 trip={trip}
                 isFavourite={false}
                 onToggleFavourite={() => {}}
-                isNextDeparture={trip.ctxRecon === nextDepartureCtx}
+                isNextDeparture={trip.ctxRecon === optimalCtxRecon}
                 index={index}
                 onClick={() => setSelectedTrip(trip)}
               />

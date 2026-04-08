@@ -1,13 +1,22 @@
 import { motion } from 'framer-motion'
-import { LogIn, LogOut, UserRound } from 'lucide-react'
+import { LogIn, LogOut, Moon, Sun, UserRound } from 'lucide-react'
 
 import { Button } from '@/components/ui/button.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx'
 import { Separator } from '@/components/ui/separator.tsx'
 import { useAuth } from '@/contexts/AuthContext.tsx'
+import { useTheme, type ColorTheme } from '@/contexts/ThemeContext.tsx'
+import { cn } from '@/lib/utils.ts'
+
+const COLOR_OPTIONS: { value: ColorTheme; label: string; swatch: string }[] = [
+  { value: 'green', label: 'Green', swatch: 'bg-[oklch(0.45_0.16_155)]' },
+  { value: 'blue', label: 'Blue', swatch: 'bg-[oklch(0.45_0.18_250)]' },
+  { value: 'violet', label: 'Violet', swatch: 'bg-[oklch(0.48_0.17_295)]' },
+]
 
 export function ProfilePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth()
+  const { theme, toggleTheme, colorTheme, setColorTheme } = useTheme()
 
   const initials = user
     ? (user.displayName ?? user.email ?? 'U')
@@ -78,6 +87,56 @@ export function ProfilePage() {
           </Button>
         </div>
       )}
+
+      {/* Appearance */}
+      <div className="bg-card mt-4 rounded-xl border p-5">
+        <h2 className="mb-3 text-sm font-semibold">Appearance</h2>
+
+        {/* Dark / Light toggle */}
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground text-sm">Mode</span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 px-3 text-xs"
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="h-3.5 w-3.5" /> Light
+              </>
+            ) : (
+              <>
+                <Moon className="h-3.5 w-3.5" /> Dark
+              </>
+            )}
+          </Button>
+        </div>
+
+        <Separator className="my-3" />
+
+        {/* Color theme picker */}
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground text-sm">Accent color</span>
+          <div className="flex gap-2">
+            {COLOR_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                aria-label={opt.label}
+                onClick={() => setColorTheme(opt.value)}
+                className={cn(
+                  'h-7 w-7 rounded-full transition-all',
+                  opt.swatch,
+                  colorTheme === opt.value
+                    ? 'ring-ring ring-offset-background scale-110 ring-2 ring-offset-2'
+                    : 'opacity-60 hover:opacity-100',
+                )}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
     </motion.div>
   )
 }
